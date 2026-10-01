@@ -1,0 +1,21 @@
+# Data runtime lokal (SQLite, uploads, Parquet)
+data/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.hypothesis/
+build/
+dist/
+
+# Frontend
+node_modules/
+.next/

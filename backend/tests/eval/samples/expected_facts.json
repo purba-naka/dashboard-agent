@@ -1,0 +1,360 @@
+{
+  "_note": "Dibangkitkan oleh generate_samples.py (seed tetap). Uang dalam IDR (integer). Nama tabel mengikuti nama file saat diunggah: customers, transactions, products (workbook satu sheet → nama tabel dari nama file).",
+  "seed": 20240511,
+  "tables": {
+    "customers": {
+      "file": "customers.csv",
+      "rows": 200,
+      "columns": [
+        "customer_id",
+        "customer_name",
+        "email",
+        "city",
+        "region",
+        "segment",
+        "signup_date"
+      ]
+    },
+    "transactions": {
+      "file": "transactions.csv",
+      "rows": 2000,
+      "columns": [
+        "transaction_id",
+        "transaction_date",
+        "customer_id",
+        "product_id",
+        "quantity",
+        "unit_price",
+        "amount",
+        "channel"
+      ],
+      "date_range": [
+        "2024-01-01",
+        "2024-12-31"
+      ]
+    },
+    "products": {
+      "file": "products.xlsx",
+      "sheet": "Products",
+      "rows": 30,
+      "columns": [
+        "product_id",
+        "product_name",
+        "category",
+        "price"
+      ]
+    }
+  },
+  "relations": [
+    {
+      "from": "customers.customer_id",
+      "to": "transactions.customer_id",
+      "cardinality": "one_to_many",
+      "distinct_from": 200,
+      "distinct_to": 196,
+      "intersection": 196,
+      "overlap_pct": 100.0
+    },
+    {
+      "from": "products.product_id",
+      "to": "transactions.product_id",
+      "cardinality": "one_to_many",
+      "distinct_from": 30,
+      "distinct_to": 30,
+      "intersection": 30,
+      "overlap_pct": 100.0
+    }
+  ],
+  "data_quality": {
+    "customers.email": {
+      "issue": "null",
+      "null_count": 7,
+      "null_pct": 3.5,
+      "customer_ids": [
+        "CUST-0002",
+        "CUST-0013",
+        "CUST-0024",
+        "CUST-0056",
+        "CUST-0065",
+        "CUST-0127",
+        "CUST-0128"
+      ]
+    },
+    "duplicate_rows": {
+      "customers": 0,
+      "transactions": 0,
+      "products": 0
+    }
+  },
+  "totals": {
+    "revenue": 1802384000,
+    "transactions": 2000,
+    "units": 4938,
+    "avg_order_value": 901192.0,
+    "active_customers": 196
+  },
+  "top_region": {
+    "region": "Jawa",
+    "revenue": 839612000,
+    "transactions": 984,
+    "share_pct": 46.58
+  },
+  "revenue_by_region": [
+    {
+      "region": "Jawa",
+      "revenue": 839612000,
+      "transactions": 984
+    },
+    {
+      "region": "Sumatera",
+      "revenue": 279085000,
+      "transactions": 282
+    },
+    {
+      "region": "Sulawesi",
+      "revenue": 255354000,
+      "transactions": 235
+    },
+    {
+      "region": "Kalimantan",
+      "revenue": 245590000,
+      "transactions": 298
+    },
+    {
+      "region": "Bali & Nusa Tenggara",
+      "revenue": 182743000,
+      "transactions": 201
+    }
+  ],
+  "customers_by_region": [
+    {
+      "region": "Jawa",
+      "customers": 100
+    },
+    {
+      "region": "Kalimantan",
+      "customers": 33
+    },
+    {
+      "region": "Sumatera",
+      "customers": 30
+    },
+    {
+      "region": "Sulawesi",
+      "customers": 19
+    },
+    {
+      "region": "Bali & Nusa Tenggara",
+      "customers": 18
+    }
+  ],
+  "monthly_trend": {
+    "months": [
+      {
+        "month": "2024-01",
+        "revenue": 127372000,
+        "transactions": 135
+      },
+      {
+        "month": "2024-02",
+        "revenue": 155156000,
+        "transactions": 138
+      },
+      {
+        "month": "2024-03",
+        "revenue": 135236000,
+        "transactions": 142
+      },
+      {
+        "month": "2024-04",
+        "revenue": 106922000,
+        "transactions": 145
+      },
+      {
+        "month": "2024-05",
+        "revenue": 145039000,
+        "transactions": 148
+      },
+      {
+        "month": "2024-06",
+        "revenue": 126259000,
+        "transactions": 150
+      },
+      {
+        "month": "2024-07",
+        "revenue": 165116000,
+        "transactions": 153
+      },
+      {
+        "month": "2024-08",
+        "revenue": 120156000,
+        "transactions": 156
+      },
+      {
+        "month": "2024-09",
+        "revenue": 132688000,
+        "transactions": 159
+      },
+      {
+        "month": "2024-10",
+        "revenue": 152604000,
+        "transactions": 162
+      },
+      {
+        "month": "2024-11",
+        "revenue": 291010000,
+        "transactions": 340
+      },
+      {
+        "month": "2024-12",
+        "revenue": 144826000,
+        "transactions": 172
+      }
+    ],
+    "anomaly": {
+      "month": "2024-11",
+      "kind": "spike",
+      "reason": "Harbolnas 11.11 (jumlah transaksi ± 2x bulan lain)",
+      "revenue": 291010000,
+      "transactions": 340,
+      "ratio_vs_mean_other_months": 2.12
+    },
+    "lowest_month": "2024-04"
+  },
+  "top_category": {
+    "category": "Elektronik",
+    "revenue": 1097145000,
+    "units": 513,
+    "share_pct": 60.87
+  },
+  "revenue_by_category": [
+    {
+      "category": "Elektronik",
+      "revenue": 1097145000,
+      "units": 513
+    },
+    {
+      "category": "Rumah Tangga",
+      "revenue": 269448000,
+      "units": 650
+    },
+    {
+      "category": "Fashion",
+      "revenue": 227720000,
+      "units": 938
+    },
+    {
+      "category": "Makanan & Minuman",
+      "revenue": 105458000,
+      "units": 2031
+    },
+    {
+      "category": "Kesehatan & Kecantikan",
+      "revenue": 102613000,
+      "units": 806
+    }
+  ],
+  "revenue_by_channel": [
+    {
+      "channel": "Marketplace",
+      "revenue": 875239000,
+      "transactions": 907
+    },
+    {
+      "channel": "Website",
+      "revenue": 502399000,
+      "transactions": 618
+    },
+    {
+      "channel": "Toko Fisik",
+      "revenue": 424746000,
+      "transactions": 475
+    }
+  ],
+  "top_customers": [
+    {
+      "customer_id": "CUST-0128",
+      "customer_name": "Budi Gunawan",
+      "region": "Jawa",
+      "revenue": 48286000
+    },
+    {
+      "customer_id": "CUST-0125",
+      "customer_name": "Maya Setiawan",
+      "region": "Bali & Nusa Tenggara",
+      "revenue": 38990000
+    },
+    {
+      "customer_id": "CUST-0177",
+      "customer_name": "Dewi Siregar",
+      "region": "Bali & Nusa Tenggara",
+      "revenue": 37958000
+    },
+    {
+      "customer_id": "CUST-0030",
+      "customer_name": "Lestari Setiawan",
+      "region": "Kalimantan",
+      "revenue": 37086000
+    },
+    {
+      "customer_id": "CUST-0114",
+      "customer_name": "Hendra Kusuma",
+      "region": "Sulawesi",
+      "revenue": 36987000
+    }
+  ],
+  "top_products": [
+    {
+      "product_id": "PRD-003",
+      "product_name": "Smartwatch",
+      "category": "Elektronik",
+      "revenue": 399993000
+    },
+    {
+      "product_id": "PRD-005",
+      "product_name": "Rice Cooker Digital",
+      "category": "Elektronik",
+      "revenue": 200640000
+    },
+    {
+      "product_id": "PRD-002",
+      "product_name": "Power Bank 20.000 mAh",
+      "category": "Elektronik",
+      "revenue": 163938000
+    },
+    {
+      "product_id": "PRD-001",
+      "product_name": "Earbuds Nirkabel",
+      "category": "Elektronik",
+      "revenue": 162360000
+    },
+    {
+      "product_id": "PRD-006",
+      "product_name": "Kipas Angin Berdiri",
+      "category": "Elektronik",
+      "revenue": 91278000
+    }
+  ],
+  "sql": {
+    "total_revenue": "SELECT SUM(amount) AS revenue, COUNT(*) AS transactions, SUM(quantity) AS units FROM transactions",
+    "revenue_by_month": "SELECT STRFTIME(transaction_date, '%Y-%m') AS month, SUM(amount) AS revenue, COUNT(*) AS transactions FROM transactions GROUP BY STRFTIME(transaction_date, '%Y-%m') ORDER BY month",
+    "revenue_by_region": "SELECT c.region, SUM(t.amount) AS revenue, COUNT(*) AS transactions FROM transactions t JOIN customers c ON t.customer_id = c.customer_id GROUP BY c.region ORDER BY revenue DESC",
+    "revenue_by_category": "SELECT p.category, SUM(t.amount) AS revenue, SUM(t.quantity) AS units FROM transactions t JOIN products p ON t.product_id = p.product_id GROUP BY p.category ORDER BY revenue DESC",
+    "revenue_by_channel": "SELECT channel, SUM(amount) AS revenue, COUNT(*) AS transactions FROM transactions GROUP BY channel ORDER BY revenue DESC",
+    "top_customers": "SELECT c.customer_id, c.customer_name, c.region, SUM(t.amount) AS revenue FROM transactions t JOIN customers c ON t.customer_id = c.customer_id GROUP BY c.customer_id, c.customer_name, c.region ORDER BY revenue DESC, customer_id LIMIT 5",
+    "top_products": "SELECT p.product_id, p.product_name, p.category, SUM(t.amount) AS revenue FROM transactions t JOIN products p ON t.product_id = p.product_id GROUP BY p.product_id, p.product_name, p.category ORDER BY revenue DESC, product_id LIMIT 5",
+    "customers_by_region": "SELECT region, COUNT(*) AS customers FROM customers GROUP BY region ORDER BY customers DESC, region",
+    "null_emails": "SELECT customer_id FROM customers WHERE email IS NULL ORDER BY customer_id"
+  },
+  "finance_monthly": {
+    "file": "finance_monthly.csv",
+    "rows": 27,
+    "cancelled_rows": 3,
+    "latest_month": "2024-12-01",
+    "latest_month_revenue": 1589656000,
+    "revenue_posted": 34332839000,
+    "revenue_posted_2024": 18416247000,
+    "revenue_all_2024_wrong": 20216247000,
+    "net_profit_posted": 4721723000
+  }
+}

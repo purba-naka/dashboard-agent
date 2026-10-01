@@ -1,0 +1,12 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.8125rem;
+}

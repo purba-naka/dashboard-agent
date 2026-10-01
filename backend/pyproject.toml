@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dashboard-studio-backend"
+version = "0.1.0"
+description = "Dashboard Studio Agent backend (FastAPI + Google ADK + Polars)"
+readme = { text = "Backend Dashboard Studio Agent. Jalankan dengan `python main.py`.", content-type = "text/markdown" }
+requires-python = ">=3.10"
+# Versi exact (==) hasil resolusi pip yang saling kompatibel.
+# Catatan: google-adk 2.10.0 membatasi opentelemetry-api<=1.42.1, sehingga
+# fastapi dipin ke 0.141.1 (0.142.x memerlukan opentelemetry-api>=1.44).
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.54.0",
+    "pydantic==2.13.5",
+    "pydantic-settings==2.15.0",
+    "python-dotenv==1.2.3",
+    "python-multipart==0.0.32",
+    "polars==1.44.2",
+    "pyarrow==25.0.1",
+    "fastexcel==0.21.0",
+    "sqlglot==30.20.0",
+    "aiosqlite==0.22.1",
+    # Metadata_Store PostgreSQL (DATABASE_URL) + migrasi skema.
+    "asyncpg==0.31.0",
+    "alembic==1.20.0",
+    # extra [db] wajib untuk DatabaseSessionService (sqlalchemy).
+    "google-adk[db]==2.10.0",
+    # SQLAlchemy 2.1 tidak lagi memasang greenlet otomatis; wajib untuk engine async.
+    "greenlet==3.5.6",
+    "litellm==1.103.1",
+    "python-ulid==4.0.1",
+    # Ekspor/impor Semantic_Model (safe_load/safe_dump saja).
+    "pyyaml==6.0.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "hypothesis==6.168.3",
+    "xlsxwriter==3.2.9",
+    "httpx==0.28.1",
+    "psutil==7.2.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["studio*"]
+
+[tool.setuptools.package-data]
+"studio.store.migrations" = ["*.sql"]
+"studio.agents.prompts" = ["*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Suite default mengecualikan eval & slow: jalankan eksplisit dengan
+# ``pytest -m eval`` / ``pytest -m slow`` (task 22.2, 23.3).
+addopts = '-m "not eval and not slow and not live"'
+markers = [
+  "eval: evaluasi agent ADK dengan model mock (deselect default, jalankan -m eval)",
+  "live: end-to-end dengan model LLM nyata dari backend/.env (berbiaya; jalankan -m live)",
+  "slow: performance test berat (deselect default, jalankan -m slow)",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

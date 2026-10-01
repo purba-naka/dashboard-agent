@@ -1,0 +1,5026 @@
+{
+  "generated_by": "backend/tests/fixtures/gen_patch_fixtures.py",
+  "dashboard_id": "dash_fixture",
+  "scenarios": [
+    {
+      "name": "add_item",
+      "description": "add_item chart (layout default) dan insight (layout eksplisit)",
+      "initial": {
+        "title": "Penjualan",
+        "items": {},
+        "layout": {},
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "agent",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "agent",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Kontributor teratas",
+                "text": "North menyumbang 1250.5 dari total revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              },
+              "layout": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 3
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Kontributor teratas",
+                "text": "North menyumbang 1250.5 dari total revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              },
+              "layout": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 3
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 6,
+            "y": 0,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "remove_item",
+      "description": "remove_item membawa snapshot item & layout",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Kontributor teratas",
+                "text": "North menyumbang 1250.5 dari total revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              },
+              "layout": {
+                "x": 0,
+                "y": 4,
+                "w": 6,
+                "h": 3
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Kontributor teratas",
+                "text": "North menyumbang 1250.5 dari total revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              },
+              "layout": {
+                "x": 0,
+                "y": 4,
+                "w": 6,
+                "h": 3
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_item_chart_update",
+      "description": "set_item dari update_chart (spec & judul baru)",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Qty per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "qty"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Qty per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "qty"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Qty per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "qty"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_item_chart_type",
+      "description": "set_item dari change_chart_type bar→line→pie→bar",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "line",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "line",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "line",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "line",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "line",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "line",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "pie",
+                  "option": {
+                    "series": [
+                      {
+                        "type": "pie",
+                        "encode": {
+                          "itemName": "region",
+                          "value": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "pie",
+                  "option": {
+                    "series": [
+                      {
+                        "type": "pie",
+                        "encode": {
+                          "itemName": "region",
+                          "value": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "line",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "line",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "pie",
+                  "option": {
+                    "series": [
+                      {
+                        "type": "pie",
+                        "encode": {
+                          "itemName": "region",
+                          "value": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    },
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_01",
+              "before": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    },
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "after": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "pie",
+                  "option": {
+                    "series": [
+                      {
+                        "type": "pie",
+                        "encode": {
+                          "itemName": "region",
+                          "value": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                },
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_item_insight",
+      "description": "set_item dari update_insight (perubahan parsial)",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_02",
+              "before": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Kontributor teratas",
+                "text": "North menyumbang 1250.5 dari total revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              },
+              "after": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Region teratas",
+                "text": "North memimpin revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_02",
+              "before": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Region teratas",
+                "text": "North memimpin revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              },
+              "after": {
+                "insight_type": "top_bottom_contributors",
+                "title": "Kontributor teratas",
+                "text": "North menyumbang 1250.5 dari total revenue.",
+                "query_id": "q_sales",
+                "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+                "evidence": {
+                  "columns": [
+                    {
+                      "name": "region",
+                      "type": "string"
+                    },
+                    {
+                      "name": "revenue",
+                      "type": "float"
+                    }
+                  ],
+                  "rows": [
+                    [
+                      "North",
+                      1250.5
+                    ],
+                    [
+                      "South",
+                      980.0
+                    ]
+                  ],
+                  "row_count": 2
+                },
+                "matched_numbers": [
+                  {
+                    "token": "1250.5",
+                    "value": 1250.5,
+                    "row": 0,
+                    "column": "revenue"
+                  }
+                ],
+                "filters_snapshot": [],
+                "dataset_ids": [
+                  "ds_sales"
+                ],
+                "computed_at": "2025-01-01T09:00:00Z",
+                "dataset_versions": {
+                  "ds_sales": 1
+                },
+                "id": "item_02",
+                "kind": "insight"
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Region teratas",
+            "text": "North memimpin revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_layout",
+      "description": "set_layout untuk dua item sekaligus",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 8,
+                    "h": 5
+                  }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 0,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 8,
+                    "y": 0,
+                    "w": 4,
+                    "h": 5
+                  }
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 8,
+                    "h": 5
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 8,
+                    "y": 0,
+                    "w": 4,
+                    "h": 5
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  }
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 8,
+            "h": 5
+          },
+          "item_02": {
+            "x": 8,
+            "y": 0,
+            "w": 4,
+            "h": 5
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_filters",
+      "description": "set_filters: tambah, kurangi, kosongkan filter global",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_filters",
+              "before": [],
+              "after": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_filters",
+              "before": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ],
+              "after": []
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_filters",
+              "before": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ],
+              "after": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_filters",
+              "before": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                }
+              ],
+              "after": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_filters",
+              "before": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                }
+              ],
+              "after": []
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_filters",
+              "before": [],
+              "after": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_title",
+      "description": "set_title",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "agent",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan",
+              "after": "Penjualan Q1"
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan Q1",
+              "after": "Penjualan"
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan Q1",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "undo_redo",
+      "description": "dua perubahan, undo dua kali, redo sekali",
+      "initial": {
+        "title": "Penjualan",
+        "items": {},
+        "layout": {},
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan",
+              "after": "Penjualan 2024"
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan 2024",
+              "after": "Penjualan"
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan 2024",
+              "after": "Penjualan"
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan",
+              "after": "Penjualan 2024"
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        },
+        {
+          "id": "patch_04",
+          "dashboard_id": "dash_fixture",
+          "version": 4,
+          "base_version": 3,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_01",
+          "ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:04:00Z"
+        },
+        {
+          "id": "patch_05",
+          "dashboard_id": "dash_fixture",
+          "version": 5,
+          "base_version": 4,
+          "source": "user",
+          "kind": "redo",
+          "target_patch_id": "patch_01",
+          "ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:05:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "undo_redo_chain",
+      "description": "undo/redo berulang lalu patch normal baru dan undo",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_01",
+          "ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "redo",
+          "target_patch_id": "patch_01",
+          "ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        },
+        {
+          "id": "patch_04",
+          "dashboard_id": "dash_fixture",
+          "version": 4,
+          "base_version": 3,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_03",
+          "ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_layout",
+              "changes": [
+                {
+                  "id": "item_01",
+                  "before": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 6,
+                    "h": 4
+                  },
+                  "after": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 12,
+                    "h": 4
+                  }
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:04:00Z"
+        },
+        {
+          "id": "patch_05",
+          "dashboard_id": "dash_fixture",
+          "version": 5,
+          "base_version": 4,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan",
+              "after": "Judul baru"
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_title",
+              "before": "Judul baru",
+              "after": "Penjualan"
+            }
+          ],
+          "created_at": "2025-01-01T09:05:00Z"
+        },
+        {
+          "id": "patch_06",
+          "dashboard_id": "dash_fixture",
+          "version": 6,
+          "base_version": 5,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_05",
+          "ops": [
+            {
+              "op": "set_title",
+              "before": "Judul baru",
+              "after": "Penjualan"
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_title",
+              "before": "Penjualan",
+              "after": "Judul baru"
+            }
+          ],
+          "created_at": "2025-01-01T09:06:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "undo_remove_and_filters",
+      "description": "undo set_filters dan remove_item (item kembali)",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_filters",
+              "before": [],
+              "after": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ]
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_filters",
+              "before": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ],
+              "after": []
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_filters",
+              "before": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ],
+              "after": []
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_filters",
+              "before": [],
+              "after": [
+                {
+                  "table": "sales",
+                  "column": "region",
+                  "kind": "in",
+                  "values": [
+                    "North",
+                    "South"
+                  ]
+                },
+                {
+                  "table": "sales",
+                  "column": "month",
+                  "kind": "date_range",
+                  "start": "2024-01-01",
+                  "end": "2024-06-30"
+                }
+              ]
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        },
+        {
+          "id": "patch_04",
+          "dashboard_id": "dash_fixture",
+          "version": 4,
+          "base_version": 3,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_01",
+          "ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_01",
+                "kind": "chart",
+                "title": "Revenue per region",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "region",
+                          "y": "revenue"
+                        }
+                      }
+                    ],
+                    "tooltip": {
+                      "trigger": "axis"
+                    }
+                  },
+                  "cross_filter_column": "region"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:04:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_02": {
+            "insight_type": "top_bottom_contributors",
+            "title": "Kontributor teratas",
+            "text": "North menyumbang 1250.5 dari total revenue.",
+            "query_id": "q_sales",
+            "sql": "SELECT region, SUM(revenue) AS revenue FROM sales GROUP BY 1",
+            "evidence": {
+              "columns": [
+                {
+                  "name": "region",
+                  "type": "string"
+                },
+                {
+                  "name": "revenue",
+                  "type": "float"
+                }
+              ],
+              "rows": [
+                [
+                  "North",
+                  1250.5
+                ],
+                [
+                  "South",
+                  980.0
+                ]
+              ],
+              "row_count": 2
+            },
+            "matched_numbers": [
+              {
+                "token": "1250.5",
+                "value": 1250.5,
+                "row": 0,
+                "column": "revenue"
+              }
+            ],
+            "filters_snapshot": [],
+            "dataset_ids": [
+              "ds_sales"
+            ],
+            "computed_at": "2025-01-01T09:00:00Z",
+            "dataset_versions": {
+              "ds_sales": 1
+            },
+            "id": "item_02",
+            "kind": "insight"
+          },
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_02": {
+            "x": 0,
+            "y": 4,
+            "w": 6,
+            "h": 3
+          },
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "kpi",
+      "description": "add_kpi, update_kpi, lalu undo update",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "agent",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "add_item",
+              "item": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total revenue",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "revenue",
+                  "comparison_column": "revenue",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "currency",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "revenue"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 10,
+                "w": 3,
+                "h": 2
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "remove_item",
+              "item": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total revenue",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "revenue",
+                  "comparison_column": "revenue",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "currency",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "revenue"
+                }
+              },
+              "layout": {
+                "x": 0,
+                "y": 10,
+                "w": 3,
+                "h": 2
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_02",
+              "before": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total revenue",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "revenue",
+                  "comparison_column": "revenue",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "currency",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "revenue"
+                }
+              },
+              "after": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total qty",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "qty",
+                  "comparison_column": "qty",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "number",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "qty"
+                }
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_02",
+              "before": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total qty",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "qty",
+                  "comparison_column": "qty",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "number",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "qty"
+                }
+              },
+              "after": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total revenue",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "revenue",
+                  "comparison_column": "revenue",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "currency",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "revenue"
+                }
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_item",
+              "id": "item_02",
+              "before": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total qty",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "qty",
+                  "comparison_column": "qty",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "number",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "qty"
+                }
+              },
+              "after": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total revenue",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "revenue",
+                  "comparison_column": "revenue",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "currency",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "revenue"
+                }
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_item",
+              "id": "item_02",
+              "before": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total revenue",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "revenue",
+                  "comparison_column": "revenue",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "currency",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "revenue"
+                }
+              },
+              "after": {
+                "id": "item_02",
+                "kind": "kpi",
+                "title": "Total qty",
+                "spec": {
+                  "spec_version": 1,
+                  "query_id": "q_sales",
+                  "value_column": "qty",
+                  "comparison_column": "qty",
+                  "comparison_label": "vs bulan lalu",
+                  "format": {
+                    "style": "number",
+                    "currency": "IDR",
+                    "decimals": 0,
+                    "compact": true
+                  },
+                  "good_direction": "up",
+                  "metric_name": "qty"
+                }
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          },
+          "item_02": {
+            "id": "item_02",
+            "kind": "kpi",
+            "title": "Total revenue",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "value_column": "revenue",
+              "comparison_column": "revenue",
+              "comparison_label": "vs bulan lalu",
+              "format": {
+                "style": "currency",
+                "currency": "IDR",
+                "decimals": 0,
+                "compact": true
+              },
+              "good_direction": "up",
+              "metric_name": "revenue"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          },
+          "item_02": {
+            "x": 0,
+            "y": 10,
+            "w": 3,
+            "h": 2
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    },
+    {
+      "name": "set_brief",
+      "description": "set_brief: buat, ubah, undo/redo, hapus",
+      "initial": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "agent",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_brief",
+              "before": null,
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": null
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        },
+        {
+          "id": "patch_04",
+          "dashboard_id": "dash_fixture",
+          "version": 4,
+          "base_version": 3,
+          "source": "user",
+          "kind": "redo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Manajer penjualan",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:04:00Z"
+        },
+        {
+          "id": "patch_05",
+          "dashboard_id": "dash_fixture",
+          "version": 5,
+          "base_version": 4,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_brief",
+              "before": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              },
+              "after": null
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_brief",
+              "before": null,
+              "after": {
+                "purpose": "Memantau penjualan bulanan",
+                "audience": "Direksi",
+                "key_questions": [
+                  "Region mana yang tumbuh?"
+                ],
+                "kpis": [
+                  {
+                    "metric": "revenue",
+                    "compare": "previous_period"
+                  }
+                ],
+                "sections": [
+                  "kpi_row",
+                  "trend",
+                  "breakdown"
+                ],
+                "time_grain": "month",
+                "assumptions": [
+                  "Periode = kalender"
+                ]
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:05:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Penjualan",
+        "items": {
+          "item_01": {
+            "id": "item_01",
+            "kind": "chart",
+            "title": "Revenue per region",
+            "spec": {
+              "spec_version": 1,
+              "query_id": "q_sales",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "region",
+                      "y": "revenue"
+                    }
+                  }
+                ],
+                "tooltip": {
+                  "trigger": "axis"
+                }
+              },
+              "cross_filter_column": "region"
+            }
+          }
+        },
+        "layout": {
+          "item_01": {
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 4
+          }
+        },
+        "global_filters": [],
+        "brief": null
+      }
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+customer_id,customer_name,email,city,region,segment,signup_date
+CUST-0001,Ayu Santoso,ayu.santoso.0001@example.com,Pontianak,Kalimantan,Retail,2023-06-07
+CUST-0002,Eko Halim,,Banjarmasin,Kalimantan,UMKM,2023-07-27
+CUST-0003,Ayu Saputra,ayu.saputra.0003@example.com,Medan,Sumatera,Retail,2023-02-02
+CUST-0004,Agus Gunawan,agus.gunawan.0004@example.com,Surabaya,Jawa,Retail,2023-01-01
+CUST-0005,Hendra Setiawan,hendra.setiawan.0005@example.com,Makassar,Sulawesi,UMKM,2023-01-08
+CUST-0006,Wulan Syahputra,wulan.syahputra.0006@example.com,Balikpapan,Kalimantan,Retail,2023-09-08
+CUST-0007,Andi Halim,andi.halim.0007@example.com,Banjarmasin,Kalimantan,Retail,2023-12-25
+CUST-0008,Hendra Syahputra,hendra.syahputra.0008@example.com,Surabaya,Jawa,Retail,2023-09-28
+CUST-0009,Wulan Utami,wulan.utami.0009@example.com,Bandung,Jawa,Korporat,2023-08-21
+CUST-0010,Dewi Saputra,dewi.saputra.0010@example.com,Surabaya,Jawa,Retail,2023-04-09
+CUST-0011,Lestari Wijaya,lestari.wijaya.0011@example.com,Medan,Sumatera,Retail,2023-06-15
+CUST-0012,Joko Gunawan,joko.gunawan.0012@example.com,Balikpapan,Kalimantan,Retail,2023-11-08
+CUST-0013,Hendra Wijaya,,Semarang,Jawa,Korporat,2023-03-27
+CUST-0014,Putri Gunawan,putri.gunawan.0014@example.com,Makassar,Sulawesi,Retail,2023-02-14
+CUST-0015,Sri Siregar,sri.siregar.0015@example.com,Yogyakarta,Jawa,UMKM,2023-11-18
+CUST-0016,Fajar Syahputra,fajar.syahputra.0016@example.com,Pontianak,Kalimantan,Retail,2023-02-21
+CUST-0017,Wulan Syahputra,wulan.syahputra.0017@example.com,Yogyakarta,Jawa,Retail,2023-01-15
+CUST-0018,Dewi Kusuma,dewi.kusuma.0018@example.com,Bandung,Jawa,UMKM,2023-02-19
+CUST-0019,Wulan Rahmawati,wulan.rahmawati.0019@example.com,Bandung,Jawa,Korporat,2023-02-11
+CUST-0020,Agus Rahmawati,agus.rahmawati.0020@example.com,Makassar,Sulawesi,Retail,2023-06-07
+CUST-0021,Sri Utami,sri.utami.0021@example.com,Palembang,Sumatera,Retail,2023-10-14
+CUST-0022,Andi Gunawan,andi.gunawan.0022@example.com,Medan,Sumatera,Retail,2023-11-23
+CUST-0023,Wulan Syahputra,wulan.syahputra.0023@example.com,Medan,Sumatera,Korporat,2023-07-25
+CUST-0024,Lestari Kusuma,,Denpasar,Bali & Nusa Tenggara,UMKM,2023-09-15
+CUST-0025,Andi Wibowo,andi.wibowo.0025@example.com,Manado,Sulawesi,Korporat,2023-09-10
+CUST-0026,Andi Gunawan,andi.gunawan.0026@example.com,Medan,Sumatera,Retail,2023-02-18
+CUST-0027,Bayu Nugroho,bayu.nugroho.0027@example.com,Manado,Sulawesi,Retail,2023-12-11
+CUST-0028,Rina Pratama,rina.pratama.0028@example.com,Jakarta,Jawa,Retail,2023-10-20
+CUST-0029,Budi Wijaya,budi.wijaya.0029@example.com,Banjarmasin,Kalimantan,UMKM,2023-05-27
+CUST-0030,Lestari Setiawan,lestari.setiawan.0030@example.com,Pontianak,Kalimantan,UMKM,2023-11-06
+CUST-0031,Budi Setiawan,budi.setiawan.0031@example.com,Makassar,Sulawesi,Retail,2023-07-05
+CUST-0032,Maya Santoso,maya.santoso.0032@example.com,Semarang,Jawa,Retail,2023-01-07
+CUST-0033,Siti Nugroho,siti.nugroho.0033@example.com,Jakarta,Jawa,Retail,2023-07-22
+CUST-0034,Budi Kusuma,budi.kusuma.0034@example.com,Jakarta,Jawa,Retail,2023-02-20
+CUST-0035,Lestari Hidayat,lestari.hidayat.0035@example.com,Malang,Jawa,UMKM,2023-08-05
+CUST-0036,Bayu Wibowo,bayu.wibowo.0036@example.com,Bandung,Jawa,Retail,2023-05-24
+CUST-0037,Budi Pratama,budi.pratama.0037@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-07-22
+CUST-0038,Hendra Wibowo,hendra.wibowo.0038@example.com,Jakarta,Jawa,Retail,2023-08-29
+CUST-0039,Dewi Hidayat,dewi.hidayat.0039@example.com,Surabaya,Jawa,Retail,2023-01-10
+CUST-0040,Wulan Nugroho,wulan.nugroho.0040@example.com,Banjarmasin,Kalimantan,Retail,2023-12-14
+CUST-0041,Wulan Wijaya,wulan.wijaya.0041@example.com,Palembang,Sumatera,Retail,2023-03-21
+CUST-0042,Joko Gunawan,joko.gunawan.0042@example.com,Malang,Jawa,Korporat,2023-07-20
+CUST-0043,Joko Siregar,joko.siregar.0043@example.com,Balikpapan,Kalimantan,Retail,2023-05-24
+CUST-0044,Joko Wijaya,joko.wijaya.0044@example.com,Denpasar,Bali & Nusa Tenggara,Retail,2023-06-07
+CUST-0045,Agus Kusuma,agus.kusuma.0045@example.com,Surabaya,Jawa,Retail,2023-02-28
+CUST-0046,Agus Rahmawati,agus.rahmawati.0046@example.com,Surabaya,Jawa,Retail,2023-11-21
+CUST-0047,Bayu Syahputra,bayu.syahputra.0047@example.com,Surabaya,Jawa,Retail,2023-01-21
+CUST-0048,Siti Santoso,siti.santoso.0048@example.com,Malang,Jawa,Retail,2023-11-07
+CUST-0049,Maya Wijaya,maya.wijaya.0049@example.com,Surabaya,Jawa,Retail,2023-07-22
+CUST-0050,Wulan Gunawan,wulan.gunawan.0050@example.com,Yogyakarta,Jawa,Retail,2023-11-02
+CUST-0051,Budi Wibowo,budi.wibowo.0051@example.com,Banjarmasin,Kalimantan,Retail,2023-08-14
+CUST-0052,Siti Rahmawati,siti.rahmawati.0052@example.com,Jakarta,Jawa,Retail,2023-04-20
+CUST-0053,Andi Lubis,andi.lubis.0053@example.com,Medan,Sumatera,UMKM,2023-12-18
+CUST-0054,Agus Lubis,agus.lubis.0054@example.com,Denpasar,Bali & Nusa Tenggara,Retail,2023-01-26
+CUST-0055,Siti Gunawan,siti.gunawan.0055@example.com,Jakarta,Jawa,Retail,2023-03-26
+CUST-0056,Dimas Rahmawati,,Surabaya,Jawa,UMKM,2023-10-30
+CUST-0057,Rina Siregar,rina.siregar.0057@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-06-13
+CUST-0058,Bayu Halim,bayu.halim.0058@example.com,Yogyakarta,Jawa,Retail,2023-05-27
+CUST-0059,Wulan Kusuma,wulan.kusuma.0059@example.com,Yogyakarta,Jawa,Korporat,2023-09-29
+CUST-0060,Rina Pratama,rina.pratama.0060@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-10-14
+CUST-0061,Lestari Siregar,lestari.siregar.0061@example.com,Denpasar,Bali & Nusa Tenggara,Korporat,2023-06-03
+CUST-0062,Dimas Rahmawati,dimas.rahmawati.0062@example.com,Bandung,Jawa,UMKM,2023-12-05
+CUST-0063,Eko Rahmawati,eko.rahmawati.0063@example.com,Manado,Sulawesi,Retail,2023-11-28
+CUST-0064,Siti Kusuma,siti.kusuma.0064@example.com,Surabaya,Jawa,UMKM,2023-02-26
+CUST-0065,Dimas Rahmawati,,Medan,Sumatera,Retail,2023-10-18
+CUST-0066,Indah Syahputra,indah.syahputra.0066@example.com,Yogyakarta,Jawa,UMKM,2023-04-08
+CUST-0067,Siti Lubis,siti.lubis.0067@example.com,Surabaya,Jawa,Retail,2023-07-27
+CUST-0068,Rina Saputra,rina.saputra.0068@example.com,Denpasar,Bali & Nusa Tenggara,Retail,2023-04-18
+CUST-0069,Lestari Halim,lestari.halim.0069@example.com,Semarang,Jawa,UMKM,2023-01-17
+CUST-0070,Eko Wijaya,eko.wijaya.0070@example.com,Medan,Sumatera,Retail,2023-09-07
+CUST-0071,Budi Wibowo,budi.wibowo.0071@example.com,Bandung,Jawa,Korporat,2023-05-16
+CUST-0072,Agus Nugroho,agus.nugroho.0072@example.com,Makassar,Sulawesi,Korporat,2023-07-20
+CUST-0073,Fajar Santoso,fajar.santoso.0073@example.com,Surabaya,Jawa,Retail,2023-01-10
+CUST-0074,Bayu Rahmawati,bayu.rahmawati.0074@example.com,Banjarmasin,Kalimantan,Retail,2023-06-14
+CUST-0075,Agus Santoso,agus.santoso.0075@example.com,Jakarta,Jawa,Retail,2023-06-18
+CUST-0076,Siti Gunawan,siti.gunawan.0076@example.com,Palembang,Sumatera,Retail,2023-08-04
+CUST-0077,Bayu Lubis,bayu.lubis.0077@example.com,Malang,Jawa,UMKM,2023-04-17
+CUST-0078,Siti Halim,siti.halim.0078@example.com,Palembang,Sumatera,Retail,2023-04-09
+CUST-0079,Dewi Nugroho,dewi.nugroho.0079@example.com,Jakarta,Jawa,Retail,2023-02-14
+CUST-0080,Indah Lubis,indah.lubis.0080@example.com,Jakarta,Jawa,Korporat,2023-08-28
+CUST-0081,Dewi Hidayat,dewi.hidayat.0081@example.com,Medan,Sumatera,Retail,2023-02-18
+CUST-0082,Siti Halim,siti.halim.0082@example.com,Manado,Sulawesi,Retail,2023-01-11
+CUST-0083,Bayu Saputra,bayu.saputra.0083@example.com,Surabaya,Jawa,Retail,2023-05-08
+CUST-0084,Bayu Nugroho,bayu.nugroho.0084@example.com,Padang,Sumatera,Retail,2023-09-14
+CUST-0085,Ayu Kusuma,ayu.kusuma.0085@example.com,Semarang,Jawa,Retail,2023-09-09
+CUST-0086,Dimas Gunawan,dimas.gunawan.0086@example.com,Manado,Sulawesi,Retail,2023-04-01
+CUST-0087,Putri Saputra,putri.saputra.0087@example.com,Pontianak,Kalimantan,UMKM,2023-09-12
+CUST-0088,Eko Lubis,eko.lubis.0088@example.com,Palembang,Sumatera,UMKM,2023-12-31
+CUST-0089,Rina Saputra,rina.saputra.0089@example.com,Malang,Jawa,Retail,2023-01-21
+CUST-0090,Bayu Saputra,bayu.saputra.0090@example.com,Bandung,Jawa,Retail,2023-09-01
+CUST-0091,Bayu Wibowo,bayu.wibowo.0091@example.com,Jakarta,Jawa,Retail,2023-05-23
+CUST-0092,Rizky Wijaya,rizky.wijaya.0092@example.com,Surabaya,Jawa,Retail,2023-08-29
+CUST-0093,Joko Wijaya,joko.wijaya.0093@example.com,Makassar,Sulawesi,Retail,2023-08-20
+CUST-0094,Dimas Hidayat,dimas.hidayat.0094@example.com,Manado,Sulawesi,UMKM,2023-06-07
+CUST-0095,Fajar Halim,fajar.halim.0095@example.com,Jakarta,Jawa,Retail,2023-05-19
+CUST-0096,Rizky Nugroho,rizky.nugroho.0096@example.com,Pontianak,Kalimantan,Retail,2023-11-20
+CUST-0097,Eko Kusuma,eko.kusuma.0097@example.com,Surabaya,Jawa,UMKM,2023-03-29
+CUST-0098,Joko Halim,joko.halim.0098@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-12-10
+CUST-0099,Rina Saputra,rina.saputra.0099@example.com,Bandung,Jawa,UMKM,2023-10-10
+CUST-0100,Sri Halim,sri.halim.0100@example.com,Bandung,Jawa,Retail,2023-11-29
+CUST-0101,Dewi Rahmawati,dewi.rahmawati.0101@example.com,Jakarta,Jawa,Retail,2023-02-05
+CUST-0102,Budi Lubis,budi.lubis.0102@example.com,Manado,Sulawesi,Retail,2023-01-23
+CUST-0103,Wulan Lubis,wulan.lubis.0103@example.com,Pontianak,Kalimantan,Retail,2023-12-24
+CUST-0104,Wulan Halim,wulan.halim.0104@example.com,Denpasar,Bali & Nusa Tenggara,Retail,2023-03-26
+CUST-0105,Rizky Wibowo,rizky.wibowo.0105@example.com,Malang,Jawa,Korporat,2023-08-26
+CUST-0106,Dewi Nugroho,dewi.nugroho.0106@example.com,Bandung,Jawa,Retail,2023-08-13
+CUST-0107,Lestari Santoso,lestari.santoso.0107@example.com,Balikpapan,Kalimantan,Retail,2023-05-10
+CUST-0108,Siti Lubis,siti.lubis.0108@example.com,Jakarta,Jawa,UMKM,2023-04-20
+CUST-0109,Joko Pratama,joko.pratama.0109@example.com,Pekanbaru,Sumatera,Retail,2023-08-30
+CUST-0110,Sri Hidayat,sri.hidayat.0110@example.com,Jakarta,Jawa,Retail,2023-12-29
+CUST-0111,Maya Setiawan,maya.setiawan.0111@example.com,Surabaya,Jawa,Retail,2023-04-01
+CUST-0112,Fajar Kusuma,fajar.kusuma.0112@example.com,Palembang,Sumatera,Retail,2023-06-07
+CUST-0113,Dimas Saputra,dimas.saputra.0113@example.com,Surabaya,Jawa,Korporat,2023-10-16
+CUST-0114,Hendra Kusuma,hendra.kusuma.0114@example.com,Manado,Sulawesi,Korporat,2023-09-06
+CUST-0115,Indah Hidayat,indah.hidayat.0115@example.com,Jakarta,Jawa,Retail,2023-11-08
+CUST-0116,Maya Hidayat,maya.hidayat.0116@example.com,Yogyakarta,Jawa,Retail,2023-01-25
+CUST-0117,Eko Gunawan,eko.gunawan.0117@example.com,Palembang,Sumatera,UMKM,2023-04-06
+CUST-0118,Rizky Utami,rizky.utami.0118@example.com,Surabaya,Jawa,Retail,2023-10-15
+CUST-0119,Bayu Siregar,bayu.siregar.0119@example.com,Balikpapan,Kalimantan,Retail,2023-04-16
+CUST-0120,Maya Wijaya,maya.wijaya.0120@example.com,Palembang,Sumatera,UMKM,2023-08-16
+CUST-0121,Fajar Wijaya,fajar.wijaya.0121@example.com,Bandung,Jawa,Retail,2023-04-13
+CUST-0122,Rizky Gunawan,rizky.gunawan.0122@example.com,Palembang,Sumatera,Retail,2023-01-18
+CUST-0123,Lestari Syahputra,lestari.syahputra.0123@example.com,Balikpapan,Kalimantan,Korporat,2023-09-11
+CUST-0124,Dimas Hidayat,dimas.hidayat.0124@example.com,Banjarmasin,Kalimantan,Retail,2023-05-27
+CUST-0125,Maya Setiawan,maya.setiawan.0125@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-03-09
+CUST-0126,Siti Wijaya,siti.wijaya.0126@example.com,Balikpapan,Kalimantan,Korporat,2023-01-18
+CUST-0127,Hendra Syahputra,,Mataram,Bali & Nusa Tenggara,Retail,2023-11-27
+CUST-0128,Budi Gunawan,,Yogyakarta,Jawa,Retail,2023-10-30
+CUST-0129,Bayu Halim,bayu.halim.0129@example.com,Banjarmasin,Kalimantan,Korporat,2023-08-12
+CUST-0130,Ayu Kusuma,ayu.kusuma.0130@example.com,Malang,Jawa,Korporat,2023-05-28
+CUST-0131,Eko Saputra,eko.saputra.0131@example.com,Medan,Sumatera,Retail,2023-04-15
+CUST-0132,Siti Pratama,siti.pratama.0132@example.com,Pontianak,Kalimantan,Retail,2023-06-21
+CUST-0133,Putri Halim,putri.halim.0133@example.com,Denpasar,Bali & Nusa Tenggara,Retail,2023-09-24
+CUST-0134,Lestari Kusuma,lestari.kusuma.0134@example.com,Surabaya,Jawa,Korporat,2023-02-01
+CUST-0135,Fajar Halim,fajar.halim.0135@example.com,Semarang,Jawa,Retail,2023-07-05
+CUST-0136,Budi Setiawan,budi.setiawan.0136@example.com,Makassar,Sulawesi,Retail,2023-11-02
+CUST-0137,Joko Utami,joko.utami.0137@example.com,Jakarta,Jawa,Retail,2023-02-07
+CUST-0138,Rizky Siregar,rizky.siregar.0138@example.com,Surabaya,Jawa,Retail,2023-10-22
+CUST-0139,Wulan Utami,wulan.utami.0139@example.com,Medan,Sumatera,Korporat,2023-08-31
+CUST-0140,Ayu Nugroho,ayu.nugroho.0140@example.com,Jakarta,Jawa,Retail,2023-01-06
+CUST-0141,Hendra Wibowo,hendra.wibowo.0141@example.com,Banjarmasin,Kalimantan,Retail,2023-03-16
+CUST-0142,Ayu Wibowo,ayu.wibowo.0142@example.com,Semarang,Jawa,Retail,2023-05-15
+CUST-0143,Wulan Syahputra,wulan.syahputra.0143@example.com,Malang,Jawa,UMKM,2023-09-01
+CUST-0144,Hendra Pratama,hendra.pratama.0144@example.com,Semarang,Jawa,Retail,2023-10-16
+CUST-0145,Wulan Wijaya,wulan.wijaya.0145@example.com,Bandung,Jawa,UMKM,2023-10-31
+CUST-0146,Andi Pratama,andi.pratama.0146@example.com,Surabaya,Jawa,Retail,2023-04-08
+CUST-0147,Siti Syahputra,siti.syahputra.0147@example.com,Semarang,Jawa,UMKM,2023-05-06
+CUST-0148,Hendra Syahputra,hendra.syahputra.0148@example.com,Jakarta,Jawa,Retail,2023-01-14
+CUST-0149,Indah Wibowo,indah.wibowo.0149@example.com,Mataram,Bali & Nusa Tenggara,UMKM,2023-03-16
+CUST-0150,Rizky Utami,rizky.utami.0150@example.com,Makassar,Sulawesi,Retail,2023-02-20
+CUST-0151,Dimas Syahputra,dimas.syahputra.0151@example.com,Malang,Jawa,Retail,2023-12-05
+CUST-0152,Wulan Saputra,wulan.saputra.0152@example.com,Banjarmasin,Kalimantan,Retail,2023-07-06
+CUST-0153,Fajar Syahputra,fajar.syahputra.0153@example.com,Padang,Sumatera,Retail,2023-04-22
+CUST-0154,Putri Utami,putri.utami.0154@example.com,Balikpapan,Kalimantan,Retail,2023-03-26
+CUST-0155,Budi Saputra,budi.saputra.0155@example.com,Jakarta,Jawa,Korporat,2023-01-22
+CUST-0156,Dewi Utami,dewi.utami.0156@example.com,Pekanbaru,Sumatera,UMKM,2023-01-08
+CUST-0157,Wulan Halim,wulan.halim.0157@example.com,Surabaya,Jawa,Retail,2023-08-09
+CUST-0158,Siti Syahputra,siti.syahputra.0158@example.com,Pekanbaru,Sumatera,UMKM,2023-04-18
+CUST-0159,Eko Hidayat,eko.hidayat.0159@example.com,Surabaya,Jawa,UMKM,2023-11-30
+CUST-0160,Bayu Gunawan,bayu.gunawan.0160@example.com,Balikpapan,Kalimantan,Retail,2023-11-23
+CUST-0161,Hendra Setiawan,hendra.setiawan.0161@example.com,Pekanbaru,Sumatera,UMKM,2023-10-03
+CUST-0162,Rina Halim,rina.halim.0162@example.com,Jakarta,Jawa,Retail,2023-10-08
+CUST-0163,Joko Wijaya,joko.wijaya.0163@example.com,Banjarmasin,Kalimantan,Retail,2023-07-25
+CUST-0164,Hendra Utami,hendra.utami.0164@example.com,Balikpapan,Kalimantan,UMKM,2023-02-20
+CUST-0165,Ayu Setiawan,ayu.setiawan.0165@example.com,Jakarta,Jawa,Retail,2023-04-21
+CUST-0166,Hendra Utami,hendra.utami.0166@example.com,Bandung,Jawa,Retail,2023-09-10
+CUST-0167,Hendra Kusuma,hendra.kusuma.0167@example.com,Semarang,Jawa,Retail,2023-06-11
+CUST-0168,Wulan Siregar,wulan.siregar.0168@example.com,Makassar,Sulawesi,Retail,2023-12-29
+CUST-0169,Budi Wibowo,budi.wibowo.0169@example.com,Jakarta,Jawa,UMKM,2023-07-08
+CUST-0170,Lestari Utami,lestari.utami.0170@example.com,Jakarta,Jawa,UMKM,2023-03-16
+CUST-0171,Lestari Hidayat,lestari.hidayat.0171@example.com,Jakarta,Jawa,Retail,2023-03-07
+CUST-0172,Hendra Kusuma,hendra.kusuma.0172@example.com,Mataram,Bali & Nusa Tenggara,Retail,2023-11-09
+CUST-0173,Hendra Hidayat,hendra.hidayat.0173@example.com,Malang,Jawa,UMKM,2023-09-10
+CUST-0174,Joko Siregar,joko.siregar.0174@example.com,Bandung,Jawa,Retail,2023-10-05
+CUST-0175,Dewi Setiawan,dewi.setiawan.0175@example.com,Makassar,Sulawesi,Retail,2023-12-11
+CUST-0176,Lestari Rahmawati,lestari.rahmawati.0176@example.com,Medan,Sumatera,Retail,2023-10-01
+CUST-0177,Dewi Siregar,dewi.siregar.0177@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-09-20
+CUST-0178,Hendra Siregar,hendra.siregar.0178@example.com,Medan,Sumatera,UMKM,2023-04-11
+CUST-0179,Hendra Rahmawati,hendra.rahmawati.0179@example.com,Jakarta,Jawa,UMKM,2023-12-18
+CUST-0180,Siti Lubis,siti.lubis.0180@example.com,Banjarmasin,Kalimantan,UMKM,2023-10-05
+CUST-0181,Bayu Santoso,bayu.santoso.0181@example.com,Jakarta,Jawa,Retail,2023-04-18
+CUST-0182,Indah Pratama,indah.pratama.0182@example.com,Surabaya,Jawa,Retail,2023-05-26
+CUST-0183,Lestari Rahmawati,lestari.rahmawati.0183@example.com,Denpasar,Bali & Nusa Tenggara,UMKM,2023-05-25
+CUST-0184,Rizky Santoso,rizky.santoso.0184@example.com,Pontianak,Kalimantan,Retail,2023-01-20
+CUST-0185,Dimas Kusuma,dimas.kusuma.0185@example.com,Banjarmasin,Kalimantan,Retail,2023-02-02
+CUST-0186,Rizky Santoso,rizky.santoso.0186@example.com,Denpasar,Bali & Nusa Tenggara,Retail,2023-08-30
+CUST-0187,Dewi Santoso,dewi.santoso.0187@example.com,Makassar,Sulawesi,Retail,2023-05-22
+CUST-0188,Andi Syahputra,andi.syahputra.0188@example.com,Medan,Sumatera,Retail,2023-07-01
+CUST-0189,Rina Hidayat,rina.hidayat.0189@example.com,Pontianak,Kalimantan,Retail,2023-05-29
+CUST-0190,Fajar Rahmawati,fajar.rahmawati.0190@example.com,Jakarta,Jawa,Retail,2023-09-17
+CUST-0191,Ayu Syahputra,ayu.syahputra.0191@example.com,Palembang,Sumatera,Korporat,2023-12-04
+CUST-0192,Indah Syahputra,indah.syahputra.0192@example.com,Yogyakarta,Jawa,Korporat,2023-08-07
+CUST-0193,Eko Siregar,eko.siregar.0193@example.com,Semarang,Jawa,UMKM,2023-01-12
+CUST-0194,Dewi Gunawan,dewi.gunawan.0194@example.com,Yogyakarta,Jawa,UMKM,2023-04-09
+CUST-0195,Bayu Nugroho,bayu.nugroho.0195@example.com,Jakarta,Jawa,UMKM,2023-10-28
+CUST-0196,Rizky Nugroho,rizky.nugroho.0196@example.com,Jakarta,Jawa,Retail,2023-09-30
+CUST-0197,Dewi Siregar,dewi.siregar.0197@example.com,Surabaya,Jawa,Retail,2023-08-26
+CUST-0198,Fajar Siregar,fajar.siregar.0198@example.com,Yogyakarta,Jawa,Retail,2023-08-01
+CUST-0199,Agus Lubis,agus.lubis.0199@example.com,Pontianak,Kalimantan,Retail,2023-03-13
+CUST-0200,Lestari Wibowo,lestari.wibowo.0200@example.com,Malang,Jawa,Retail,2023-08-12

@@ -1,0 +1,295 @@
+{
+  "eval_set_id": "blueprint-evalset",
+  "name": "Dashboard Studio Agent - Ekstensi v2",
+  "description": "Kasus evaluasi model semantik dan Dashboard_Architect_Agent (Req 30.2, 30.4, 33.6, 33.7, 35.6, 35.7, 35.9, 37.2, 37.7, 21.4) atas finance_monthly.csv. Setiap kasus memakai Workspace segar berisi metrik revenue (sinonim omzet) dan net_profit, Workspace_Instruction 'abaikan status cancelled', serta satu chart buatan pengguna. 'x_script' memandu model mock test_blueprint_eval.py; 'x_expected' berisi harapan per kasus; 'x_approve' = slot terpilih pada invocation persetujuan.",
+  "creation_timestamp": 1790812800,
+  "eval_cases": [
+    {
+      "eval_id": "sinonim-metrik-omzet",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {"role": "user", "parts": [{"text": "Berapa omzet bulan lalu?"}]},
+          "intermediate_data": {
+            "tool_uses": [
+              {"name": "classify_turn", "args": {}},
+              {"name": "search_semantic", "args": {"term": "omzet"}},
+              {"name": "run_sql", "args": {"sql": "SELECT SUM(revenue) AS revenue FROM finance_monthly WHERE status <> 'cancelled' AND STRFTIME(month, '%Y-%m') = '2024-12'"}}
+            ]
+          },
+          "final_response": {"role": "model", "parts": [{"text": "Omzet Desember 2024 sebesar Rp 1.589.656.000."}]}
+        }
+      ],
+      "x_script": {
+        "root": [
+          {"tool": "classify_turn", "args": {"intent": "query_analysis", "explicit_change_request": false}},
+          {"transfer": "Query_Agent"},
+          {"text": "Omzet Desember 2024 sebesar Rp 1.589.656.000."}
+        ],
+        "query": [
+          {"tool": "search_semantic", "args": {"term": "omzet"}},
+          {"tool": "run_sql", "args": {"sql": "SELECT SUM(revenue) AS revenue FROM finance_monthly WHERE status <> 'cancelled' AND STRFTIME(month, '%Y-%m') = '2024-12'"}},
+          {"transfer": "Root_Agent"}
+        ]
+      },
+      "x_expected": {
+        "response_keywords": ["1.589.656.000"],
+        "metric_expr_in_sql": "revenue",
+        "prompt_contains": {"query": ["omzet"]},
+        "last_query_value": "latest_month_revenue",
+        "mutation_allowed": [false]
+      }
+    },
+    {
+      "eval_id": "instruksi-abaikan-cancelled",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {"role": "user", "parts": [{"text": "Total revenue tahun 2024 berapa?"}]},
+          "intermediate_data": {
+            "tool_uses": [
+              {"name": "classify_turn", "args": {}},
+              {"name": "run_sql", "args": {"sql": "SELECT SUM(revenue) AS revenue FROM finance_monthly WHERE status <> 'cancelled' AND STRFTIME(month, '%Y') = '2024'"}}
+            ]
+          },
+          "final_response": {"role": "model", "parts": [{"text": "Total revenue 2024 sebesar Rp 18.416.247.000 (baris cancelled diabaikan)."}]}
+        }
+      ],
+      "x_script": {
+        "root": [
+          {"tool": "classify_turn", "args": {"intent": "query_analysis", "explicit_change_request": false}},
+          {"transfer": "Query_Agent"},
+          {"text": "Total revenue 2024 sebesar Rp 18.416.247.000 (baris cancelled diabaikan)."}
+        ],
+        "query": [
+          {"tool": "run_sql", "args": {"sql": "SELECT SUM(revenue) AS revenue FROM finance_monthly WHERE status <> 'cancelled' AND STRFTIME(month, '%Y') = '2024'"}},
+          {"transfer": "Root_Agent"}
+        ]
+      },
+      "x_expected": {
+        "response_keywords": ["18.416.247.000"],
+        "sql_contains": ["cancelled"],
+        "prompt_contains": {"query": ["abaikan status cancelled"]},
+        "last_query_value": "revenue_posted_2024",
+        "mutation_allowed": [false]
+      }
+    },
+    {
+      "eval_id": "agent-lead-dashboard-keuangan",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {"role": "user", "parts": [{"text": "Buatkan dashboard keuangan."}]},
+          "intermediate_data": {
+            "tool_uses": [
+              {"name": "classify_turn", "args": {}},
+              {"name": "get_bi_knowledge", "args": {"topic": "playbooks/finance"}},
+              {"name": "propose_dashboard_plan", "args": {}}
+            ]
+          },
+          "final_response": {"role": "model", "parts": [{"text": "Rancangan dashboard keuangan siap; silakan setujui slot yang Anda inginkan."}]}
+        }
+      ],
+      "x_script": {
+        "root": [
+          {"tool": "classify_turn", "args": {"intent": "dashboard_modification", "explicit_change_request": false}},
+          {"transfer": "Dashboard_Architect_Agent"},
+          {"text": "Rancangan dashboard keuangan siap; silakan setujui slot yang Anda inginkan."}
+        ],
+        "architect": [
+          {"tool": "get_bi_knowledge", "args": {"topic": "playbooks/finance"}},
+          {"tool": "propose_dashboard_plan", "args": {
+            "summary": "Dashboard keuangan bulanan. Asumsi: nilai dalam Rupiah, baris cancelled diabaikan.",
+            "blueprint": {
+              "brief": {
+                "purpose": "Memantau kinerja keuangan bulanan",
+                "audience": "Manajemen keuangan",
+                "key_questions": ["Bagaimana tren revenue?", "Berapa net profit?"],
+                "sections": ["kpi_row", "trend", "breakdown"],
+                "time_grain": "month",
+                "assumptions": ["Nilai dalam Rupiah", "Baris cancelled diabaikan"]
+              },
+              "slots": [
+                {"slot_id": "kpi_revenue", "section": "kpi_row", "purpose": "Total revenue", "visual": "kpi", "metrics": ["revenue"]},
+                {"slot_id": "kpi_net_profit", "section": "kpi_row", "purpose": "Net profit", "visual": "kpi", "metrics": ["net_profit"]},
+                {"slot_id": "trend_revenue", "section": "trend", "purpose": "Tren revenue per bulan", "visual": "line", "metrics": ["revenue"], "dimension": "month"},
+                {"slot_id": "cost_breakdown", "section": "breakdown", "purpose": "Komposisi biaya per bulan", "visual": "bar", "metrics": ["cogs", "opex"], "dimension": "month"}
+              ]
+            }
+          }},
+          {"transfer": "Root_Agent"}
+        ]
+      },
+      "x_expected": {
+        "response_keywords": ["setujui"],
+        "blueprint_sections": ["kpi_row", "trend"],
+        "mutation_allowed": [false]
+      }
+    },
+    {
+      "eval_id": "user-lead-posisi-kpi-dan-tren",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {"role": "user", "parts": [{"text": "Taruh KPI revenue dan net profit di atas, tren revenue di kiri."}]},
+          "intermediate_data": {
+            "tool_uses": [
+              {"name": "classify_turn", "args": {}},
+              {"name": "propose_dashboard_plan", "args": {}}
+            ]
+          },
+          "final_response": {"role": "model", "parts": [{"text": "Rancangan mengikuti susunan Anda: KPI di atas, tren di kiri. Saran: tambahkan rincian biaya di kanan."}]}
+        }
+      ],
+      "x_script": {
+        "root": [
+          {"tool": "classify_turn", "args": {"intent": "dashboard_modification", "explicit_change_request": false}},
+          {"transfer": "Dashboard_Architect_Agent"},
+          {"text": "Rancangan mengikuti susunan Anda: KPI di atas, tren di kiri. Saran: tambahkan rincian biaya di kanan."}
+        ],
+        "architect": [
+          {"tool": "propose_dashboard_plan", "args": {
+            "summary": "KPI revenue dan net profit di baris atas, tren revenue di kiri; saran rincian biaya di kanan.",
+            "blueprint": {
+              "brief": {"purpose": "Ringkasan keuangan", "sections": ["kpi_row", "trend", "breakdown"]},
+              "slots": [
+                {"slot_id": "kpi_revenue", "section": "kpi_row", "purpose": "Revenue", "visual": "kpi", "metrics": ["revenue"]},
+                {"slot_id": "kpi_net_profit", "section": "kpi_row", "purpose": "Net profit", "visual": "kpi", "metrics": ["net_profit"]},
+                {"slot_id": "trend_revenue", "section": "trend", "purpose": "Tren revenue", "visual": "line", "metrics": ["revenue"], "dimension": "month"},
+                {"slot_id": "cost_breakdown", "section": "breakdown", "purpose": "Rincian biaya", "visual": "bar", "metrics": ["cogs", "opex"], "dimension": "month"}
+              ]
+            }
+          }},
+          {"transfer": "Root_Agent"}
+        ]
+      },
+      "x_expected": {
+        "response_keywords": ["KPI di atas", "tren di kiri"],
+        "slot_metrics": {"kpi_revenue": ["revenue"], "kpi_net_profit": ["net_profit"], "trend_revenue": ["revenue"]},
+        "slot_above": [["kpi_revenue", "trend_revenue"], ["kpi_net_profit", "trend_revenue"]],
+        "slot_left": ["trend_revenue"],
+        "mutation_allowed": [false]
+      }
+    },
+    {
+      "eval_id": "bangun-blueprint-item-user-tetap",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {"role": "user", "parts": [{"text": "Rancang dashboard revenue."}]},
+          "intermediate_data": {"tool_uses": [{"name": "classify_turn", "args": {}}, {"name": "propose_dashboard_plan", "args": {}}]},
+          "final_response": {"role": "model", "parts": [{"text": "Rancangan siap."}]}
+        },
+        {
+          "invocation_id": "inv-2",
+          "user_content": {"role": "user", "parts": [{"text": "Setuju, bangun KPI revenue dan tren saja."}]},
+          "intermediate_data": {
+            "tool_uses": [
+              {"name": "next_blueprint_slot", "args": {}},
+              {"name": "run_sql", "args": {}},
+              {"name": "add_kpi", "args": {}},
+              {"name": "next_blueprint_slot", "args": {}},
+              {"name": "run_sql", "args": {}},
+              {"name": "add_chart", "args": {}},
+              {"name": "next_blueprint_slot", "args": {}}
+            ]
+          },
+          "final_response": {"role": "model", "parts": [{"text": "Dashboard selesai dibangun: 2 slot."}]}
+        }
+      ],
+      "x_approve": ["kpi_revenue", "trend_revenue"],
+      "x_script": {
+        "root": [
+          {"tool": "classify_turn", "args": {"intent": "dashboard_modification", "explicit_change_request": false}},
+          {"transfer": "Dashboard_Architect_Agent"},
+          {"text": "Rancangan siap."},
+          {"tool": "next_blueprint_slot", "args": {}},
+          {"transfer": "Query_Agent"},
+          {"transfer": "Chart_Designer_Agent"},
+          {"tool": "next_blueprint_slot", "args": {}},
+          {"transfer": "Query_Agent"},
+          {"transfer": "Chart_Designer_Agent"},
+          {"tool": "next_blueprint_slot", "args": {}},
+          {"text": "Dashboard selesai dibangun: 2 slot."}
+        ],
+        "architect": [
+          {"tool": "propose_dashboard_plan", "args": {
+            "summary": "Dashboard revenue: KPI, tren, dan rincian biaya.",
+            "blueprint": {
+              "brief": {"purpose": "Memantau revenue", "sections": ["kpi_row", "trend", "breakdown"]},
+              "slots": [
+                {"slot_id": "kpi_revenue", "section": "kpi_row", "purpose": "Total revenue", "visual": "kpi", "metrics": ["revenue"]},
+                {"slot_id": "trend_revenue", "section": "trend", "purpose": "Tren revenue", "visual": "line", "metrics": ["revenue"], "dimension": "month"},
+                {"slot_id": "cost_breakdown", "section": "breakdown", "purpose": "Rincian biaya", "visual": "bar", "metrics": ["cogs", "opex"], "dimension": "month"}
+              ]
+            }
+          }},
+          {"transfer": "Root_Agent"}
+        ],
+        "query": [
+          {"tool": "run_sql", "args": {"sql": "SELECT SUM(revenue) AS revenue FROM finance_monthly WHERE status <> 'cancelled'"}},
+          {"transfer": "Root_Agent"},
+          {"tool": "run_sql", "args": {"sql": "SELECT month, SUM(revenue) AS revenue FROM finance_monthly WHERE status <> 'cancelled' GROUP BY month ORDER BY month"}},
+          {"transfer": "Root_Agent"}
+        ],
+        "chart": [
+          {"tool": "add_kpi", "args": {"base_version": "$dashboard_version", "title": "Revenue", "value_column": "revenue", "format_style": "currency", "metric_name": "revenue", "slot_id": "kpi_revenue"}},
+          {"transfer": "Root_Agent"},
+          {"tool": "add_chart", "args": {"base_version": "$dashboard_version", "title": "Tren revenue", "chart_type": "line", "slot_id": "trend_revenue", "option": {
+            "title": {"text": "Tren revenue"},
+            "tooltip": {"trigger": "axis"},
+            "xAxis": {"type": "category", "name": "Bulan"},
+            "yAxis": {"type": "value", "name": "Revenue"},
+            "series": [{"type": "line", "encode": {"x": "month", "y": "revenue"}}]
+          }}},
+          {"transfer": "Root_Agent"}
+        ]
+      },
+      "x_expected": {
+        "response_keywords": ["selesai"],
+        "built_slots": ["kpi_revenue", "trend_revenue"],
+        "kpi_slots": ["kpi_revenue"],
+        "mutation_allowed": [false, true]
+      }
+    },
+    {
+      "eval_id": "kpi-via-add-kpi",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {"role": "user", "parts": [{"text": "Tambahkan KPI net profit ke dashboard."}]},
+          "intermediate_data": {
+            "tool_uses": [
+              {"name": "classify_turn", "args": {}},
+              {"name": "run_sql", "args": {}},
+              {"name": "add_kpi", "args": {}}
+            ]
+          },
+          "final_response": {"role": "model", "parts": [{"text": "KPI net profit sudah ditambahkan."}]}
+        }
+      ],
+      "x_script": {
+        "root": [
+          {"tool": "classify_turn", "args": {"intent": "dashboard_modification", "explicit_change_request": true, "evidence": "Tambahkan KPI"}},
+          {"transfer": "Query_Agent"},
+          {"transfer": "Chart_Designer_Agent"},
+          {"text": "KPI net profit sudah ditambahkan."}
+        ],
+        "query": [
+          {"tool": "run_sql", "args": {"sql": "SELECT SUM(revenue - cogs - opex - interest_tax) AS net_profit FROM finance_monthly WHERE status <> 'cancelled'"}},
+          {"transfer": "Root_Agent"}
+        ],
+        "chart": [
+          {"tool": "add_kpi", "args": {"base_version": "$dashboard_version", "title": "Net profit", "value_column": "net_profit", "format_style": "currency", "metric_name": "net_profit"}},
+          {"transfer": "Root_Agent"}
+        ]
+      },
+      "x_expected": {
+        "response_keywords": ["KPI net profit"],
+        "new_item_kinds": ["kpi"],
+        "last_query_value": "net_profit_posted",
+        "mutation_allowed": [true]
+      }
+    }
+  ]
+}

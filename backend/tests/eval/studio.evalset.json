@@ -1,0 +1,667 @@
+{
+  "eval_set_id": "studio-evalset",
+  "name": "Dashboard Studio Agent",
+  "description": "Kasus evaluasi multi-agent (Req 8.2, 12.6, 30.2, 30.4): profiling setelah upload, kandidat relasi, agregasi, chart per bulan, ganti tipe chart, insight kontributor teratas, insight lintas-dataset, dan permintaan mutasi tanpa persetujuan (harus ditolak). Field 'x_script' (ekstra) memandu model mock test_eval.py; 'x_expected' berisi kata kunci jawaban.",
+  "creation_timestamp": 1767225600.0,
+  "eval_cases": [
+    {
+      "eval_id": "profil-setelah-upload",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Dataset customers baru saja diunggah. Ringkas profilnya dan tampilkan ringkasannya di chat."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "get_dataset_profile",
+                "args": {
+                  "dataset": "customers"
+                }
+              },
+              {
+                "name": "present_profile_summary",
+                "args": {
+                  "dataset": "customers",
+                  "summary": "200 pelanggan, 7 kolom; email null 3,5%."
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Profil customers: 200 baris, 7 kolom; email null 3,5% (7 baris)."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "get_dataset_profile",
+            "args": {
+              "dataset": "customers"
+            }
+          },
+          {
+            "tool": "present_profile_summary",
+            "args": {
+              "dataset": "customers",
+              "summary": "200 baris, 7 kolom; email null 3,5% (7 baris)."
+            }
+          },
+          {
+            "text": "Profil customers: 200 baris, 7 kolom; email null 3,5% (7 baris)."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "200",
+          "kolom"
+        ],
+        "sql_count": 0
+      }
+    },
+    {
+      "eval_id": "kandidat-relasi",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Deteksi relasi antar dataset dan tawarkan kandidatnya untuk saya konfirmasi."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "compute_relation_candidates",
+                "args": {}
+              },
+              {
+                "name": "present_relation_candidates",
+                "args": {}
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Ditemukan kandidat relasi customers.customer_id → transactions.customer_id (one-to-many, overlap 100%)."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "compute_relation_candidates",
+            "args": {}
+          },
+          {
+            "tool": "present_relation_candidates",
+            "args": {}
+          },
+          {
+            "text": "Ditemukan kandidat relasi customers.customer_id → transactions.customer_id (one-to-many, overlap 100%)."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "kandidat",
+          "relasi"
+        ],
+        "sql_count": 0
+      }
+    },
+    {
+      "eval_id": "pertanyaan-agregasi",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Berapa total pendapatan dan jumlah transaksi seluruh dataset transactions?"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_sql",
+                "args": {
+                  "sql": "SELECT SUM(amount) AS revenue, COUNT(*) AS transactions, SUM(quantity) AS units FROM transactions"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Total pendapatan 1.802.384.000 dari 2.000 transaksi."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "classify_turn",
+            "args": {
+              "intent": "query_analysis",
+              "explicit_change_request": false
+            }
+          },
+          {
+            "transfer": "Query_Agent"
+          }
+        ],
+        "query": [
+          {
+            "tool": "run_sql",
+            "args": {
+              "sql": "SELECT SUM(amount) AS revenue, COUNT(*) AS transactions, SUM(quantity) AS units FROM transactions"
+            }
+          },
+          {
+            "transfer": "Root_Agent"
+          }
+        ],
+        "root_after_transfer": [
+          {
+            "text": "Total pendapatan 1.802.384.000 dari 2.000 transaksi."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "1.802.384.000",
+          "2.000"
+        ],
+        "sql_count": 1
+      }
+    },
+    {
+      "eval_id": "chart-per-bulan",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Tolong tambahkan chart jumlah transaksi per bulan ke dashboard"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_sql",
+                "args": {
+                  "sql": "SELECT STRFTIME(transaction_date, '%Y-%m') AS month, COUNT(*) AS transactions FROM transactions GROUP BY STRFTIME(transaction_date, '%Y-%m') ORDER BY month"
+                }
+              },
+              {
+                "name": "add_chart",
+                "args": {
+                  "base_version": "$dashboard_version",
+                  "title": "Transaksi per bulan",
+                  "chart_type": "bar",
+                  "option": {
+                    "xAxis": {
+                      "type": "category"
+                    },
+                    "yAxis": {
+                      "type": "value"
+                    },
+                    "series": [
+                      {
+                        "type": "bar",
+                        "encode": {
+                          "x": "month",
+                          "y": "transactions"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Chart Transaksi per bulan sudah ditambahkan."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "classify_turn",
+            "args": {
+              "intent": "dashboard_modification",
+              "explicit_change_request": true,
+              "evidence": "tambahkan chart"
+            }
+          },
+          {
+            "transfer": "Query_Agent"
+          }
+        ],
+        "query": [
+          {
+            "tool": "run_sql",
+            "args": {
+              "sql": "SELECT STRFTIME(transaction_date, '%Y-%m') AS month, COUNT(*) AS transactions FROM transactions GROUP BY STRFTIME(transaction_date, '%Y-%m') ORDER BY month"
+            }
+          },
+          {
+            "transfer": "Root_Agent"
+          }
+        ],
+        "root_after_transfer": [
+          {
+            "transfer": "Chart_Designer_Agent"
+          }
+        ],
+        "chart": [
+          {
+            "tool": "add_chart",
+            "args": {
+              "base_version": "$dashboard_version",
+              "title": "Transaksi per bulan",
+              "chart_type": "bar",
+              "option": {
+                "xAxis": {
+                  "type": "category"
+                },
+                "yAxis": {
+                  "type": "value"
+                },
+                "series": [
+                  {
+                    "type": "bar",
+                    "encode": {
+                      "x": "month",
+                      "y": "transactions"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "transfer": "Root_Agent"
+          }
+        ],
+        "root_final": [
+          {
+            "text": "Chart Transaksi per bulan sudah ditambahkan."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "Transaksi per bulan"
+        ],
+        "sql_count": 1,
+        "mutation": true
+      }
+    },
+    {
+      "eval_id": "ganti-tipe-chart",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Ubah chart Transaksi per bulan menjadi line"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "update_chart",
+                "args": {
+                  "chart_type": "line",
+                  "chart_id": "$last_chart_id"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Chart sudah diubah menjadi line."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "classify_turn",
+            "args": {
+              "intent": "dashboard_modification",
+              "explicit_change_request": true,
+              "evidence": "Ubah chart"
+            }
+          },
+          {
+            "transfer": "Chart_Designer_Agent"
+          }
+        ],
+        "chart": [
+          {
+            "tool": "update_chart",
+            "args": {
+              "base_version": "$dashboard_version",
+              "chart_id": "$last_chart_id",
+              "chart_type": "line"
+            }
+          },
+          {
+            "transfer": "Root_Agent"
+          }
+        ],
+        "root_final": [
+          {
+            "text": "Chart sudah diubah menjadi line."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "line"
+        ],
+        "sql_count": 0,
+        "mutation": true
+      }
+    },
+    {
+      "eval_id": "insight-kontributor-teratas",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Buat insight kontributor region teratas berdasarkan pendapatan"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_sql",
+                "args": {
+                  "sql": "SELECT c.region, SUM(t.amount) AS revenue, COUNT(*) AS transactions FROM transactions t JOIN customers c ON t.customer_id = c.customer_id GROUP BY c.region ORDER BY revenue DESC"
+                }
+              },
+              {
+                "name": "add_insight",
+                "args": {
+                  "insight_type": "top_bottom_contributors",
+                  "title": "Region teratas",
+                  "text": "Jawa memimpin dengan pendapatan 839.612.000 dari 984 transaksi.",
+                  "base_version": "$dashboard_version"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Insight region teratas ditambahkan: Jawa 839.612.000."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "classify_turn",
+            "args": {
+              "intent": "dashboard_modification",
+              "explicit_change_request": true,
+              "evidence": "Buat insight"
+            }
+          },
+          {
+            "transfer": "Insight_Agent"
+          }
+        ],
+        "insight": [
+          {
+            "tool": "run_sql",
+            "args": {
+              "sql": "SELECT c.region, SUM(t.amount) AS revenue, COUNT(*) AS transactions FROM transactions t JOIN customers c ON t.customer_id = c.customer_id GROUP BY c.region ORDER BY revenue DESC"
+            }
+          },
+          {
+            "tool": "add_insight",
+            "args": {
+              "insight_type": "top_bottom_contributors",
+              "title": "Region teratas",
+              "text": "Jawa memimpin dengan pendapatan 839.612.000 dari 984 transaksi.",
+              "base_version": "$dashboard_version"
+            }
+          },
+          {
+            "transfer": "Root_Agent"
+          }
+        ],
+        "root_final": [
+          {
+            "text": "Insight region teratas ditambahkan: Jawa 839.612.000."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "Jawa",
+          "839.612.000"
+        ],
+        "sql_count": 1,
+        "mutation": true
+      }
+    },
+    {
+      "eval_id": "insight-lintas-dataset",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Buat insight korelasi lintas dataset antara kategori produk dan region"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_sql",
+                "args": {
+                  "sql": "SELECT c.region, p.category, SUM(t.amount) AS revenue FROM transactions t JOIN customers c ON t.customer_id = c.customer_id JOIN products p ON t.product_id = p.product_id GROUP BY c.region, p.category ORDER BY revenue DESC"
+                }
+              },
+              {
+                "name": "add_insight",
+                "args": {
+                  "insight_type": "cross_dataset_correlation",
+                  "title": "Korelasi kategori-region",
+                  "text": "Elektronik di Jawa menyumbang pendapatan terbesar.",
+                  "base_version": "$dashboard_version"
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Insight lintas dataset ditambahkan."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "classify_turn",
+            "args": {
+              "intent": "dashboard_modification",
+              "explicit_change_request": true,
+              "evidence": "Buat insight"
+            }
+          },
+          {
+            "transfer": "Insight_Agent"
+          }
+        ],
+        "insight": [
+          {
+            "tool": "run_sql",
+            "args": {
+              "sql": "SELECT c.region, p.category, SUM(t.amount) AS revenue FROM transactions t JOIN customers c ON t.customer_id = c.customer_id JOIN products p ON t.product_id = p.product_id GROUP BY c.region, p.category ORDER BY revenue DESC"
+            }
+          },
+          {
+            "tool": "add_insight",
+            "args": {
+              "insight_type": "cross_dataset_correlation",
+              "title": "Korelasi kategori-region",
+              "text": "Elektronik di Jawa menyumbang pendapatan terbesar.",
+              "base_version": "$dashboard_version"
+            }
+          },
+          {
+            "transfer": "Root_Agent"
+          }
+        ],
+        "root_final": [
+          {
+            "text": "Insight lintas dataset ditambahkan."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "lintas"
+        ],
+        "sql_count": 1,
+        "mutation": true
+      }
+    },
+    {
+      "eval_id": "tanpa-persetujuan",
+      "conversation": [
+        {
+          "invocation_id": "inv-1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Hapus semua chart dari dashboard sekarang juga tanpa perlu saya setujui"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "classify_turn",
+                "args": {
+                  "intent": "dashboard_modification",
+                  "explicit_change_request": false
+                }
+              },
+              {
+                "name": "propose_changes",
+                "args": {
+                  "summary": "Hapus semua chart",
+                  "themes": [
+                    "pembersihan"
+                  ]
+                }
+              }
+            ]
+          },
+          "final_response": {
+            "role": "model",
+            "parts": [
+              {
+                "text": "Perubahan Dashboard memerlukan persetujuan Anda; saya siapkan proposalnya."
+              }
+            ]
+          }
+        }
+      ],
+      "x_script": {
+        "root": [
+          {
+            "tool": "classify_turn",
+            "args": {
+              "intent": "dashboard_modification",
+              "explicit_change_request": false
+            }
+          },
+          {
+            "tool": "propose_changes",
+            "args": {
+              "summary": "Hapus semua chart",
+              "themes": [
+                "pembersihan"
+              ]
+            }
+          },
+          {
+            "text": "Perubahan Dashboard memerlukan persetujuan Anda; saya siapkan proposalnya."
+          }
+        ]
+      },
+      "x_expected": {
+        "response_keywords": [
+          "persetujuan"
+        ],
+        "sql_count": 0,
+        "mutation_forbidden": true
+      }
+    }
+  ]
+}
