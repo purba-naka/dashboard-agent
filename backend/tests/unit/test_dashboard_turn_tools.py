@@ -110,6 +110,9 @@ async def test_resolve_dataset_accepts_upload_filename(env: Env) -> None:
         assert (await resolve_dataset(env.repos, env.ws_id, ref)).id == env.dataset_id
 
 
+PAGE_TOOLS = {"list_pages", "create_page", "switch_page"}
+
+
 async def test_all_tools_have_adk_declarations(env: Env) -> None:
     assert set(env.tools) == set(DASHBOARD_TOOL_NAMES) | set(TURN_TOOL_NAMES)
     for name, fn in env.tools.items():
@@ -120,7 +123,7 @@ async def test_all_tools_have_adk_declarations(env: Env) -> None:
         )
         props = schema.get("properties") or {}
         assert "tool_context" not in props
-        if name in DASHBOARD_TOOL_NAMES and name != "get_dashboard_state":
+        if name in DASHBOARD_TOOL_NAMES and name not in PAGE_TOOLS | {"get_dashboard_state"}:
             assert "base_version" in props and "base_version" in schema.get("required", [])
 
 
@@ -251,3 +254,23 @@ async def test_propose_changes_and_presenters(env: Env) -> None:
     assert out["ok"] and out["count"] == 0 and CHAT_EVENTS_KEY not in out
     out = await env.tools["present_profile_summary"]("nope", "x", ctx)
     assert out["error"]["code"] == "UNKNOWN_DATASET"
+
+
+async def test_create_and_switch_page_retarget_add_chart(env: Env) -> None:
+    ctx = env.ctx()
+    await env.allow(ctx)
+    assert (await env.tools["add_chart"](0, "A", "bar", BAR_OPTION, ctx))["ok"]
+    first = ctx.state[STATE_DASHBOARD_ID]
+
+    page = await env.tools["create_page"]("Revenue", ctx)
+    assert page["ok"] and ctx.state[STATE_DASHBOARD_ID] == page["dashboard_id"] != first
+    assert (await env.tools["add_chart"](0, "B", "bar", BAR_OPTION, ctx))["ok"]
+    assert len((await env.store.get(page["dashboard_id"])).content.items) == 1
+    assert len((await env.store.get(first)).content.items) == 1
+
+    pages = (await env.tools["list_pages"](ctx))["pages"]
+    assert {p["dashboard_id"]: p["active"] for p in pages} == {first: False, page["dashboard_id"]: True}
+
+    assert (await env.tools["switch_page"](first, ctx))["ok"]
+    assert ctx.state[STATE_DASHBOARD_ID] == first
+    assert (await env.tools["switch_page"]("tidak-ada", ctx))["ok"] is False

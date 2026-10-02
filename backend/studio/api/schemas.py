@@ -604,6 +604,8 @@ class ChatRequest(StudioModel):
     session_id: str | None = None
     message: str = Field(min_length=1)
     approval: ApprovalRef | None = None
+    #: Halaman (Dashboard) yang sedang dilihat pengguna; kosong = yang terakhir diubah.
+    dashboard_id: str | None = None
 
 
 __all__ = [

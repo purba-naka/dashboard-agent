@@ -23,6 +23,7 @@ from fastapi.responses import StreamingResponse
 
 from studio.agents.runner import APP_NAME, USER_ID
 from studio.agents.tools.architect_tools import activate_blueprint
+from studio.agents.tools.context import STATE_DASHBOARD_ID
 from studio.agents.turn_policy import resolve_approval
 from studio.api.errors import StudioError
 from studio.api.schemas import ChatRequest
@@ -72,7 +73,18 @@ async def chat(workspace_id: str, body: ChatRequest, request: Request) -> Stream
         session = await repos.chat_sessions.create(workspace_id, _DEFAULT_TITLE)
         session_id = session.id
 
-    dashboard_id = await _active_dashboard_id(repos, workspace_id)
+    if body.dashboard_id:
+        record = await repos.dashboards.get_or_none(body.dashboard_id)
+        if record is None or record.workspace_id != workspace_id:
+            raise StudioError(
+                "NOT_FOUND",
+                f"Dashboard '{body.dashboard_id}' tidak ada di Workspace ini.",
+                {"entity": "Dashboard", "id": body.dashboard_id},
+                http_status=404,
+            )
+        dashboard_id: str | None = body.dashboard_id
+    else:
+        dashboard_id = await _active_dashboard_id(repos, workspace_id)
     await runner.ensure_session(
         session_id, workspace_id=workspace_id, dashboard_id=dashboard_id
     )
@@ -84,6 +96,9 @@ async def chat(workspace_id: str, body: ChatRequest, request: Request) -> Stream
     )
     # Persetujuan Blueprint → simpan Blueprint aktif berisi slot terpilih (Req 37.6).
     extra_state: dict[str, Any] = {}
+    if body.dashboard_id:
+        # Sesi lama hanya mengisi dashboard_id saat dibuat; tulis ulang tiap giliran.
+        extra_state[STATE_DASHBOARD_ID] = body.dashboard_id
     if approved:
         proposal = await repos.proposals.get_or_none(approved)
         if proposal is not None and proposal.kind == "blueprint":

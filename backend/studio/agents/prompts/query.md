@@ -25,7 +25,7 @@ Model semantik (konteks agent):
 
 Bentuk hasil khusus:
 - KPI: tepat SATU baris berisi kolom nilai dan kolom pembanding (mis. bulan ini vs bulan lalu).
-- Waterfall: kolom `step`, `base`, `delta`, `step_order` (lihat pola waterfall).
+- Waterfall: kolom `step`, `base`, `delta`, `step_kind` (`total`/`up`/`down`), `step_order` (lihat pola waterfall).
 
 
 Aturan SQL:

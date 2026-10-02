@@ -10,6 +10,7 @@ import { RelationsPanel } from "@/components/relations";
 import { SemanticPanel } from "@/components/semantic";
 import { BriefPanel } from "@/components/brief";
 import { WorkspaceView } from "@/components/workspaces";
+import { PageNav } from "./PageNav";
 import { connectWorkspaceEvents, type WorkspaceEventsSubscription } from "@/lib/sse";
 import {
   dashboardReducer,
@@ -28,6 +29,13 @@ import styles from "./studio.module.css";
 export interface WorkspaceStudioProps {
   workspaceId: string;
   deps?: StudioDeps;
+}
+
+const PAGE_PARAM = "page";
+
+function pageFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get(PAGE_PARAM);
 }
 
 /** Giliran chat pemicu setelah upload selesai (Req 21.1). */
@@ -49,6 +57,8 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
   const [crossFilters, setCrossFilters] = useState<FilterSet>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  /** Halaman aktif (dari `?page=`); bila tak dikenal dipakai halaman tertua. */
+  const [activeId, setActiveId] = useState<string | null>(pageFromUrl);
   const [studioError, setStudioError] = useState<string | null>(null);
   /** Naik saat `semantic.updated` → SemanticPanel memuat ulang. */
   const [semanticKey, setSemanticKey] = useState(0);
@@ -112,13 +122,27 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
   /** Id Dashboard aktif yang sudah/sedang dimuat snapshot-nya. */
   const loadedDashboardIdRef = useRef<string | null>(null);
   const loadDashboardIfNeeded = useCallback(
-    (dashboards: ReadonlyArray<{ id: string }>) => {
-      const id = dashboards[0]?.id ?? null;
+    (id: string | null) => {
       if (id === null || loadedDashboardIdRef.current === id) return;
       loadedDashboardIdRef.current = id;
       void loadSnapshot(id);
     },
     [loadSnapshot],
+  );
+
+  /** Id halaman yang dikenal dari detail Workspace terakhir. */
+  const knownPagesRef = useRef<Set<string>>(new Set());
+
+  const selectPage = useCallback(
+    (id: string) => {
+      setActiveId(id);
+      setCrossFilters([]);
+      const url = new URL(window.location.href);
+      url.searchParams.set(PAGE_PARAM, id);
+      window.history.replaceState(null, "", url);
+      loadDashboardIfNeeded(id);
+    },
+    [loadDashboardIfNeeded],
   );
 
   // -----------------------------------------------------------------------
@@ -131,8 +155,11 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
       {
         onEvent: (event) => {
           if (event.event === "patch.applied") {
+            const patch = event.data as PatchEvent;
+            // Halaman baru (mis. dibuat agent): muat ulang daftar halaman.
+            if (!knownPagesRef.current.has(patch.dashboard_id)) reloadDetailRef.current();
             // Reducer mengabaikan patch milik Dashboard lain.
-            dispatch({ type: "patchReceived", patch: event.data as PatchEvent });
+            dispatch({ type: "patchReceived", patch });
             return;
           }
           if (event.event === "job.done") {
@@ -204,7 +231,11 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
   const renderSlots = useCallback(
     ({ detail, reload }: { detail: WorkspaceDetail; reload: () => void }) => {
       reloadDetailRef.current = reload;
-      loadDashboardIfNeeded(detail.dashboards);
+      knownPagesRef.current = new Set(detail.dashboards.map((d) => d.id));
+      const pageId = detail.dashboards.some((d) => d.id === activeId)
+        ? activeId
+        : (detail.dashboards[0]?.id ?? null);
+      loadDashboardIfNeeded(pageId);
 
       const snapshot = dashState.snapshot;
       const datasetVersions: Record<string, number> = {};
@@ -282,7 +313,59 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
         </div>
       );
 
+      const pagesSlot = detail.dashboards.length ? (
+        <PageNav
+          pages={detail.dashboards}
+          activeId={pageId}
+          busy={creating}
+          onSelect={selectPage}
+          onCreate={() => {
+            setCreating(true);
+            setStudioError(null);
+            deps
+              .createDashboard(workspaceId, `Halaman ${detail.dashboards.length + 1}`)
+              .then((snap) => {
+                dispatch({ type: "snapshotLoaded", snapshot: snap });
+                loadedDashboardIdRef.current = snap.id;
+                selectPage(snap.id);
+                reload();
+              })
+              .catch((err: unknown) =>
+                setStudioError(err instanceof Error ? err.message : "Gagal membuat halaman."),
+              )
+              .finally(() => setCreating(false));
+          }}
+          onRename={(id, title) => {
+            if (!snapshot || snapshot.id !== id) return;
+            deps.canvas
+              .command(id, snapshot.version, { type: "set_title", title })
+              .then((patch) => {
+                dispatch({ type: "patchReceived", patch });
+                reload();
+              })
+              .catch((err: unknown) =>
+                setStudioError(err instanceof Error ? err.message : "Gagal mengganti nama."),
+              );
+          }}
+          onDelete={(id) => {
+            const title = detail.dashboards.find((d) => d.id === id)?.title ?? "halaman ini";
+            if (!window.confirm(`Hapus halaman "${title}"?`)) return;
+            deps
+              .deleteDashboard(id)
+              .then(() => {
+                const next = detail.dashboards.find((d) => d.id !== id);
+                if (next) selectPage(next.id);
+                reload();
+              })
+              .catch((err: unknown) =>
+                setStudioError(err instanceof Error ? err.message : "Gagal menghapus halaman."),
+              );
+          }}
+        />
+      ) : undefined;
+
       return {
+        pages: pagesSlot,
         export: exportSlot,
         datasets: (
           <DatasetsPanel
@@ -328,11 +411,14 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
             onPatch={(patch) => dispatch({ type: "patchReceived", patch })}
             onRelationsChanged={() => void reloadRelations()}
             onSessionChange={setChatSessionId}
+            dashboardId={snapshot?.id ?? null}
           />
         ),
       };
     },
     [
+      activeId,
+      selectPage,
       chatSessionId,
       creating,
       crossFilters,

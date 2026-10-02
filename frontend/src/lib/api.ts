@@ -538,6 +538,11 @@ export function createDashboard(
   return request(`/workspaces/${seg(ws)}/dashboards`, { method: "POST", body, ...opts });
 }
 
+/** Hapus satu halaman; 409 `LAST_PAGE` bila itu halaman terakhir Workspace. */
+export function deleteDashboard(dashboardId: string, opts: RequestOptions = {}): Promise<void> {
+  return request(`/dashboards/${seg(dashboardId)}`, { method: "DELETE", ...opts });
+}
+
 export function listDashboards(ws: string, opts: RequestOptions = {}): Promise<DashboardSummary[]> {
   return request(`/workspaces/${seg(ws)}/dashboards`, { method: "GET", ...opts });
 }

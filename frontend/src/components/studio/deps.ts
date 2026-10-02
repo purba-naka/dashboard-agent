@@ -8,6 +8,7 @@
 
 import {
   createDashboard,
+  deleteDashboard,
   getDashboard,
   getPatchesSince,
 } from "@/lib/api";
@@ -46,6 +47,7 @@ export interface StudioDeps {
     sinceVersion: number,
   ) => Promise<import("@/lib/types").PatchesSinceResponse>;
   createDashboard: (ws: string, title: string) => Promise<import("@/lib/types").DashboardSnapshot>;
+  deleteDashboard: (dashboardId: string) => Promise<void>;
   /** Pabrik EventSource workspace (injeksi untuk test). */
   eventSourceFactory?: (url: string) => EventSourceLike;
 }
@@ -63,4 +65,5 @@ export const defaultStudioDeps: StudioDeps = {
   getDashboard,
   getPatchesSince,
   createDashboard: (ws, title) => createDashboard(ws, title),
+  deleteDashboard: (id) => deleteDashboard(id),
 };

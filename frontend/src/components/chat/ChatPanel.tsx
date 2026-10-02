@@ -51,6 +51,8 @@ export interface ChatPanelProps {
   onRelationsChanged?: () => void;
   /** Sesi baru dibuat backend (`run.started`). */
   onSessionChange?: (sessionId: string) => void;
+  /** Halaman aktif; dikirim tiap giliran agar agent mengedit halaman yang sama dengan UI. */
+  dashboardId?: string | null;
   ref?: Ref<ChatPanelHandle>;
 }
 
@@ -62,15 +64,16 @@ export function ChatPanel({
   onPatch,
   onRelationsChanged,
   onSessionChange,
+  dashboardId = null,
   ref,
 }: ChatPanelProps) {
   const [state, dispatch] = useReducer(chatReducer, sessionId, initialChatState);
   const [busyRelation, setBusyRelation] = useState<string | null>(null);
   const stateRef = useRef(state);
-  const callbacks = useRef({ onPatch, onRelationsChanged, onSessionChange });
+  const callbacks = useRef({ onPatch, onRelationsChanged, onSessionChange, dashboardId });
   useEffect(() => {
     stateRef.current = state;
-    callbacks.current = { onPatch, onRelationsChanged, onSessionChange };
+    callbacks.current = { onPatch, onRelationsChanged, onSessionChange, dashboardId };
   });
   const abortRef = useRef<AbortController | null>(null);
   const logRef = useRef<HTMLOListElement>(null);
@@ -112,12 +115,14 @@ export function ChatPanel({
       const ctrl = new AbortController();
       abortRef.current = ctrl;
       const sid = stateRef.current.sessionId;
+      const page = callbacks.current.dashboardId;
       try {
         await client.send(
           workspaceId,
           {
             message: text,
             ...(sid ? { session_id: sid } : {}),
+            ...(page ? { dashboard_id: page } : {}),
             ...(proposalId
               ? {
                   approval: {

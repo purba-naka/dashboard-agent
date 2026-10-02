@@ -6,7 +6,7 @@
  */
 import { colorAt, parseColor, readableOn, TEXT_DARK, TEXT_LIGHT } from "./contrast";
 import { formatNumber } from "./format-number";
-import { colorFor } from "./echarts-theme";
+import { colorFor, PALETTE } from "./echarts-theme";
 
 type O = Record<string, any>;
 
@@ -76,7 +76,20 @@ export function orderCategories(values: unknown[]): unknown[] {
   return uniq;
 }
 
+/** Warna langkah waterfall dari kolom `step_kind`: total biru, turun oranye, naik hijau. */
+export const STEP_COLORS: Record<string, string> = { total: PALETTE[0], down: PALETTE[1], up: PALETTE[4] };
+
 const asArray = (v: unknown): any[] => (Array.isArray(v) ? v : v == null ? [] : [v]);
+
+/** Seri `base` waterfall: bar transparan yang bertumpuk (`stack` sama) dengan bar lain. */
+function isWaterfallBase(all: O[], s: O): boolean {
+  return (
+    s?.type === "bar" &&
+    s.stack != null &&
+    s.itemStyle?.color === "transparent" &&
+    all.some((t) => t !== s && t?.type === "bar" && t.stack === s.stack && t.itemStyle?.color !== "transparent")
+  );
+}
 const first = (v: unknown): unknown => (Array.isArray(v) ? v[0] : v);
 const isHorizontal = (o: O): boolean => asArray(o.yAxis)[0]?.type === "category";
 
@@ -169,6 +182,15 @@ function applyLabels(o: O, categoryCount: number, ref: number | undefined): void
   let firstValueSeries: O | undefined;
   o.series = all.map((raw) => {
     const s: O = { ...raw };
+    if (isWaterfallBase(all, raw)) {
+      s.itemStyle = { ...(s.itemStyle ?? {}), color: "transparent" };
+      s.label = { show: false };
+      s.tooltip = { ...(s.tooltip ?? {}), show: false };
+      s.emphasis = { ...(s.emphasis ?? {}), disabled: true };
+      s.silent = true;
+      delete s.markLine;
+      return s;
+    }
     firstValueSeries ??= s;
     const ds = datasetOf(o, s);
     const dims: string[] = ds?.dimensions ?? [];
@@ -180,7 +202,14 @@ function applyLabels(o: O, categoryCount: number, ref: number | undefined): void
     label.textBorderColor = "transparent";
     label.textBorderWidth = 0;
     label.textShadowBlur = 0;
-    if ((s.type === "line" || s.type === "bar") && multi) {
+    const kindIdx = dims.indexOf("step_kind");
+    if (s.type === "bar" && kindIdx >= 0 && all.some((t) => isWaterfallBase(all, t))) {
+      const fallback = colorFor(s.name);
+      s.itemStyle = {
+        ...(s.itemStyle ?? {}),
+        color: (p: any) => STEP_COLORS[String(rowValue(p, kindIdx))] ?? fallback,
+      };
+    } else if ((s.type === "line" || s.type === "bar") && multi) {
       s.itemStyle = { ...(s.itemStyle ?? {}), color: colorFor(s.name) };
     } else if (s.type === "pie") {
       s.itemStyle = { ...(s.itemStyle ?? {}), color: (p: any) => colorFor(p.name) };
@@ -274,7 +303,8 @@ export function normalizeChart(input: O): NormalizeResult {
     }
   }
 
-  const seriesCount = asArray(o.series).length;
+  const visibleSeries = asArray(o.series).filter((s, _i, all) => !isWaterfallBase(all, s));
+  const seriesCount = visibleSeries.length;
   const legendItems = chartType === "pie" ? rows.length : seriesCount;
   const needsLegend = legendItems > 1;
   const sideLegend = legendItems > LEGEND_MAX_INLINE;
@@ -283,6 +313,7 @@ export function normalizeChart(input: O): NormalizeResult {
 
   if (needsLegend) {
     const common = { show: true, formatter: truncate, tooltip: { show: true }, itemWidth: 14, itemHeight: 8 };
+    if (visibleSeries.length < asArray(o.series).length) baseLegend.data = visibleSeries.map((s) => s.name);
     o.legend = sideLegend
       ? { ...baseLegend, ...common, type: "scroll", orient: "vertical", left: undefined, right: 0, top: 8, bottom: 8, width: 150 }
       : { ...baseLegend, ...common, type: "plain", orient: "horizontal", left: "center", right: undefined, top: 0, bottom: undefined };

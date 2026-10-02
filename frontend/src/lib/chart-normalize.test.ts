@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DIVERGING, normalizeChart, orderCategories, referenceFor } from "./chart-normalize";
+import { DIVERGING, normalizeChart, orderCategories, referenceFor, STEP_COLORS } from "./chart-normalize";
 
 const MONTHS = ["Januari", "Februari", "Maret"];
 const GROUPS = ["A", "B", "C"];
@@ -152,6 +152,59 @@ describe("normalizeChart", () => {
     expect((r.option.series as { markLine?: unknown }[])[0].markLine).toBeUndefined();
     expect(referenceFor("omzet")).toBeUndefined();
     expect(referenceFor("rata_ntp")).toBe(100);
+  });
+});
+
+describe("waterfall", () => {
+  const wf = (withKind: boolean) => ({
+    legend: { show: false },
+    xAxis: { type: "category" },
+    yAxis: { type: "value" },
+    series: [
+      { type: "bar", name: "base", stack: "total", itemStyle: { color: "transparent" }, encode: { x: "step", y: "base" } },
+      { type: "bar", name: "Nilai", stack: "total", encode: { x: "step", y: "delta" } },
+    ],
+    dataset: {
+      dimensions: withKind ? ["step", "base", "delta", "step_kind"] : ["step", "base", "delta"],
+      source: withKind
+        ? [["Revenue", 0, 100, "total"], ["COGS", 60, 40, "down"], ["Bonus", 60, 10, "up"]]
+        : [["Revenue", 0, 100], ["COGS", 60, 40]],
+    },
+  });
+  type S = { name: string; itemStyle: { color: unknown }; label: { show: boolean }; tooltip?: { show: boolean }; emphasis?: { disabled: boolean }; silent?: boolean; markLine?: unknown };
+
+  it("base tetap transparan, tanpa label/tooltip/hover, tidak di legend", () => {
+    const r = normalizeChart(wf(false));
+    const [base, delta] = r.option.series as S[];
+    expect(base.itemStyle.color).toBe("transparent");
+    expect(base.label.show).toBe(false);
+    expect(base.tooltip?.show).toBe(false);
+    expect(base.emphasis?.disabled).toBe(true);
+    expect(base.silent).toBe(true);
+    expect(base.markLine).toBeUndefined();
+    expect(delta.label.show).toBe(true);
+    expect(r.option.legend).toBeUndefined();
+  });
+
+  it("base tidak diberi markLine acuan walau kolom indeks", () => {
+    const o = wf(false);
+    o.series[0].encode.y = "rata_ntp";
+    o.dataset.dimensions = ["step", "rata_ntp", "delta"];
+    const [base] = normalizeChart(o).option.series as S[];
+    expect(base.markLine).toBeUndefined();
+  });
+
+  it("warna delta mengikuti step_kind", () => {
+    const [, delta] = normalizeChart(wf(true)).option.series as S[];
+    const f = delta.itemStyle.color as (p: unknown) => string;
+    expect(f({ value: ["Revenue", 0, 100, "total"] })).toBe(STEP_COLORS.total);
+    expect(f({ value: ["COGS", 60, 40, "down"] })).toBe(STEP_COLORS.down);
+    expect(f({ value: ["Bonus", 60, 10, "up"] })).toBe(STEP_COLORS.up);
+  });
+
+  it("tanpa step_kind: satu warna", () => {
+    const [, delta] = normalizeChart(wf(false)).option.series as S[];
+    expect(typeof delta.itemStyle.color).toBe("string");
   });
 });
 

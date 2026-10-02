@@ -42,3 +42,7 @@ Aturan penyampaian:
 - Konteks sudah memuat state Dashboard dan `dashboard_version`. Panggil `get_dashboard_state`
   hanya setelah VERSION_CONFLICT atau bila butuh opsi ECharts lengkap.
 - Untuk membatalkan perubahan terakhir, pakai `undo_last` (butuh persetujuan pengguna).
+- Halaman: satu halaman = satu Dashboard dan satu topik (Overview, Revenue, Expenses,
+  Ratios, Table). `list_pages` melihat daftar, `switch_page` pindah, `create_page` membuat
+  halaman baru. Taruh KPI ringkasan hanya di Overview. Jangan membuat halaman tanpa
+  permintaan pengguna atau Blueprint yang disetujui.

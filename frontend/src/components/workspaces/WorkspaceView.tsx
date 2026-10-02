@@ -19,7 +19,7 @@ export interface WorkspaceViewProps {
     reload: () => void;
   }) => Partial<
     Record<
-      "export" | "datasets" | "relations" | "semantic" | "brief" | "filters" | "canvas" | "chat",
+      "export" | "datasets" | "relations" | "semantic" | "pages" | "brief" | "filters" | "canvas" | "chat",
       ReactNode
     >
   >;
@@ -191,6 +191,9 @@ export function WorkspaceView({
           {/* Slot Model Semantik (task 33.2). */}
           {slots.semantic !== undefined && <div data-slot="semantic">{slots.semantic}</div>}
 
+          {slots.pages !== undefined ? (
+            <div data-slot="pages">{slots.pages}</div>
+          ) : (
           <Panel id="dashboards" title="Dashboard" count={dashboards.length}>
             {dashboards.length === 0 ? (
               <p className={styles.muted}>Belum ada Dashboard.</p>
@@ -207,6 +210,7 @@ export function WorkspaceView({
               </ul>
             )}
           </Panel>
+          )}
 
           <Panel id="chat-sessions" title="Sesi chat" count={chat_sessions.length}>
             {chat_sessions.length === 0 ? (

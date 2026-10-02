@@ -600,6 +600,8 @@ export interface ChatRequest {
   message: string;
   /** `selected_slot_ids` untuk persetujuan Blueprint per slot (Req 37.6). */
   approval?: { proposal_id: string; selected_slot_ids?: string[] };
+  /** Halaman (Dashboard) yang sedang dilihat; kosong = yang terakhir diubah. */
+  dashboard_id?: string;
 }
 
 // ---------------------------------------------------------------------------

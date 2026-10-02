@@ -38,7 +38,7 @@ import inspect
 import logging
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query, Request, Response
 
 from studio.api.errors import StudioError
 from studio.api.schemas import (
@@ -134,6 +134,23 @@ async def get_dashboard(
     dashboard_id: str, store: DashboardStore = Depends(_store)
 ) -> DashboardSnapshot:
     return await store.get(dashboard_id)
+
+
+@router.delete("/dashboards/{dashboard_id}", status_code=204)
+async def delete_dashboard(
+    dashboard_id: str, repos: Repositories = Depends(_repos)
+) -> Response:
+    """Hapus satu halaman; halaman terakhir Workspace ditolak (``409``)."""
+    record = await repos.dashboards.get(dashboard_id)
+    if len(await repos.dashboards.list_by_workspace(record.workspace_id)) <= 1:
+        raise StudioError(
+            "LAST_PAGE",
+            "Halaman terakhir Workspace tidak bisa dihapus.",
+            {"id": dashboard_id},
+            http_status=409,
+        )
+    await repos.dashboards.delete(dashboard_id)
+    return Response(status_code=204)
 
 
 @router.get("/dashboards/{dashboard_id}/patches", response_model=PatchesSinceResponse)

@@ -102,7 +102,10 @@ kurang (mis. Revenue → Net Profit). Ini **bukan** `chart_type` baru, melainkan
   1. **base**: transparan (`itemStyle: {"color": "transparent"}`), boleh
      `tooltip: {"show": false}`. Mengangkat batang delta ke posisi yang benar.
   2. **delta**: batang terlihat, tinggi = nilai absolut langkah.
-- Kolom `step`, `base`, `delta` (dan `step_order` untuk urutan) dihitung di **SQL**:
+- Kolom `step`, `base`, `delta`, `step_kind` (dan `step_order` untuk urutan) dihitung di **SQL**:
+  - `step_kind` ∈ `'total'` | `'up'` | `'down'`. Frontend memakainya untuk warna batang
+    (total biru, down oranye, up hijau). Wajib ada di `dimensions` dataset; opsional,
+    tanpa kolom ini semua batang satu warna.
   - `delta` = nilai absolut langkah, selalu ≥ 0.
   - `base` = total kumulatif sebelum langkah untuk langkah penambah; untuk langkah pengurang,
     base = kumulatif sebelum langkah dikurangi delta (yaitu kumulatif sesudah langkah), sehingga
@@ -126,19 +129,19 @@ WITH t AS (
     SUM(interest_tax) AS tax
   FROM finance_monthly
 )
-SELECT 1 AS step_order, 'Revenue' AS step, 0 AS base, rev AS delta FROM t
+SELECT 1 AS step_order, 'Revenue' AS step, 0 AS base, rev AS delta, 'total' AS step_kind FROM t
 UNION ALL
-SELECT 2, 'COGS', rev - cogs, cogs FROM t
+SELECT 2, 'COGS', rev - cogs, cogs, 'down' FROM t
 UNION ALL
-SELECT 3, 'Gross Profit', 0, rev - cogs FROM t
+SELECT 3, 'Gross Profit', 0, rev - cogs, 'total' FROM t
 UNION ALL
-SELECT 4, 'Opex', rev - cogs - opex, opex FROM t
+SELECT 4, 'Opex', rev - cogs - opex, opex, 'down' FROM t
 UNION ALL
-SELECT 5, 'EBIT', 0, rev - cogs - opex FROM t
+SELECT 5, 'EBIT', 0, rev - cogs - opex, 'total' FROM t
 UNION ALL
-SELECT 6, 'Interest & Tax', rev - cogs - opex - tax, tax FROM t
+SELECT 6, 'Interest & Tax', rev - cogs - opex - tax, tax, 'down' FROM t
 UNION ALL
-SELECT 7, 'Net Profit', 0, rev - cogs - opex - tax FROM t
+SELECT 7, 'Net Profit', 0, rev - cogs - opex - tax, 'total' FROM t
 ORDER BY step_order
 ```
 
@@ -165,6 +168,7 @@ ORDER BY step_order
 ```
 
 Catatan: `option` hanya memakai key yang diizinkan, tanpa `data` inline, tanpa formatter fungsi.
+Warna per langkah tidak ditulis di spec; frontend memasangnya dari kolom `step_kind`.
 Urutan langkah mengikuti urutan baris hasil query (`ORDER BY step_order`).
 
 ## Contoh singkat tipe lain

@@ -221,6 +221,7 @@ function makeDeps(over: Partial<StudioDeps> = {}): StudioDeps {
     getDashboard: vi.fn(async () => snapshot()),
     getPatchesSince: vi.fn(async () => ({ patches: [], version: 2 })),
     createDashboard: vi.fn(async () => snapshot()),
+    deleteDashboard: vi.fn(async () => undefined),
     eventSourceFactory: (url: string) => new FakeEventSource(url),
     ...over,
   };
@@ -334,5 +335,67 @@ describe("WorkspaceStudio", () => {
     // Paksa celah versi: patch versi 5 (versi lokal 2 → gap → resync).
     src.emit("patch.applied", patchEvent({ version: 5, base_version: 4 }));
     await waitFor(() => expect(deps.getPatchesSince).toHaveBeenCalled());
+  });
+
+  describe("multi-halaman", () => {
+    const twoPages = () =>
+      detail({
+        dashboards: [
+          { id: "db_1", workspace_id: "ws_1", title: "Overview", version: 2, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z" },
+          { id: "db_2", workspace_id: "ws_1", title: "Revenue", version: 1, created_at: "2026-01-02T00:00:00Z", updated_at: "2026-01-02T00:00:00Z" },
+        ],
+      });
+    const pagesDeps = () =>
+      makeDeps({
+        workspace: { ...makeDeps().workspace, get: vi.fn(async () => twoPages()) },
+        getDashboard: vi.fn(async (id: string) =>
+          id === "db_2"
+            ? snapshot({ id: "db_2", title: "Revenue", version: 1, content: { title: "Revenue", items: {}, layout: {}, global_filters: [] } })
+            : snapshot({ id: "db_1", title: "Overview" }),
+        ),
+      });
+
+    afterEach(() => window.history.replaceState(null, "", "/"));
+
+    it("pindah halaman memuat snapshot yang benar dan menulis ?page=", async () => {
+      const deps = pagesDeps();
+      const user = userEvent.setup();
+      render(<WorkspaceStudio workspaceId="ws_1" deps={deps} />);
+      const nav = await screen.findByRole("navigation", { name: "Halaman dashboard" });
+      expect(nav.querySelector('[aria-current="page"]')?.textContent).toBe("Overview");
+      await user.click(screen.getByRole("button", { name: "Revenue" }));
+      await waitFor(() => expect(deps.getDashboard).toHaveBeenCalledWith("db_2"));
+      expect(window.location.search).toBe("?page=db_2");
+      expect(nav.querySelector('[aria-current="page"]')?.textContent).toBe("Revenue");
+    });
+
+    it("?page= dipulihkan saat dimuat", async () => {
+      window.history.replaceState(null, "", "/?page=db_2");
+      const deps = pagesDeps();
+      render(<WorkspaceStudio workspaceId="ws_1" deps={deps} />);
+      await waitFor(() => expect(deps.getDashboard).toHaveBeenCalledWith("db_2"));
+      expect(deps.getDashboard).not.toHaveBeenCalledWith("db_1");
+    });
+
+    it("patch halaman lain tidak mengubah canvas", async () => {
+      const deps = pagesDeps();
+      render(<WorkspaceStudio workspaceId="ws_1" deps={deps} />);
+      await screen.findByRole("navigation", { name: "Halaman dashboard" });
+      await waitFor(() => expect(deps.getDashboard).toHaveBeenCalledWith("db_1"));
+      currentSource().emit("patch.applied", patchEvent({ dashboard_id: "db_2", version: 2, base_version: 1 }));
+      await new Promise((r) => setTimeout(r, 50));
+      expect(screen.queryByText("Judul Baru")).toBeNull();
+    });
+
+    it("chat mengirim dashboard_id halaman aktif", async () => {
+      const deps = pagesDeps();
+      const user = userEvent.setup();
+      render(<WorkspaceStudio workspaceId="ws_1" deps={deps} />);
+      await user.click(await screen.findByRole("button", { name: "Revenue" }));
+      await waitFor(() => expect(deps.getDashboard).toHaveBeenCalledWith("db_2"));
+      await user.type(await screen.findByLabelText("Pesan"), "halo{enter}");
+      await waitFor(() => expect(deps.chat.send).toHaveBeenCalled());
+      expect(vi.mocked(deps.chat.send).mock.calls[0][1]).toMatchObject({ dashboard_id: "db_2" });
+    });
   });
 });

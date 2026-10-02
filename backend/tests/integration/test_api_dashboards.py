@@ -391,3 +391,21 @@ async def test_query_detail(studio: Studio) -> None:
 
     resp = await client.get("/api/queries/tidak-ada")
     assert resp.status_code == 404 and err(resp)["code"] == "NOT_FOUND"
+
+
+# ---------------------------------------------------------------------------
+# Halaman = Dashboard: hapus
+# ---------------------------------------------------------------------------
+
+async def test_delete_page_rejects_last_and_removes_other(studio: Studio) -> None:
+    ws = await studio.create_workspace()
+    first = await studio.create_dashboard(ws, "Overview")
+    resp = await studio.client.delete(f"/api/dashboards/{first['id']}")
+    assert resp.status_code == 409 and err(resp)["code"] == "LAST_PAGE"
+
+    second = await studio.create_dashboard(ws, "Revenue")
+    resp = await studio.client.delete(f"/api/dashboards/{second['id']}")
+    assert resp.status_code == 204
+    listed = await studio.client.get(f"/api/workspaces/{ws}/dashboards")
+    assert [d["id"] for d in listed.json()] == [first["id"]]
+    assert (await studio.client.get(f"/api/dashboards/{second['id']}")).status_code == 404

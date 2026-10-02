@@ -126,6 +126,9 @@ DASHBOARD_TOOL_NAMES: tuple[str, ...] = (
     "add_kpi",
     "update_kpi",
     "update_brief",
+    "list_pages",
+    "create_page",
+    "switch_page",
 )
 
 #: Tool yang kegagalan validasinya memakan jatah retry ``chart_spec`` (Req 13.5).
@@ -344,7 +347,13 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
         return chosen
 
     async def state_of(dashboard_id: str) -> dict[str, Any]:
-        return dashboard_state_for_llm(await store_of().get(dashboard_id))
+        state = dashboard_state_for_llm(await store_of().get(dashboard_id))
+        record = await repos.dashboards.get(dashboard_id)
+        state["pages"] = [
+            {"dashboard_id": d.id, "title": d.title}
+            for d in await repos.dashboards.list_by_workspace(record.workspace_id)
+        ]
+        return state
 
     async def load_query(ws_id: str, tool_context: ToolContext, query_id: str | None) -> QueryRecord:
         qid = (query_id or "").strip() or tool_context.state.get(STATE_LAST_QUERY_ID)
@@ -968,6 +977,52 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
         """
         return await mutate(tool_context, "undo_last", base_version, None)
 
+    # -- halaman (satu halaman = satu Dashboard) -----------------------------
+
+    @guard
+    async def list_pages(tool_context: ToolContext) -> dict[str, Any]:
+        """Daftar halaman (Dashboard) Workspace: dashboard_id, title, item_count, active."""
+        ws_id = workspace_id_of(tool_context)
+        active = await resolve_dashboard(tool_context, create=False)
+        return ok_result(
+            pages=[
+                {
+                    "dashboard_id": d.id,
+                    "title": d.title,
+                    "item_count": len(d.content.items),
+                    "active": d.id == active,
+                }
+                for d in await repos.dashboards.list_by_workspace(ws_id)
+            ]
+        )
+
+    @guard
+    async def create_page(title: str, tool_context: ToolContext) -> dict[str, Any]:
+        """Buat halaman baru kosong lalu jadikan aktif. Hanya atas permintaan pengguna/Blueprint.
+
+        Args:
+            title: Judul halaman (mis. Overview, Revenue).
+        """
+        title = (title or "").strip()
+        if not title:
+            return error_result("title wajib diisi.")
+        snapshot = await store_of().create_dashboard(workspace_id_of(tool_context), title)
+        tool_context.state[STATE_DASHBOARD_ID] = snapshot.id
+        return ok_result(dashboard_id=snapshot.id, dashboard_version=snapshot.version, title=title)
+
+    @guard
+    async def switch_page(dashboard_id: str, tool_context: ToolContext) -> dict[str, Any]:
+        """Pindah halaman aktif; tool mutasi berikutnya menargetkan halaman ini.
+
+        Args:
+            dashboard_id: Id halaman dari list_pages.
+        """
+        record = await repos.dashboards.get_or_none(dashboard_id)
+        if record is None or record.workspace_id != workspace_id_of(tool_context):
+            return error_result(f"Halaman '{dashboard_id}' tidak ada di Workspace ini.")
+        tool_context.state[STATE_DASHBOARD_ID] = dashboard_id
+        return ok_result(dashboard=await state_of(dashboard_id))
+
     tools = {
         "get_dashboard_state": get_dashboard_state,
         "add_chart": add_chart,
@@ -980,6 +1035,9 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
         "add_kpi": add_kpi,
         "update_kpi": update_kpi,
         "update_brief": update_brief,
+        "list_pages": list_pages,
+        "create_page": create_page,
+        "switch_page": switch_page,
     }
     assert tuple(tools) == DASHBOARD_TOOL_NAMES
     return tools

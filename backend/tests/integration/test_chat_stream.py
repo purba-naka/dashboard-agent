@@ -353,3 +353,17 @@ def dump(frames: list[Any]) -> str:  # pragma: no cover - hanya debugging
 
 def unique_id() -> str:  # pragma: no cover
     return uuid4().hex
+
+
+async def test_chat_dashboard_id_workspace_lain_ditolak(tmp_path: Path) -> None:
+    app = make_app(tmp_path, fake_models([text("Halo.")]))
+    async with running(app) as client:
+        studio = Studio(app, client)
+        ids = await setup_sales(studio)
+        other = await studio.create_workspace("Lain")
+        foreign = (await studio.create_dashboard(other))["id"]
+        resp = await client.post(
+            f"/api/workspaces/{ids['ws']}/chat",
+            json={"message": MESSAGE, "dashboard_id": foreign},
+        )
+        assert resp.status_code == 404
