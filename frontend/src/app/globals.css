@@ -19,6 +19,8 @@
   --ring: #2563eb;
   --shadow: 0 1px 2px rgb(16 24 40 / 0.06);
   --shadow-lg: 0 12px 32px rgb(16 24 40 / 0.18);
+  /* >= 3:1 vs --bg and --surface (WCAG 1.4.11 non-text contrast). */
+  --scrollbar-thumb: #848d9b;
 
   --radius-sm: 6px;
   --radius: 8px;
@@ -54,6 +56,7 @@
     --ring: #8fb3ff;
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.55);
+    --scrollbar-thumb: #677080;
   }
 }
 
@@ -228,6 +231,38 @@ textarea:focus-visible {
 
 [aria-busy="true"] {
   color: var(--text-muted);
+}
+
+/* Slim neutral thumb; turns accent only while hovered/dragged, so the one accent
+   shows up when the user is actually scrolling. Track stays transparent. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--scrollbar-thumb) padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--accent);
+}
+
+/* Firefox: no thumb hover pseudo; standard props only. Gated so Chromium keeps the
+   webkit rules above (it ignores them once scrollbar-color is set). */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
 }
 
 ::selection {
