@@ -48,7 +48,13 @@ export interface ExportClient {
 }
 
 export const defaultExportClient: ExportClient = {
-  toPng: (node) => toPng(node, { pixelRatio: 2 }),
+  toPng: (node) =>
+    toPng(node, {
+      pixelRatio: 2,
+      // Latar node transparan; tanpa ini teks redup tak terbaca di viewer.
+      backgroundColor: getComputedStyle(document.body).backgroundColor,
+      filter: (n) => !(n instanceof HTMLElement && n.dataset.exportHide !== undefined),
+    }),
   createPdfDoc: () =>
     new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" }) as unknown as PdfDocLike,
   slice: sliceImageStrips,

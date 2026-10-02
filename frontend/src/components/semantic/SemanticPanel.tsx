@@ -159,9 +159,15 @@ export function SemanticPanel({ workspaceId, refreshKey = 0, client = defaultSem
       )}
       {run?.status === "running" && <p className={styles.muted}>Agent sedang menyusun draft pemahaman data…</p>}
       {run?.status === "llm_failed" && (
-        <p className={styles.warn} role="status">
-          Pengayaan oleh LLM gagal; yang tampil adalah draft heuristik.
-        </p>
+        <div className={styles.warn} role="status">
+          <p>
+            Agent gagal melengkapi pemahaman data. Yang tampil hanya draft otomatis: label dan agregasi
+            dasar. Deskripsi, sinonim, dan metrik usulan belum ada, jadi jawaban chat bisa kurang tepat.
+          </p>
+          <button type="button" disabled={busy} onClick={() => act(() => client.redraft(workspaceId))}>
+            Coba lagi
+          </button>
+        </div>
       )}
       {error && (
         <p className={styles.error} role="alert">

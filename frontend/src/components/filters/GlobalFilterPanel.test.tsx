@@ -1,6 +1,6 @@
 // Feature: dashboard-studio-agent — test panel Global_Filter (Req 22.1, 22.3, 24.3, 24.4).
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -92,6 +92,7 @@ function memoryClient(over: Partial<FilterClient> = {}): FilterClient {
   return {
     command: vi.fn(async () => ({}) as PatchEvent),
     getDataset: vi.fn(async () => detail),
+    columnValues: vi.fn(async () => ({ values: ["Barat", "Timur"], truncated: false })),
     ...over,
   };
 }
@@ -150,14 +151,11 @@ describe("GlobalFilterPanel", () => {
   });
 
   it("membuat filter rentang tanggal untuk kolom waktu (Req 22.1)", async () => {
-    const user = userEvent.setup();
     const { client } = renderPanel();
-    await user.selectOptions(screen.getByLabelText("Dataset filter"), "ds_1");
-    await user.selectOptions(screen.getByLabelText("Kolom filter"), "order_date");
-    await user.type(screen.getByLabelText("Tanggal mulai"), "2026-01-01");
-    await user.type(screen.getByLabelText("Tanggal akhir"), "2026-01-31");
-    await user.click(screen.getByRole("button", { name: "Terapkan filter" }));
-    expect(client.command).toHaveBeenCalledWith("db_1", 5, {
+    const from = await screen.findByLabelText("Order date dari");
+    fireEvent.change(from, { target: { value: "2026-01-01" } });
+    // Langsung berlaku tanpa tombol terapkan.
+    expect(client.command).toHaveBeenLastCalledWith("db_1", 5, {
       type: "set_global_filters",
       filters: [
         {
@@ -165,21 +163,18 @@ describe("GlobalFilterPanel", () => {
           table: "sales",
           column: "order_date",
           start: "2026-01-01",
-          end: "2026-01-31",
+          end: null,
         },
       ],
     } satisfies Command);
   });
 
-  it("membuat filter kategorikal dari nilai top kolom (Req 22.1)", async () => {
+  it("memfilter dimensi lewat dropdown dengan nilai dari API (Req 22.1)", async () => {
     const user = userEvent.setup();
     const { client } = renderPanel();
-    await user.selectOptions(screen.getByLabelText("Dataset filter"), "ds_1");
-    await user.selectOptions(screen.getByLabelText("Kolom filter"), "region");
-    // Nilai top dimuat dari detail dataset.
+    await user.click(await screen.findByText("Region"));
     const barat = await screen.findByLabelText("Barat");
     await user.click(barat);
-    await user.click(screen.getByRole("button", { name: "Terapkan filter" }));
     expect(client.command).toHaveBeenCalledWith("db_1", 5, {
       type: "set_global_filters",
       filters: [
@@ -194,7 +189,7 @@ describe("GlobalFilterPanel", () => {
       { kind: "in", table: "sales", column: "region", values: ["Timur"] },
     ];
     const { onCrossFiltersChange } = renderPanel({ crossFilters: cross });
-    expect(screen.getByText(/Cross_Filter · sales\.region = Timur/)).toBeTruthy();
+    expect(screen.getByText(/Dipilih di chart · sales\.region = Timur/)).toBeTruthy();
     await user.click(
       screen.getByRole("button", { name: "Hapus Cross_Filter sales.region = Timur" }),
     );
@@ -223,7 +218,7 @@ describe("GlobalFilterPanel", () => {
   it("menampilkan pesan kosong bila belum ada dataset", () => {
     renderPanel({ datasets: [] });
     expect(
-      screen.getByText("Unggah dataset untuk mulai memfilter."),
+      screen.getByText("Unggah dataset untuk mulai menyaring data."),
     ).toBeTruthy();
   });
 });

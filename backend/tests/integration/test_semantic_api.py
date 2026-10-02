@@ -161,3 +161,31 @@ async def test_llm_failure_keeps_heuristic_draft(studio: Studio) -> None:
     assert model["draft_run"]["status"] == "llm_failed"
     assert "col:customers.customer_id" in _by_key(model)
     assert ("semantic.warning", {"run_id": model["draft_run"]["id"], "reason": "timeout"}) in events
+
+
+async def test_redraft_schedules_new_run(studio: Studio) -> None:
+    drafter = studio.app.state.semantic_drafter
+    ws = await studio.create_workspace("R")
+    await studio.upload_sample(ws, "customers.csv")
+    await drafter.wait_idle()
+    first = (await _semantic(studio, ws))["draft_run"]["id"]
+
+    resp = await studio.client.post(f"/api/workspaces/{ws}/semantic/redraft")
+    assert resp.status_code == 202, resp.text
+    await drafter.wait_idle()
+    assert (await _semantic(studio, ws))["draft_run"]["id"] != first
+
+
+async def test_column_values_distinct_sorted_and_searchable(studio: Studio) -> None:
+    ws = await studio.create_workspace("V")
+    await studio.upload_sample(ws, "customers.csv")
+    dataset = (await studio.client.get(f"/api/workspaces/{ws}/datasets")).json()[0]
+    string_col = next(c["name"] for c in dataset["schema"] if c["type"] == "string")
+    url = f"/api/workspaces/{ws}/datasets/{dataset['id']}/columns/{string_col}/values"
+
+    body = (await studio.client.get(url)).json()
+    assert body["values"] == sorted(set(body["values"])) and body["values"]
+    needle = str(body["values"][0])[:2].upper()
+    found = (await studio.client.get(url, params={"q": needle})).json()["values"]
+    assert body["values"][0] in found
+    assert (await studio.client.get(url.replace(string_col, "nope"))).status_code == 404

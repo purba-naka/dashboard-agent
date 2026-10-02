@@ -13,7 +13,8 @@ import {
 } from "react";
 import { formatCardinality, formatOverlap, relationTitle } from "@/components/relations/client";
 import { isAbortError } from "@/lib/api";
-import type { PatchEvent, Relation } from "@/lib/types";
+import type { Dataset, PatchEvent, Relation } from "@/lib/types";
+import { suggestQuestions } from "./suggestions";
 import {
   agentLabel,
   chatReducer,
@@ -29,6 +30,9 @@ import { ReviewCard } from "./ReviewCard";
 import { SemanticDraftCard } from "./SemanticDraftCard";
 import styles from "./chat.module.css";
 
+/** Jarak dari dasar log yang masih dianggap "di bawah". */
+const SCROLL_STICK_PX = 48;
+
 export interface ChatPanelHandle {
   /** Kirim pesan secara programatik (mis. setelah `job.done` upload). */
   send(message: string): Promise<void>;
@@ -39,6 +43,8 @@ export interface ChatPanelProps {
   /** Sesi yang dilanjutkan; riwayatnya dimuat saat mount/berubah. */
   sessionId?: string | null;
   client?: ChatClient;
+  /** Dataset Workspace: sumber contoh pertanyaan pada tampilan kosong. */
+  datasets?: readonly Dataset[];
   /** Setiap `patch.applied` dari stream chat. */
   onPatch?: (patch: PatchEvent) => void;
   /** Relasi dikonfirmasi/ditolak dari kartu kandidat. */
@@ -52,6 +58,7 @@ export function ChatPanel({
   workspaceId,
   sessionId = null,
   client = defaultChatClient,
+  datasets = [],
   onPatch,
   onRelationsChanged,
   onSessionChange,
@@ -67,9 +74,14 @@ export function ChatPanel({
   });
   const abortRef = useRef<AbortController | null>(null);
   const logRef = useRef<HTMLOListElement>(null);
+  /** Sesi yang dibuat oleh run panel ini sendiri. */
+  const ownSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!sessionId) return;
+    // Sesi yang baru dibuat run ini (`run.started`) sudah ada di state; memuat
+    // riwayat akan menimpa pesan yang sedang berjalan.
+    if (!sessionId || sessionId === ownSessionRef.current) return;
+    ownSessionRef.current = null;
     const ctrl = new AbortController();
     client
       .history(workspaceId, sessionId)
@@ -84,15 +96,18 @@ export function ChatPanel({
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  /** Ikuti stream hanya bila pengguna sudah di dasar log (tidak sedang membaca ke atas). */
+  const stickRef = useRef(true);
   useEffect(() => {
     const el = logRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el && stickRef.current) el.scrollTop = el.scrollHeight;
   }, [state.entries]);
 
   const send = useCallback(
     async (message: string, proposalId?: string, selectedSlotIds?: string[]) => {
       const text = message.trim();
       if (!text || stateRef.current.running) return;
+      stickRef.current = true;
       dispatch({ type: "send", text });
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -117,6 +132,7 @@ export function ChatPanel({
               dispatch({ type: "event", event });
               if (event.event === "patch.applied") callbacks.current.onPatch?.(event.data);
               if (event.event === "run.started" && event.data.session_id !== sid) {
+                ownSessionRef.current = event.data.session_id;
                 callbacks.current.onSessionChange?.(event.data.session_id);
               }
             },
@@ -324,8 +340,26 @@ export function ChatPanel({
 
   return (
     <section className={styles.panel} aria-label="Chat">
-      <ol className={styles.log} ref={logRef} aria-live="polite">
-        {state.entries.length === 0 && <li className={styles.muted}>Belum ada percakapan.</li>}
+      <ol
+        className={styles.log}
+        ref={logRef}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_STICK_PX;
+        }}
+      >
+        {state.entries.length === 0 && (
+          <li className={styles.empty}>
+            <p className={styles.muted}>
+              {datasets.length ? "Coba tanyakan:" : "Unggah dataset, lalu mulai bertanya."}
+            </p>
+            {suggestQuestions(datasets).map((q) => (
+              <button key={q} type="button" className={styles.suggestion} disabled={running} onClick={() => onSend(q)}>
+                {q}
+              </button>
+            ))}
+          </li>
+        )}
         {state.entries.map((e) => (
           <li key={e.id}>{renderEntry(e)}</li>
         ))}
@@ -362,6 +396,8 @@ const Composer = memo(function Composer({
   const [draft, setDraft] = useState("");
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
+    // Saat run berjalan `send` menolak pesan; jangan buang draft pengguna.
+    if (running || !draft.trim()) return;
     onSend(draft);
     setDraft("");
   };

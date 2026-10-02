@@ -2,10 +2,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .header {
@@ -21,14 +24,44 @@
 }
 
 .type {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  align-self: flex-start;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
 }
 
 .text {
   margin: 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  /* ponytail: 2 baris karena tinggi tile grid tetap; naikkan bila tile ikut tinggi isi. */
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  max-height: 3em; /* 2 baris × line-height 1.5; pengaman untuk export */
+  flex-shrink: 0; /* jangan disusutkan flex sampai terpotong di tengah baris */
+}
+
+.fullText {
+  margin: 0;
   white-space: pre-wrap;
   line-height: 1.55;
+}
+
+.more {
+  align-self: flex-start;
+  padding: 0;
+  min-height: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  text-decoration: underline;
 }
 
 .badges {

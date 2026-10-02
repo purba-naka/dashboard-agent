@@ -5,7 +5,13 @@
  * implementasi in-memory di test; default-nya memakai klien REST `lib/api`.
  */
 
-import { applyCommand, getDataset, isApiError, type RequestOptions } from "@/lib/api";
+import {
+  applyCommand,
+  getColumnValues,
+  getDataset,
+  isApiError,
+  type RequestOptions,
+} from "@/lib/api";
 import type {
   ColumnInfo,
   Command,
@@ -29,12 +35,20 @@ export interface FilterClient {
     datasetId: string,
     opts?: RequestOptions,
   ): Promise<DatasetDetail>;
+  /** Nilai unik sebuah kolom (dropdown filter), dengan pencarian substring. */
+  columnValues(
+    ws: string,
+    datasetId: string,
+    column: string,
+    q?: string,
+  ): Promise<{ values: Scalar[]; truncated: boolean }>;
 }
 
 export const defaultFilterClient: FilterClient = {
   command: (dashboardId, baseVersion, command, opts) =>
     applyCommand(dashboardId, baseVersion, command, opts),
   getDataset: (ws, datasetId, opts) => getDataset(ws, datasetId, opts),
+  columnValues: (ws, datasetId, column, q) => getColumnValues(ws, datasetId, column, { q }),
 };
 
 /** Kolom waktu (rentang tanggal); sisanya diperlakukan kategorikal (Req 22.1). */

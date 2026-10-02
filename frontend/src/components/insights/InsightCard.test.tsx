@@ -124,6 +124,24 @@ describe("InsightCard", () => {
     expect(within(dialog).getAllByText("A").length).toBeGreaterThan(0);
   });
 
+  it("modal detail dirender di luar kartu agar tidak terjebak transform grid", async () => {
+    const user = userEvent.setup();
+    render(
+      <InsightCard
+        insight={insight()}
+        dashboardId="db_1"
+        baseVersion={1}
+        activeFilters={[]}
+        client={memoryClient()}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Detail" }));
+    const dialog = await screen.findByRole("dialog");
+    const card = screen.getByRole("article");
+    expect(card.contains(dialog)).toBe(false);
+    expect(dialog.parentElement).toBe(document.body);
+  });
+
   it("memanggil refresh dengan base_version (Req 15.1)", async () => {
     const user = userEvent.setup();
     const refresh = vi.fn(async () => ({}) as never);

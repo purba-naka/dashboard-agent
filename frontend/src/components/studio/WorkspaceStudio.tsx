@@ -242,6 +242,7 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
               datasets={detail.datasets}
               onCrossFiltersChange={setCrossFilters}
               renderKey={renderKey}
+              onAskAgent={(message) => void chatRef.current?.send(message)}
               client={deps.canvas}
             />
           </div>
@@ -323,6 +324,7 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
             workspaceId={workspaceId}
             sessionId={chatSessionId}
             client={deps.chat}
+            datasets={detail.datasets}
             onPatch={(patch) => dispatch({ type: "patchReceived", patch })}
             onRelationsChanged={() => void reloadRelations()}
             onSessionChange={setChatSessionId}

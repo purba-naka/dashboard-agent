@@ -191,6 +191,7 @@ function makeDeps(over: Partial<StudioDeps> = {}): StudioDeps {
     filters: {
       command: vi.fn(async () => ({}) as never),
       getDataset: vi.fn(async () => ({}) as never),
+      columnValues: vi.fn(async () => ({ values: [], truncated: false })),
     },
     relations: {
       list: vi.fn(async () => [relation]),
@@ -212,6 +213,7 @@ function makeDeps(over: Partial<StudioDeps> = {}): StudioDeps {
       confirm: vi.fn(async () => ({}) as never),
       reject: vi.fn(async () => ({}) as never),
       confirmAll: vi.fn(async () => ({ confirmed: 0 })),
+      redraft: vi.fn(async () => ({ scheduled: true })),
       exportYaml: vi.fn(async () => ""),
       importYaml: vi.fn(async () => ({}) as never),
     },

@@ -7,6 +7,8 @@ import "react-grid-layout/css/styles.css";
 import { InsightCard } from "@/components/insights";
 import { KpiTile } from "./KpiTile";
 import { toggleCrossFilter } from "@/lib/filters";
+import { normalizeChart } from "@/lib/chart-normalize";
+import { useChartTheme } from "@/lib/echarts-theme";
 import type {
   DashboardSnapshot,
   Dataset,
@@ -42,9 +44,15 @@ export interface CanvasProps {
   onCrossFiltersChange?: (filters: FilterSet) => void;
   /** Berubah (mis. `data_version` Dataset naik) → render ulang chart (Req 26.2). */
   renderKey?: number | string;
+  /** Kirim permintaan ke agent chat (mis. tombol "Buat KPI"). */
+  onAskAgent?: (message: string) => void;
 }
 
 const ROW_HEIGHT = 48;
+/** Chart + insight yang tampil sekaligus; KPI selalu tampil. Sisanya di-collapse. */
+const MAX_VISIBLE_VIEWS = 8;
+const KPI_REQUEST =
+  "Tambahkan 2-4 KPI utama di baris atas dashboard dari metrik model semantik, dengan pembanding awal periode.";
 // Prop ECharts konstan: objek baru tiap render memicu resize/rebind di echarts-for-react.
 const ECHARTS_OPTS = { renderer: "canvas" } as const;
 const ECHARTS_STYLE = { height: "100%", minHeight: 0 } as const;
@@ -72,14 +80,34 @@ export function Canvas({
   datasets = [],
   onCrossFiltersChange,
   renderKey = 0,
+  onAskAgent,
 }: CanvasProps) {
   const { content, version } = snapshot;
   const { containerRef, width } = useContainerWidth();
   // Hasil /render disimpan sebagai state agar re-render saat selesai.
   const [rendered, setRendered] = useState<Record<string, RenderedItem>>({});
   const [renderError, setRenderError] = useState<string | null>(null);
+  /** `query_id` insight yang sedang di-hover: chart bersumber sama disorot. */
+  const [hoverQuery, setHoverQuery] = useState<string | null>(null);
 
   const ids = useMemo(() => sortedItemIds(content.layout), [content.layout]);
+  const [expanded, setExpanded] = useState(false);
+  // Urutan baca = urutan layout (kiri atas dulu); KPI tidak dihitung ke batas.
+  const { visibleIds, hiddenCount, hasKpi } = useMemo(() => {
+    let views = 0;
+    let kpi = false;
+    const visible: string[] = [];
+    for (const id of ids) {
+      if (content.items[id]?.kind === "kpi") {
+        kpi = true;
+        visible.push(id);
+      } else if (expanded || views < MAX_VISIBLE_VIEWS) {
+        views++;
+        visible.push(id);
+      }
+    }
+    return { visibleIds: visible, hiddenCount: ids.length - visible.length, hasKpi: kpi };
+  }, [ids, content.items, expanded]);
 
   // Render ulang saat patch (version), filter, Cross_Filter, atau data sumber
   // berubah (Req 18.3, 22.3, 26.2).
@@ -186,11 +214,11 @@ export function Canvas({
 
   const layout: GridEntry[] = useMemo(
     () =>
-      ids.map((id) => {
+      visibleIds.map((id) => {
         const rect = content.layout[id];
         return { i: id, x: rect.x, y: rect.y, w: rect.w, h: rect.h };
       }),
-    [ids, content.layout],
+    [visibleIds, content.layout],
   );
 
   const renderItems = rendered;
@@ -201,8 +229,13 @@ export function Canvas({
         <h2 className={styles.title}>{content.title}</h2>
         <span className={styles.muted}>v{version}</span>
         {hasFilters && (
-          <button type="button" className={styles.itemAction} onClick={resetFilters}>
+          <button type="button" className={styles.itemAction} data-export-hide onClick={resetFilters}>
             Reset semua filter
+          </button>
+        )}
+        {onAskAgent && ids.length > 0 && !hasKpi && (
+          <button type="button" className={styles.itemAction} data-export-hide onClick={() => onAskAgent(KPI_REQUEST)}>
+            Buat KPI di atas dashboard
           </button>
         )}
         {renderError && (
@@ -221,7 +254,7 @@ export function Canvas({
             layout={layout}
             onLayoutChange={onLayoutChange}
           >
-            {ids.map((id) => (
+            {visibleIds.map((id) => (
               <div key={id} className={styles.cell}>
                 <Cell
                   id={id}
@@ -234,12 +267,24 @@ export function Canvas({
                   onChartElementClick={stableChartClick}
                   onVerify={client.verify ? stableVerify : undefined}
                   verified={verifiedIds.has(id)}
+                  highlighted={
+                    hoverQuery !== null &&
+                    content.items[id]?.kind === "chart" &&
+                    content.items[id].spec.query_id === hoverQuery
+                  }
+                  onHoverQuery={setHoverQuery}
                 />
               </div>
             ))}
           </GridLayout>
         )}
       </div>
+
+      {(hiddenCount > 0 || (expanded && ids.length > MAX_VISIBLE_VIEWS)) && (
+        <button type="button" className={styles.moreViews} onClick={() => setExpanded((v) => !v)}>
+          {expanded ? "Ringkas dashboard" : `Tampilkan ${hiddenCount} item lainnya`}
+        </button>
+      )}
 
       {ids.length === 0 && (
         <p className={styles.empty}>
@@ -261,6 +306,8 @@ const Cell = memo(function Cell({
   onChartElementClick,
   onVerify,
   verified = false,
+  highlighted = false,
+  onHoverQuery,
 }: {
   id: string;
   snapshot: DashboardSnapshot;
@@ -275,6 +322,8 @@ const Cell = memo(function Cell({
   ) => void;
   onVerify?: (itemId: string) => void;
   verified?: boolean;
+  highlighted?: boolean;
+  onHoverQuery?: (queryId: string | null) => void;
 }) {
   const item = snapshot.content.items[id];
   const status = snapshot.item_status[id];
@@ -284,18 +333,30 @@ const Cell = memo(function Cell({
 
   const title = item?.title ?? id;
   const isChartItem = item?.kind === "chart";
+  const renderedOption = rendered?.option;
+  const normalized = useMemo(
+    () => (isChartItem && renderedOption ? normalizeChart(renderedOption) : null),
+    [isChartItem, renderedOption],
+  );
   const crossFilterActive =
     isChartItem && item.spec.cross_filter_column !== null && crossFilters.length > 0;
 
   return (
-    <>
+    <div
+      className={`${styles.cellBody} ${highlighted ? styles.highlighted : ""}`}
+      onMouseEnter={item?.kind === "insight" ? () => onHoverQuery?.(item.query_id) : undefined}
+      onMouseLeave={item?.kind === "insight" ? () => onHoverQuery?.(null) : undefined}
+    >
       <div className={styles.cellHeader}>
         <button
           type="button"
           className={styles.dragHandle}
           aria-label={`Pindah item ${title}`}
         >
-          {title}
+          <span className={styles.cellTitle}>{title}</span>
+          {normalized?.subtitle && (
+            <span className={styles.cellSubtitle}>{normalized.subtitle}</span>
+          )}
         </button>
         <span className={styles.badges}>
           {crossFilterActive && (
@@ -318,11 +379,11 @@ const Cell = memo(function Cell({
               type="button"
               className={styles.itemAction}
               aria-label={`Tandai terverifikasi ${title}`}
-              title="Jadikan contoh query terverifikasi untuk agent"
+              title="Tandai hasil ini benar. Agent memakainya sebagai contoh untuk pertanyaan serupa."
               disabled={verified}
               onClick={() => onVerify(id)}
             >
-              {verified ? "Terverifikasi" : "Verifikasi"}
+              {verified ? "✓ Hasil benar" : "Tandai benar"}
             </button>
           )}
           <button
@@ -337,8 +398,12 @@ const Cell = memo(function Cell({
       </div>
 
       {isChartItem ? (
-        rendered?.option ? (
-          <Chart id={id} option={rendered.option} onClick={onChartElementClick} />
+        normalized?.error ? (
+          <div className={styles.placeholder} role="alert">
+            Chart tidak dapat ditampilkan: {normalized.error}
+          </div>
+        ) : normalized ? (
+          <Chart id={id} option={normalized.option} onClick={onChartElementClick} />
         ) : (
           <div className={styles.placeholder}>
             {rendered?.status && rendered.status !== "ok"
@@ -363,7 +428,7 @@ const Cell = memo(function Cell({
       ) : (
         <div className={styles.placeholder}>Item tidak dikenal.</div>
       )}
-    </>
+    </div>
   );
 });
 
@@ -381,8 +446,10 @@ const Chart = memo(function Chart({
     () => ({ click: (params: { name?: unknown; value?: unknown }) => onClick(id, params) }),
     [id, onClick],
   );
+  const theme = useChartTheme();
   return (
     <ReactECharts
+      theme={theme}
       opts={ECHARTS_OPTS}
       style={ECHARTS_STYLE}
       option={option ?? {}}

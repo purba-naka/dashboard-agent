@@ -239,9 +239,11 @@ describe("Canvas", () => {
       expect.objectContaining({ signal: expect.anything() }),
     );
     const echarts = await screen.findByTestId("echarts");
-    expect(JSON.parse(echarts.getAttribute("data-option") ?? "{}")).toEqual({
-      series: [{ type: "bar" }],
-    });
+    // Option dinormalisasi sebelum dirender (lib/chart-normalize); tipe series tetap.
+    const opt = JSON.parse(echarts.getAttribute("data-option") ?? "{}");
+    expect(opt.series).toHaveLength(1);
+    expect(opt.series[0].type).toBe("bar");
+    expect(opt.title).toBeUndefined();
   });
 
   it("kegagalan /render menampilkan pesan error tanpa merusak grid (Req 22.3)", async () => {

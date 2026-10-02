@@ -1,5 +1,5 @@
 # Data runtime lokal (SQLite, uploads, Parquet)
-data/
+/data/
 
 # Secrets
 .env

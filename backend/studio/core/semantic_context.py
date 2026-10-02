@@ -115,7 +115,7 @@ def project_entry(entry: EntryLike, scope: str, no_sample_tables: Collection[str
     elif entry.kind == "column":
         keys = ["table", "column", "label"]
         if scope in ("query", "architect"):
-            keys += ["description", "synonyms", "default_aggregation", "is_enum"]
+            keys += ["description", "synonyms", "default_aggregation", "reference_value", "is_enum"]
         for k in keys:
             if body.get(k) not in (None, "", [], False):
                 out[k] = body[k]

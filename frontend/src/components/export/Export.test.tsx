@@ -137,9 +137,10 @@ describe("ExportBar", () => {
     setup();
     await user.click(screen.getByRole("button", { name: "Ekspor PNG" }));
     await waitFor(() => expect(toPngMock).toHaveBeenCalled());
-    expect(toPngMock).toHaveBeenCalledWith(screen.getByTestId("canvas-node"), {
-      pixelRatio: 2,
-    });
+    expect(toPngMock).toHaveBeenCalledWith(
+      screen.getByTestId("canvas-node"),
+      expect.objectContaining({ pixelRatio: 2, filter: expect.any(Function) }),
+    );
     expect(screen.queryByRole("alert")).toBeNull();
   });
 

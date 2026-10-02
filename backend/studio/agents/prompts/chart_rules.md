@@ -43,10 +43,15 @@ Aturan tambahan:
 - Tidak boleh ada fungsi atau kode di string (mis. formatter berupa fungsi).
 
 Setiap chart wajib:
-- judul yang deskriptif,
+- `title.text` deskriptif (judul tampil di header kartu); `title.subtext` opsional untuk satu baris konteks,
 - label sumbu (X dan Y) yang jelas, lewat `name` pada sumbu,
-- legenda bila ada lebih dari satu seri,
 - `tooltip` (`trigger: "axis"` untuk line/bar, `"item"` untuk pie/scatter/heatmap).
+
+Tata letak diatur frontend. Jangan tulis `grid`, posisi `legend`, `label.textBorder*`, `axisLabel.rotate`, atau ukuran font.
+
+Multi-series dari satu measure (mis. satu garis per kelompok): hasil query berbentuk long
+(`periode, kelompok, nilai`). Buat satu series per nilai `kelompok` dengan `name` persis sama dengan nilai
+kolom itu dan `encode` yang sama. Backend memisahkan datanya per `name`. Jangan beri `name` yang tidak ada di kolom.
 
 ## Contoh (satu per tipe; nama kolom ilustrasi)
 

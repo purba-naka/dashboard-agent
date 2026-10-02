@@ -133,6 +133,6 @@ describe("Canvas ekstensi", () => {
     render(<Canvas snapshot={snapshot()} crossFilters={[]} client={c} />);
     await userEvent.click(await screen.findByRole("button", { name: "Tandai terverifikasi Revenue" }));
     expect(c.verify).toHaveBeenCalledWith("db_1", "k1");
-    expect(await screen.findByText("Terverifikasi")).toBeTruthy();
+    expect(await screen.findByText("✓ Hasil benar")).toBeTruthy();
   });
 });

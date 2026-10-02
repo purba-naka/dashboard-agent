@@ -56,6 +56,7 @@ function client(over: Partial<SemanticClient> = {}): SemanticClient {
     confirm: vi.fn(async () => ({}) as never),
     reject: vi.fn(async () => ({}) as never),
     confirmAll: vi.fn(async () => ({ confirmed: 1 })),
+    redraft: vi.fn(async () => ({ scheduled: true })),
     exportYaml: vi.fn(async () => "metrics: []\n"),
     importYaml: vi.fn(async () => model()),
     ...over,

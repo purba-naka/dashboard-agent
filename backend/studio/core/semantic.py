@@ -177,6 +177,14 @@ _ROLE_AGG: dict[str, Aggregation] = {
 def default_aggregation(role: ColumnRole) -> Aggregation:
     return _ROLE_AGG.get(role, "none")
 
+# ponytail: indeks dikenali dari nama (sama dengan frontend `referenceFor`); upgrade ke
+# deteksi distribusi bila ada indeks bernama lain.
+_INDEX_NAME = re.compile(r"(^|_)(ntp|ntup|indeks|index|idx|ihk)(_|$)", re.IGNORECASE)
+
+def is_index_column(profile: ColumnProfile) -> bool:
+    """Kolom indeks (acuan 100): dijumlah tidak bermakna, jadi default AVG."""
+    return profile.role == "measure" and profile.type in _NUMERIC and bool(_INDEX_NAME.search(profile.name))
+
 
 def heuristic_label(original: str) -> str:
     """``total_amt`` → ``Total Amt``; kapital hanya pada huruf pertama tiap kata."""
@@ -227,12 +235,14 @@ def heuristic_draft(datasets: Sequence[DatasetInput]) -> list[DraftEntry]:
         for col in ds.columns:
             original = ds.original_names.get(col.name, col.name)
             is_enum = col.role == "dimension" and col.distinct_count <= ENUM_MAX_DISTINCT
+            index = is_index_column(col)
             body = SemanticColumn(
                 table=ds.table,
                 column=col.name,
                 label=heuristic_label(original),
-                default_aggregation=default_aggregation(col.role),
+                default_aggregation="avg" if index else default_aggregation(col.role),
                 format=heuristic_format(col),
+                reference_value=100.0 if index else None,
                 is_enum=is_enum,
                 enum_values=[v for v, _ in col.top_values] if is_enum else [],
             ).model_dump(mode="json")
@@ -241,15 +251,17 @@ def heuristic_draft(datasets: Sequence[DatasetInput]) -> list[DraftEntry]:
         for col in ds.columns:
             if col.role != "measure" or col.type not in _NUMERIC:
                 continue
+            index = is_index_column(col)
+            prefix, fn, word = ("rata", "AVG", "Rata-rata") if index else ("total", "SUM", "Total")
             name = (
-                f"total_{col.name}"
+                f"{prefix}_{col.name}"
                 if measure_owners.get(col.name, 0) <= 1
-                else f"total_{ds.table}_{col.name}"
+                else f"{prefix}_{ds.table}_{col.name}"
             )
             metric = BusinessMetric(
-                name=normalize_key_part(name)[:64] or "total",
-                label=f"Total {heuristic_label(ds.original_names.get(col.name, col.name))}",
-                expr=f"SUM({_quote(col.name)})",
+                name=normalize_key_part(name)[:64] or prefix,
+                label=f"{word} {heuristic_label(ds.original_names.get(col.name, col.name))}",
+                expr=f"{fn}({_quote(col.name)})",
                 base_table=ds.table,
                 format=heuristic_format(col),
                 good_direction="up",

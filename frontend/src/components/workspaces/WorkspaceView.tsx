@@ -49,6 +49,21 @@ export function WorkspaceView({
 }: WorkspaceViewProps) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [chatOpen, setChatOpen] = useState(true);
+
+  // Pulihkan pilihan panel dari sesi sebelumnya.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSidebarOpen(window.localStorage.getItem("studio.sidebar") !== "0");
+    setChatOpen(window.localStorage.getItem("studio.chat") !== "0");
+  }, []);
+  const toggle = (key: "sidebar" | "chat") => {
+    const set = key === "sidebar" ? setSidebarOpen : setChatOpen;
+    const now = key === "sidebar" ? sidebarOpen : chatOpen;
+    set(!now);
+    window.localStorage.setItem(`studio.${key}`, now ? "0" : "1");
+  };
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -120,12 +135,28 @@ export function WorkspaceView({
           <h1>{workspace.name}</h1>
           <p className={styles.muted}>Dibuat {formatDateTime(workspace.created_at)}</p>
         </div>
-        {/* Slot ekspor PNG/PDF (task 21.10). */}
-        <div data-slot="export">{slots.export}</div>
+        <div className={styles.headerActions}>
+          <button
+            type="button"
+            aria-pressed={sidebarOpen}
+            onClick={() => toggle("sidebar")}
+          >
+            {sidebarOpen ? "Sembunyikan data" : "Tampilkan data"}
+          </button>
+          <button type="button" aria-pressed={chatOpen} onClick={() => toggle("chat")}>
+            {chatOpen ? "Sembunyikan chat" : "Tampilkan chat"}
+          </button>
+          {/* Slot ekspor PNG/PDF (task 21.10). */}
+          <div data-slot="export">{slots.export}</div>
+        </div>
       </header>
 
-      <div className={styles.grid}>
-        <aside className={styles.sidebar} aria-label="Panel Workspace">
+      <div
+        className={styles.grid}
+        data-sidebar={sidebarOpen ? "open" : "closed"}
+        data-chat={chatOpen ? "open" : "closed"}
+      >
+        <aside className={styles.sidebar} aria-label="Panel Workspace" hidden={!sidebarOpen}>
           {/* Slot upload & detail Dataset (task 21.2) sudah berisi kartunya
               sendiri, jadi dipasang tanpa Panel pembungkus agar tidak dobel. */}
           {slots.datasets !== undefined ? (
@@ -212,7 +243,7 @@ export function WorkspaceView({
         </div>
 
         {/* Slot Chat_Panel (task 21.4): kolom kanan, tetap terlihat saat canvas di-scroll. */}
-        <section aria-label="Chat" data-slot="chat" className={styles.chatColumn}>
+        <section aria-label="Chat" data-slot="chat" className={styles.chatColumn} hidden={!chatOpen}>
           {slots.chat ?? <p className={styles.muted}>Panel chat agent akan tampil di sini.</p>}
         </section>
       </div>

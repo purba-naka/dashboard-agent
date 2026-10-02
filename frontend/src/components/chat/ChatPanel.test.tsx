@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createRef } from "react";
+import { createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChatStreamHandlers, ChatStreamResult } from "@/lib/sse";
 import type { ChatRequest, ChatSseEvent, Relation } from "@/lib/types";
@@ -53,6 +53,31 @@ function fakeClient() {
 const started: ChatSseEvent = { event: "run.started", data: { run_id: "run_1", session_id: "s_1" } };
 
 describe("ChatPanel", () => {
+  it("pesan pertama tetap tampil saat parent meneruskan sesi baru dari run.started", async () => {
+    const user = userEvent.setup();
+    const { client, emit } = fakeClient();
+    // Riwayat backend belum memuat pesan yang sedang diproses.
+    client.history = vi.fn(async () => []);
+    function Host() {
+      const [sid, setSid] = useState<string | null>(null);
+      return <ChatPanel workspaceId="ws" client={client} sessionId={sid} onSessionChange={setSid} />;
+    }
+    render(<Host />);
+
+    await user.type(screen.getByLabelText("Pesan"), "Total penjualan?{Enter}");
+    await emit(started, { event: "text.delta", data: { agent: "root", text: "Sebentar" } });
+    await act(async () => {});
+
+    expect(client.history).not.toHaveBeenCalled();
+    expect(screen.getByText("Total penjualan?")).toBeTruthy();
+    expect(screen.getByText("Sebentar")).toBeTruthy();
+    expect(screen.getByRole("status")).toBeTruthy();
+
+    // Enter saat run berjalan tidak membuang draft.
+    await user.type(screen.getByLabelText("Pesan"), "lanjut{Enter}");
+    expect((screen.getByLabelText("Pesan") as HTMLTextAreaElement).value).toBe("lanjut");
+  });
+
   it("menampilkan agent aktif, tool berjalan, dan teks streaming (Req 16.4)", async () => {
     const user = userEvent.setup();
     const { client, emit, end } = fakeClient();

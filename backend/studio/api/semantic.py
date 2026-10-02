@@ -294,6 +294,18 @@ async def reject_entry(
     return _out(record)
 
 
+@router.post("/workspaces/{ws}/semantic/redraft", status_code=202)
+async def redraft(
+    ws: str, repos: Repositories = Depends(get_repos), drafter: Any = Depends(get_drafter)
+) -> dict[str, bool]:
+    """Jalankan ulang pengayaan LLM (mis. setelah ``llm_failed``)."""
+    await repos.workspaces.get(ws)
+    if drafter is None:
+        raise StudioError("UNAVAILABLE", "Semantic_Drafter tidak aktif.", {}, http_status=503)
+    drafter.schedule(ws)
+    return {"scheduled": True}
+
+
 @router.post("/workspaces/{ws}/semantic/confirm-all")
 async def confirm_all(
     ws: str, repos: Repositories = Depends(get_repos), bus: Any = Depends(get_bus)

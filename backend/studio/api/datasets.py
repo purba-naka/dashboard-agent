@@ -29,10 +29,11 @@ request selesai.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from starlette.datastructures import UploadFile
 from starlette.requests import ClientDisconnect
 
@@ -230,6 +231,38 @@ async def get_job(job_id: str, ingestion: IngestionDep) -> JobStatus:
 async def list_datasets(ws: str, repos: ReposDep) -> list[DatasetOut]:
     await repos.workspaces.get(ws)
     return [DatasetOut.from_record(d) for d in await repos.datasets.list_by_workspace(ws)]
+
+
+@router.get("/workspaces/{ws}/datasets/{dataset_id}/columns/{column}/values")
+async def column_values(
+    ws: str,
+    dataset_id: str,
+    column: str,
+    request: Request,
+    repos: ReposDep,
+    q: str = "",
+    limit: int = Query(default=200, ge=1, le=1000),
+) -> dict[str, Any]:
+    """Nilai unik kolom (untuk dropdown filter), urut menaik; ``q`` = substring tanpa huruf besar/kecil."""
+    import polars as pl
+
+    dataset = await repos.datasets.get(dataset_id, workspace_id=ws)
+    if column not in {c.name for c in dataset.schema}:
+        raise StudioError("NOT_FOUND", f"Kolom '{column}' tidak ada.", {"column": column}, http_status=404)
+    path = request.app.state.engine.parquet_path(dataset)
+
+    def read() -> dict[str, Any]:
+        col = pl.col(column)
+        lf = pl.scan_parquet(path).select(col).drop_nulls().unique().sort(column)
+        if q:
+            lf = lf.filter(col.cast(pl.String).str.to_lowercase().str.contains(q.lower(), literal=True))
+        values = lf.head(limit + 1).collect()[column].to_list()
+        return {
+            "values": [v.isoformat() if hasattr(v, "isoformat") else v for v in values[:limit]],
+            "truncated": len(values) > limit,
+        }
+
+    return await asyncio.to_thread(read)
 
 
 @router.get("/workspaces/{ws}/datasets/{dataset_id}", response_model=DatasetDetail)

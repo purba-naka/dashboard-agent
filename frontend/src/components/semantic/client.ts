@@ -9,6 +9,7 @@ import {
   getSemanticModel,
   importSemanticYaml,
   isApiError,
+  redraftSemantic,
   rejectSemanticEntry,
   semanticImportIssues,
   updateSemanticEntry,
@@ -27,6 +28,7 @@ export interface SemanticClient {
   confirm(ws: string, entryId: string): Promise<SemanticEntry>;
   reject(ws: string, entryId: string): Promise<SemanticEntry>;
   confirmAll(ws: string): Promise<{ confirmed: number }>;
+  redraft(ws: string): Promise<{ scheduled: boolean }>;
   exportYaml(ws: string): Promise<string>;
   importYaml(ws: string, text: string): Promise<SemanticModelResponse>;
 }
@@ -37,6 +39,7 @@ export const defaultSemanticClient: SemanticClient = {
   confirm: (ws, id) => confirmSemanticEntry(ws, id),
   reject: (ws, id) => rejectSemanticEntry(ws, id),
   confirmAll: (ws) => confirmAllSemantic(ws),
+  redraft: (ws) => redraftSemantic(ws),
   exportYaml: (ws) => exportSemanticYaml(ws),
   importYaml: (ws, text) => importSemanticYaml(ws, text),
 };

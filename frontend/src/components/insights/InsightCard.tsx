@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { formatScalar } from "@/lib/filters";
 import type { FilterSet, InsightItem, QueryDetail } from "@/lib/types";
 import {
@@ -42,6 +43,13 @@ export function InsightCard({
   const [busy, setBusy] = useState<"detail" | "refresh" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const [clamped, setClamped] = useState(false);
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (el) setClamped(el.scrollHeight > el.clientHeight + 1);
+  }, [insight.text]);
+
   const differentFilters = computedWithDifferentFilters(insight, activeFilters);
   const stale = isStale(insight, datasetVersions);
 
@@ -74,12 +82,17 @@ export function InsightCard({
 
   return (
     <article className={styles.card} aria-label={`Insight: ${insight.title}`}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>{insight.title}</h3>
-        <span className={styles.type}>{insightTypeLabel(insight.insight_type)}</span>
-      </div>
+      {/* Judul tampil di header sel Canvas; kartu hanya badge tipe. */}
+      <span className={styles.type}>{insightTypeLabel(insight.insight_type)}</span>
 
-      <p className={styles.text}>{insight.text}</p>
+      <p ref={textRef} className={styles.text}>
+        {insight.text}
+      </p>
+      {clamped && (
+        <button type="button" className={styles.more} onClick={openDetail}>
+          Lihat selengkapnya
+        </button>
+      )}
 
       {(differentFilters || stale) && (
         <div className={styles.badges}>
@@ -144,7 +157,9 @@ function InsightDetail({
   loading: boolean;
   onClose: () => void;
 }) {
-  return (
+  // Portal: sel grid memakai `transform` + `overflow: hidden`, yang menjebak
+  // `position: fixed` sehingga modal terpotong di dalam kartu.
+  return createPortal(
     <div
       className={styles.backdrop}
       role="dialog"
@@ -159,6 +174,8 @@ function InsightDetail({
             Tutup
           </button>
         </div>
+
+        <p className={styles.fullText}>{insight.text}</p>
 
         <div>
           <h4>SQL sumber</h4>
@@ -180,7 +197,8 @@ function InsightDetail({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

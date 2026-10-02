@@ -560,6 +560,8 @@ class SemanticColumn(StudioModel):
     synonyms: list[str] = Field(default_factory=list, max_length=20)
     default_aggregation: Aggregation = "none"
     format: NumberFormat = Field(default_factory=NumberFormat)
+    #: Nilai acuan indeks (mis. NTP 100 = netral); garis referensi di chart.
+    reference_value: float | None = None
     is_enum: bool = False
     #: Nilai enum (dari top values profil); dihapus untuk ``privacy_no_samples``.
     enum_values: list[Scalar] = Field(default_factory=list, max_length=50)

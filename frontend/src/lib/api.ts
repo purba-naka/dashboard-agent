@@ -47,6 +47,7 @@ import type {
   BlueprintRecordResponse,
   SemanticEntry,
   SemanticImportIssue,
+  Scalar,
   SemanticKind,
   SemanticModelResponse,
 } from "./types";
@@ -420,6 +421,19 @@ export function getDataset(
   return request(`/workspaces/${seg(ws)}/datasets/${seg(datasetId)}`, { method: "GET", ...opts });
 }
 
+export function getColumnValues(
+  ws: string,
+  datasetId: string,
+  column: string,
+  opts: RequestOptions & { q?: string; limit?: number } = {},
+): Promise<{ values: Scalar[]; truncated: boolean }> {
+  const { q, limit, ...rest } = opts;
+  return request(
+    `/workspaces/${seg(ws)}/datasets/${seg(datasetId)}/columns/${seg(column)}/values`,
+    { method: "GET", query: { q: q || undefined, limit }, ...rest },
+  );
+}
+
 export function updateDataset(
   ws: string,
   datasetId: string,
@@ -717,6 +731,10 @@ export function rejectSemanticEntry(
     method: "POST",
     ...opts,
   });
+}
+
+export function redraftSemantic(ws: string, opts: RequestOptions = {}): Promise<{ scheduled: boolean }> {
+  return request(`/workspaces/${seg(ws)}/semantic/redraft`, { method: "POST", ...opts });
 }
 
 export function confirmAllSemantic(

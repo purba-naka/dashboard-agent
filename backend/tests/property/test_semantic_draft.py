@@ -15,7 +15,6 @@ from hypothesis import strategies as st
 from studio.core.semantic import (
     DatasetInput,
     ExistingEntry,
-    default_aggregation,
     heuristic_draft,
     merge_draft,
 )
@@ -77,6 +76,7 @@ def test_merge_draft_respects_user_decisions(scenario) -> None:
     for entry in draft:
         if entry.kind == "column":
             role = roles[(entry.body["table"], entry.body["column"])]
-            assert entry.body["default_aggregation"] == _ROLE_AGG[role] == default_aggregation(role)
+            expected = "avg" if entry.body["reference_value"] is not None else _ROLE_AGG[role]
+            assert entry.body["default_aggregation"] == expected
             if entry.body["is_enum"]:
                 assert role == "dimension"

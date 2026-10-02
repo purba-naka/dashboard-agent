@@ -230,6 +230,24 @@
   font-size: 0.875rem;
 }
 
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.empty p {
+  margin: 0;
+}
+
+.suggestion {
+  text-align: left;
+  white-space: normal;
+  height: auto;
+  padding: 0.5rem 0.75rem;
+}
+
 .status {
   font-size: 0.8125rem;
   color: var(--text-muted);
