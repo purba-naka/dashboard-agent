@@ -7,10 +7,12 @@ import styles from "./workspaces.module.css";
 export interface CreateWorkspaceFormProps {
   /** Dipanggil dengan nama yang sudah di-trim; lempar error untuk menampilkannya. */
   onCreate: (name: string) => Promise<void>;
+  /** Bila ada, tampilkan tombol Batal (dan Escape) untuk menutup form. */
+  onCancel?: () => void;
 }
 
 /** Form buat Workspace baru (Req 1.1). */
-export function CreateWorkspaceForm({ onCreate }: CreateWorkspaceFormProps) {
+export function CreateWorkspaceForm({ onCreate, onCancel }: CreateWorkspaceFormProps) {
   const inputId = useId();
   const errorId = useId();
   const [name, setName] = useState("");
@@ -46,6 +48,10 @@ export function CreateWorkspaceForm({ onCreate }: CreateWorkspaceFormProps) {
           value={name}
           maxLength={MAX_WORKSPACE_NAME_LENGTH}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && onCancel && !pending) onCancel();
+          }}
+          autoFocus={onCancel !== undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           disabled={pending}
@@ -53,8 +59,13 @@ export function CreateWorkspaceForm({ onCreate }: CreateWorkspaceFormProps) {
         />
       </div>
       <button type="submit" className={styles.button} disabled={pending}>
-        {pending ? "Membuat…" : "Buat Workspace"}
+        {pending ? "Membuat" : "Buat Workspace"}
       </button>
+      {onCancel && (
+        <button type="button" onClick={onCancel} disabled={pending}>
+          Batal
+        </button>
+      )}
       {error && (
         <p id={errorId} role="alert" className={styles.error} style={{ flexBasis: "100%" }}>
           {error}

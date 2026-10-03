@@ -5,6 +5,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { isAbortError, isApiError } from "@/lib/api";
 import type { WorkspaceDetail } from "@/lib/types";
 import { defaultWorkspaceClient, errorMessage, formatDateTime, type WorkspaceClient } from "./client";
+import { ChatCircleTextIcon, SidebarSimpleIcon } from "@phosphor-icons/react/ssr";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import styles from "./workspaces.module.css";
 
 export interface WorkspaceViewProps {
@@ -27,6 +33,8 @@ export interface WorkspaceViewProps {
   activeSessionId?: string | null;
   /** Dipanggil saat pengguna memilih sesi chat lama dari panel "Sesi chat". */
   onSelectSession?: (sessionId: string) => void;
+  /** Jumlah usulan yang menunggu review per tab sidebar; tampil sebagai badge. */
+  pending?: Partial<Record<"relations" | "semantic", number>>;
 }
 
 type LoadState =
@@ -46,6 +54,7 @@ export function WorkspaceView({
   renderSlots,
   activeSessionId,
   onSelectSession,
+  pending,
 }: WorkspaceViewProps) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [reloadKey, setReloadKey] = useState(0);
@@ -93,7 +102,7 @@ export function WorkspaceView({
         <h1>Workspace</h1>
         {state.kind === "loading" && (
           <div aria-busy="true" className={styles.section}>
-            <span className={styles.muted}>Memuat Workspace…</span>
+            <span className={styles.muted}>Memuat Workspace</span>
             <div className={styles.skeleton} />
             <div className={styles.skeleton} />
           </div>
@@ -136,18 +145,17 @@ export function WorkspaceView({
           <p className={styles.muted}>Dibuat {formatDateTime(workspace.created_at)}</p>
         </div>
         <div className={styles.headerActions}>
-          <button
-            type="button"
-            aria-pressed={sidebarOpen}
-            onClick={() => toggle("sidebar")}
-          >
+          <Button variant="ghost" aria-pressed={sidebarOpen} onClick={() => toggle("sidebar")}>
+            <SidebarSimpleIcon data-icon="inline-start" weight={sidebarOpen ? "fill" : "regular"} />
             {sidebarOpen ? "Sembunyikan data" : "Tampilkan data"}
-          </button>
-          <button type="button" aria-pressed={chatOpen} onClick={() => toggle("chat")}>
+          </Button>
+          <Button variant="ghost" aria-pressed={chatOpen} onClick={() => toggle("chat")}>
+            <ChatCircleTextIcon data-icon="inline-start" weight={chatOpen ? "fill" : "regular"} />
             {chatOpen ? "Sembunyikan chat" : "Tampilkan chat"}
-          </button>
+          </Button>
           {/* Slot ekspor PNG/PDF (task 21.10). */}
           <div data-slot="export">{slots.export}</div>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -157,39 +165,59 @@ export function WorkspaceView({
         data-chat={chatOpen ? "open" : "closed"}
       >
         <aside className={styles.sidebar} aria-label="Panel Workspace" hidden={!sidebarOpen}>
-          {/* Slot upload & detail Dataset (task 21.2) sudah berisi kartunya
-              sendiri, jadi dipasang tanpa Panel pembungkus agar tidak dobel. */}
-          {slots.datasets !== undefined ? (
-            <section aria-label="Dataset" data-slot="datasets" className={styles.slotPlain}>
-              {slots.datasets}
-            </section>
-          ) : (
-            <Panel id="datasets" title="Dataset" count={datasets.length}>
-              {datasets.length === 0 ? (
-                <p className={styles.muted}>Belum ada Dataset. Unggah file CSV atau XLSX.</p>
-              ) : (
-                <ul className={styles.itemList}>
-                  {datasets.map((d) => (
-                    <li key={d.id}>
-                      <strong>{d.table_name}</strong>{" "}
-                      <span className={styles.muted}>
-                        {d.source_name}
-                        {d.sheet_name ? ` · ${d.sheet_name}` : ""} ·{" "}
-                        {d.row_count.toLocaleString("id-ID")} baris · {d.schema.length} kolom
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+          <Tabs defaultValue="datasets" className="gap-3">
+            <TabsList className="w-full">
+              <SidebarTab value="datasets" label="Dataset" />
+              <SidebarTab value="relations" label="Relasi" pending={pending?.relations} />
+              {slots.semantic !== undefined && (
+                <SidebarTab value="semantic" label="Semantik" pending={pending?.semantic} />
               )}
-              <div data-slot="datasets" hidden />
-            </Panel>
-          )}
+            </TabsList>
+            {/* forceMount: panel tetap hidup (state, SSE, hitungan) saat tab lain aktif. */}
+            <TabsContent value="datasets" forceMount className="data-[state=inactive]:hidden">
+              {/* Slot upload & detail Dataset (task 21.2) sudah berisi kartunya
+                  sendiri, jadi dipasang tanpa Panel pembungkus agar tidak dobel. */}
+              {slots.datasets !== undefined ? (
+                <section aria-label="Dataset" data-slot="datasets" className={styles.slotPlain}>
+                  {slots.datasets}
+                </section>
+              ) : (
+                <Panel id="datasets" title="Dataset" count={datasets.length}>
+                  {datasets.length === 0 ? (
+                    <p className={styles.muted}>Belum ada Dataset. Unggah file CSV atau XLSX.</p>
+                  ) : (
+                    <ul className={styles.itemList}>
+                      {datasets.map((d) => (
+                        <li key={d.id}>
+                          <strong>{d.table_name}</strong>{" "}
+                          <span className={styles.muted}>
+                            {d.source_name}
+                            {d.sheet_name ? ` · ${d.sheet_name}` : ""} ·{" "}
+                            {d.row_count.toLocaleString("id-ID")} baris · {d.schema.length} kolom
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div data-slot="datasets" hidden />
+                </Panel>
+              )}
+            </TabsContent>
 
-          {/* Slot daftar relasi candidate/confirmed/rejected (task 21.3). */}
-          <div data-slot="relations">{slots.relations}</div>
+            {/* Slot daftar relasi candidate/confirmed/rejected (task 21.3). */}
+            <TabsContent value="relations" forceMount className="data-[state=inactive]:hidden">
+              <div data-slot="relations">{slots.relations}</div>
+            </TabsContent>
 
-          {/* Slot Model Semantik (task 33.2). */}
-          {slots.semantic !== undefined && <div data-slot="semantic">{slots.semantic}</div>}
+            {/* Slot Model Semantik (task 33.2). */}
+            {slots.semantic !== undefined && (
+              <TabsContent value="semantic" forceMount className="data-[state=inactive]:hidden">
+                <div data-slot="semantic">{slots.semantic}</div>
+              </TabsContent>
+            )}
+          </Tabs>
+
+          <Separator />
 
           {slots.pages !== undefined ? (
             <div data-slot="pages">{slots.pages}</div>
@@ -252,6 +280,19 @@ export function WorkspaceView({
         </section>
       </div>
     </main>
+  );
+}
+
+function SidebarTab({ value, label, pending = 0 }: { value: string; label: string; pending?: number }) {
+  return (
+    <TabsTrigger value={value} aria-label={pending > 0 ? `${label}, ${pending} usulan` : label}>
+      {label}
+      {pending > 0 && (
+        <Badge variant="secondary" className="tabular-nums" aria-hidden>
+          {pending}
+        </Badge>
+      )}
+    </TabsTrigger>
   );
 }
 

@@ -88,7 +88,7 @@ export function DeleteWorkspaceDialog({ workspace, onConfirm, onCancel }: Delete
           )}
           <div className={styles.actions}>
             <button type="submit" className={styles.dangerButton} disabled={!matches || pending}>
-              {pending ? "Menghapus…" : "Hapus permanen"}
+              {pending ? "Menghapus" : "Hapus permanen"}
             </button>
             <button type="button" className={styles.button} onClick={onCancel} disabled={pending}>
               Batal

@@ -14,10 +14,10 @@ import {
   renameWorkspace,
   type RequestOptions,
 } from "@/lib/api";
-import type { Workspace, WorkspaceDetail } from "@/lib/types";
+import type { Workspace, WorkspaceDetail, WorkspaceSummary } from "@/lib/types";
 
 export interface WorkspaceClient {
-  list(opts?: RequestOptions): Promise<Workspace[]>;
+  list(opts?: RequestOptions): Promise<WorkspaceSummary[]>;
   create(name: string, opts?: RequestOptions): Promise<Workspace>;
   get(id: string, opts?: RequestOptions): Promise<WorkspaceDetail>;
   rename(id: string, name: string, opts?: RequestOptions): Promise<Workspace>;
@@ -60,6 +60,27 @@ const dateTimeFormat = new Intl.DateTimeFormat("id-ID", {
   dateStyle: "medium",
   timeStyle: "short",
 });
+
+const relativeFormat = new Intl.RelativeTimeFormat("id-ID", { numeric: "auto" });
+const RELATIVE_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+  ["year", 365 * 24 * 3600],
+  ["month", 30 * 24 * 3600],
+  ["week", 7 * 24 * 3600],
+  ["day", 24 * 3600],
+  ["hour", 3600],
+  ["minute", 60],
+];
+
+/** "2 jam yang lalu"; string mentah bila tidak valid. */
+export function formatRelative(iso: string, now = Date.now()): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const seconds = (t - now) / 1000;
+  for (const [unit, size] of RELATIVE_UNITS) {
+    if (Math.abs(seconds) >= size) return relativeFormat.format(Math.round(seconds / size), unit);
+  }
+  return "baru saja";
+}
 
 /** Format timestamp ISO untuk tampilan; string mentah bila tidak valid. */
 export function formatDateTime(iso: string): string {

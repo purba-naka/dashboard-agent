@@ -1,5 +1,5 @@
 import { ApiError } from "@/lib/api";
-import type { Workspace, WorkspaceDetail } from "@/lib/types";
+import type { Workspace, WorkspaceDetail, WorkspaceSummary } from "@/lib/types";
 import type { WorkspaceClient } from "./client";
 
 /**
@@ -8,7 +8,7 @@ import type { WorkspaceClient } from "./client";
  * harus sama persis → 422 `VALIDATION_ERROR`).
  */
 export function createMemoryClient(
-  initial: Workspace[] = [],
+  initial: WorkspaceSummary[] = [],
   details: Record<string, Partial<Omit<WorkspaceDetail, "workspace">>> = {},
 ) {
   const store = new Map(initial.map((w) => [w.id, { ...w }]));
@@ -28,7 +28,7 @@ export function createMemoryClient(
 
   const client: WorkspaceClient = {
     async list() {
-      return [...store.values()];
+      return [...store.values()].map((w) => ({ ...w }));
     },
     async create(raw) {
       const now = new Date().toISOString();
@@ -39,18 +39,20 @@ export function createMemoryClient(
         created_at: now,
         updated_at: now,
       };
-      store.set(ws.id, ws);
-      return { ...ws };
+      store.set(ws.id, { ...ws, dataset_count: 0, dashboard_count: 0, last_activity_at: now });
+      return ws;
     },
     async get(id) {
-      const workspace = { ...find(id) };
+      const { id: wsId, owner_id, name, created_at, updated_at } = find(id);
+      const workspace = { id: wsId, owner_id, name, created_at, updated_at };
       return { workspace, datasets: [], dashboards: [], chat_sessions: [], ...details[id] };
     },
     async rename(id, raw) {
       const ws = find(id);
       ws.name = checkName(raw);
-      ws.updated_at = new Date().toISOString();
-      return { ...ws };
+      ws.updated_at = ws.last_activity_at = new Date().toISOString();
+      const { id: wsId, owner_id, name, created_at, updated_at } = ws;
+      return { id: wsId, owner_id, name, created_at, updated_at };
     },
     async remove(id, confirmName) {
       calls.remove.push([id, confirmName]);
@@ -65,12 +67,20 @@ export function createMemoryClient(
   return { client, store, calls };
 }
 
-export function makeWorkspace(id: string, name: string): Workspace {
+export function makeWorkspace(
+  id: string,
+  name: string,
+  extra: Partial<WorkspaceSummary> = {},
+): WorkspaceSummary {
   return {
     id,
     owner_id: "local",
     name,
     created_at: "2024-01-31T10:00:00Z",
     updated_at: "2024-01-31T10:00:00Z",
+    dataset_count: 0,
+    dashboard_count: 0,
+    last_activity_at: "2024-01-31T10:00:00Z",
+    ...extra,
   };
 }

@@ -2,8 +2,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/api";
-import { WorkspaceList } from "./WorkspaceList";
-import { validateWorkspaceName } from "./client";
+import { filterAndSort, WorkspaceList } from "./WorkspaceList";
+import { formatRelative, validateWorkspaceName } from "./client";
 import { createMemoryClient, makeWorkspace } from "./memoryClient.test-util";
 
 afterEach(cleanup);
@@ -18,7 +18,77 @@ describe("validateWorkspaceName", () => {
   });
 });
 
+describe("filterAndSort", () => {
+  const list = [
+    makeWorkspace("a", "penjualan", { dataset_count: 1, last_activity_at: "2024-03-01T00:00:00Z" }),
+    makeWorkspace("b", "Anggaran", { dataset_count: 5, last_activity_at: "2024-01-01T00:00:00Z" }),
+    makeWorkspace("c", "Penjualan Q2", { dataset_count: 5, last_activity_at: "2024-02-01T00:00:00Z" }),
+  ];
+  const ids = (q: string, s: Parameters<typeof filterAndSort>[2]) =>
+    filterAndSort(list, q, s).map((w) => w.id);
+
+  it("mencari tanpa peduli huruf besar dan spasi tepi", () => {
+    expect(ids("  PENJUALAN ", "name")).toEqual(["a", "c"]);
+    expect(ids("tidak ada", "name")).toEqual([]);
+  });
+
+  it("mengurutkan per aktivitas, nama, dan jumlah dataset (seri: nama)", () => {
+    expect(ids("", "activity")).toEqual(["a", "c", "b"]);
+    expect(ids("", "name")).toEqual(["b", "a", "c"]);
+    expect(ids("", "datasets")).toEqual(["b", "c", "a"]);
+  });
+});
+
+describe("formatRelative", () => {
+  it("memformat selisih waktu dalam bahasa Indonesia", () => {
+    const now = Date.parse("2024-01-31T12:00:00Z");
+    expect(formatRelative("2024-01-31T11:59:30Z", now)).toBe("baru saja");
+    expect(formatRelative("2024-01-31T10:00:00Z", now)).toBe("2 jam yang lalu");
+    expect(formatRelative("bukan-tanggal", now)).toBe("bukan-tanggal");
+  });
+});
+
+async function openMenuItem(user: ReturnType<typeof userEvent.setup>, ws: string, item: string) {
+  await user.click(await screen.findByRole("button", { name: `Aksi untuk ${ws}` }));
+  await user.click(screen.getByRole("menuitem", { name: item }));
+}
+
 describe("WorkspaceList", () => {
+  it("menampilkan ringkasan isi dan menyaring lewat kotak cari", async () => {
+    const user = userEvent.setup();
+    const { client } = createMemoryClient([
+      makeWorkspace("ws_a", "Penjualan", { dataset_count: 3, dashboard_count: 2 }),
+      makeWorkspace("ws_b", "Anggaran"),
+    ]);
+    render(<WorkspaceList client={client} />);
+
+    const list = await screen.findByRole("list", { name: "Daftar Workspace" });
+    expect(within(list).getByText("3 dataset · 2 dashboard")).toBeTruthy();
+    expect(within(list).getByText("Belum ada data")).toBeTruthy();
+
+    await user.type(screen.getByLabelText("Cari Workspace"), "angg");
+    expect(screen.queryByRole("link", { name: "Penjualan" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Anggaran" })).toBeTruthy();
+
+    await user.clear(screen.getByLabelText("Cari Workspace"));
+    await user.type(screen.getByLabelText("Cari Workspace"), "xyz");
+    expect(screen.getByText(/Tidak ada Workspace yang cocok/)).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Hapus pencarian" }));
+    expect(screen.getByRole("link", { name: "Penjualan" })).toBeTruthy();
+  });
+
+  it("membuka form lewat tombol Workspace baru dan menutupnya dengan Batal", async () => {
+    const user = userEvent.setup();
+    const { client } = createMemoryClient([makeWorkspace("ws_a", "A")]);
+    render(<WorkspaceList client={client} />);
+
+    await screen.findByRole("link", { name: "A" });
+    expect(screen.queryByLabelText("Nama Workspace baru")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Workspace baru" }));
+    expect(document.activeElement).toBe(screen.getByLabelText("Nama Workspace baru"));
+    await user.click(screen.getByRole("button", { name: "Batal" }));
+    expect(screen.queryByLabelText("Nama Workspace baru")).toBeNull();
+  });
   it("menampilkan state kosong lalu membuat Workspace baru (Req 1.1)", async () => {
     const user = userEvent.setup();
     const { client, store } = createMemoryClient();
@@ -34,7 +104,7 @@ describe("WorkspaceList", () => {
       "/w/ws_1",
     );
     expect([...store.values()].map((w) => w.name)).toEqual(["Penjualan 2024"]);
-    expect((screen.getByLabelText("Nama Workspace baru") as HTMLInputElement).value).toBe("");
+    expect(screen.queryByLabelText("Nama Workspace baru")).toBeNull();
     expect(screen.getByRole("status").textContent).toMatch(/dibuat/);
   });
 
@@ -56,7 +126,7 @@ describe("WorkspaceList", () => {
     const { client, store } = createMemoryClient([makeWorkspace("ws_a", "Lama")]);
     render(<WorkspaceList client={client} />);
 
-    await user.click(await screen.findByRole("button", { name: "Ganti nama Lama" }));
+    await openMenuItem(user, "Lama", "Ganti nama");
     const input = screen.getByLabelText("Nama baru untuk “Lama”");
     await user.clear(input);
     await user.type(input, "Baru");
@@ -75,7 +145,7 @@ describe("WorkspaceList", () => {
     ]);
     render(<WorkspaceList client={client} />);
 
-    await user.click(await screen.findByRole("button", { name: "Hapus Hapus Saya" }));
+    await openMenuItem(user, "Hapus Saya", "Hapus");
     const dialog = screen.getByRole("alertdialog", { name: /Hapus Workspace/ });
     const input = within(dialog).getByLabelText("Nama Workspace untuk konfirmasi");
     const confirm = within(dialog).getByRole("button", { name: "Hapus permanen" });
@@ -106,7 +176,7 @@ describe("WorkspaceList", () => {
     const { client, store } = createMemoryClient([makeWorkspace("ws_a", "A")]);
     render(<WorkspaceList client={client} />);
 
-    await user.click(await screen.findByRole("button", { name: "Hapus A" }));
+    await openMenuItem(user, "A", "Hapus");
     await user.keyboard("{Escape}");
 
     expect(screen.queryByRole("alertdialog")).toBeNull();
