@@ -7,7 +7,23 @@ import { CreateWorkspaceForm } from "./CreateWorkspaceForm";
 import { DeleteWorkspaceDialog } from "./DeleteWorkspaceDialog";
 import { WorkspaceRow } from "./WorkspaceRow";
 import { defaultWorkspaceClient, errorMessage, type WorkspaceClient } from "./client";
-import styles from "./workspaces.module.css";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const TILE_GRID = "grid list-none grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3";
 
 export interface WorkspaceListProps {
   client?: WorkspaceClient;
@@ -113,21 +129,21 @@ export function WorkspaceList({ client = defaultWorkspaceClient }: WorkspaceList
   const showForm = creating || isEmpty;
 
   return (
-    <section aria-labelledby="workspace-list-heading" className={styles.section}>
-      <div className={styles.listHeader}>
-        <h2 id="workspace-list-heading">
+    <section aria-labelledby="workspace-list-heading" className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <h2 id="workspace-list-heading" className="flex items-center gap-2">
           Workspace
-          {all.length > 0 && <span className={styles.count}>{all.length}</span>}
+          {all.length > 0 && (
+            <Badge variant="secondary" className="tabular-nums">
+              {all.length}
+            </Badge>
+          )}
         </h2>
-        {!showForm && (
-          <button type="button" className={styles.primary} onClick={() => setCreating(true)}>
-            Workspace baru
-          </button>
-        )}
+        {!showForm && <Button onClick={() => setCreating(true)}>Workspace baru</Button>}
       </div>
 
       {showForm && (
-        <div className={styles.createPanel}>
+        <div className="rounded-lg border bg-card p-4">
           <CreateWorkspaceForm
             onCreate={handleCreate}
             onCancel={isEmpty ? undefined : () => setCreating(false)}
@@ -135,78 +151,92 @@ export function WorkspaceList({ client = defaultWorkspaceClient }: WorkspaceList
         </div>
       )}
 
-      <p role="status" aria-live="polite" className={styles.srOnly}>
+      <p role="status" aria-live="polite" className="sr-only">
         {status}
       </p>
 
       {all.length > 0 && (
-        <div className={styles.toolbar}>
-          <div className={styles.toolbarField}>
-            <label htmlFor={searchId} className={styles.srOnly}>
-              Cari Workspace
-            </label>
-            <input
-              id={searchId}
-              type="search"
-              className={styles.input}
-              placeholder="Cari nama Workspace"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
-          <div className={styles.sortField}>
-            <label htmlFor={sortId}>Urutkan</label>
-            <select
-              id={sortId}
-              value={sort}
-              onChange={(e) => setSort(e.target.value as WorkspaceSort)}
-            >
-              {Object.entries(SORT_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-wrap items-center gap-3">
+          <Label htmlFor={searchId} className="sr-only">
+            Cari Workspace
+          </Label>
+          <Input
+            id={searchId}
+            type="search"
+            className="min-w-64 flex-1"
+            placeholder="Cari nama Workspace"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            autoComplete="off"
+          />
+          <div className="flex items-center gap-2">
+            <Label htmlFor={sortId} className="text-muted-foreground">
+              Urutkan
+            </Label>
+            <Select value={sort} onValueChange={(v) => setSort(v as WorkspaceSort)}>
+              <SelectTrigger id={sortId} className="min-w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {Object.entries(SORT_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}
 
       {state.kind === "loading" && (
-        <div aria-busy="true" className={styles.tileGrid}>
-          <span className={styles.srOnly}>Memuat Workspace</span>
-          <div className={styles.skeleton} />
-          <div className={styles.skeleton} />
-          <div className={styles.skeleton} />
+        <div aria-busy="true" className={TILE_GRID}>
+          <span className="sr-only">Memuat Workspace</span>
+          <Skeleton className="h-25" />
+          <Skeleton className="h-25" />
+          <Skeleton className="h-25" />
         </div>
       )}
 
       {state.kind === "error" && (
-        <div role="alert" className={styles.empty}>
-          <p className={styles.error}>Gagal memuat Workspace: {state.message}</p>
-          <button type="button" onClick={retry}>
-            Coba lagi
-          </button>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>Gagal memuat Workspace: {state.message}</span>
+            <Button variant="outline" size="sm" onClick={retry}>
+              Coba lagi
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {isEmpty && (
-        <p className={styles.empty}>
-          Belum ada Workspace. Beri nama Workspace pertama, lalu unggah CSV atau XLSX di dalamnya.
-        </p>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyTitle>Belum ada Workspace.</EmptyTitle>
+            <EmptyDescription>
+              Beri nama Workspace pertama, lalu unggah CSV atau XLSX di dalamnya.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
 
       {all.length > 0 && visible.length === 0 && (
-        <div className={styles.empty}>
-          <p>Tidak ada Workspace yang cocok dengan “{query.trim()}”.</p>
-          <button type="button" onClick={() => setQuery("")}>
-            Hapus pencarian
-          </button>
-        </div>
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyTitle>Tidak ada Workspace yang cocok dengan “{query.trim()}”.</EmptyTitle>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button variant="outline" size="sm" onClick={() => setQuery("")}>
+              Hapus pencarian
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
 
       {visible.length > 0 && (
-        <ul className={styles.tileGrid} aria-label="Daftar Workspace">
+        <ul className={TILE_GRID} aria-label="Daftar Workspace">
           {visible.map((ws) => (
             <WorkspaceRow
               key={ws.id}

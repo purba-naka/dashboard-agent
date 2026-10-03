@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import type { Workspace } from "@/lib/types";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { errorMessage } from "./client";
-import styles from "./workspaces.module.css";
 
 export interface DeleteWorkspaceDialogProps {
   workspace: Workspace;
@@ -17,21 +28,12 @@ export interface DeleteWorkspaceDialogProps {
  * pengguna mengetik nama Workspace persis sama (backend membandingkan apa adanya).
  */
 export function DeleteWorkspaceDialog({ workspace, onConfirm, onCancel }: DeleteWorkspaceDialogProps) {
-  const titleId = useId();
-  const descId = useId();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const matches = typed === workspace.name;
-
-  // Fokus ke input saat dibuka; kembalikan fokus ke pemicu saat ditutup.
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    inputRef.current?.focus();
-    return () => previous?.focus?.();
-  }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,56 +48,47 @@ export function DeleteWorkspaceDialog({ workspace, onConfirm, onCancel }: Delete
     }
   }
 
-  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (e.key === "Escape" && !pending) {
-      e.stopPropagation();
-      onCancel();
-    }
-  }
-
   return (
-    <div className={styles.backdrop} onKeyDown={handleKeyDown}>
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descId}
-        className={styles.dialog}
+    <AlertDialog open onOpenChange={(open) => !open && !pending && onCancel()}>
+      <AlertDialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          inputRef.current?.focus();
+        }}
+        onEscapeKeyDown={(e) => pending && e.preventDefault()}
       >
-        <h2 id={titleId}>Hapus Workspace “{workspace.name}”?</h2>
-        <p id={descId}>
-          Semua Dataset, file upload, Dashboard, dan riwayat chat di Workspace ini akan dihapus
-          permanen. Ketik <strong>{workspace.name}</strong> untuk mengonfirmasi.
-        </p>
-        <form className={styles.section} onSubmit={handleSubmit}>
-          <div className={styles.field}>
-            <label htmlFor={inputId}>Nama Workspace untuk konfirmasi</label>
-            <input
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Workspace “{workspace.name}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Semua Dataset, file upload, Dashboard, dan riwayat chat di Workspace ini akan dihapus
+              permanen. Ketik <strong className="text-foreground">{workspace.name}</strong> untuk
+              mengonfirmasi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Field data-invalid={error ? true : undefined} data-disabled={pending || undefined}>
+            <FieldLabel htmlFor={inputId}>Nama Workspace untuk konfirmasi</FieldLabel>
+            <Input
               ref={inputRef}
               id={inputId}
-              className={styles.input}
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
               disabled={pending}
               autoComplete="off"
               spellCheck={false}
             />
-          </div>
-          {error && (
-            <p role="alert" className={styles.error}>
-              {error}
-            </p>
-          )}
-          <div className={styles.actions}>
-            <button type="submit" className={styles.dangerButton} disabled={!matches || pending}>
-              {pending ? "Menghapus" : "Hapus permanen"}
-            </button>
-            <button type="button" className={styles.button} onClick={onCancel} disabled={pending}>
+            {error && <FieldError>{error}</FieldError>}
+          </Field>
+          <AlertDialogFooter>
+            <AlertDialogCancel type="button" disabled={pending}>
               Batal
-            </button>
-          </div>
+            </AlertDialogCancel>
+            <Button type="submit" variant="destructive" disabled={!matches || pending}>
+              {pending ? "Menghapus" : "Hapus permanen"}
+            </Button>
+          </AlertDialogFooter>
         </form>
-      </div>
-    </div>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

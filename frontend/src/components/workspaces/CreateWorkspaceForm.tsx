@@ -1,8 +1,10 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { errorMessage, MAX_WORKSPACE_NAME_LENGTH, validateWorkspaceName } from "./client";
-import styles from "./workspaces.module.css";
 
 export interface CreateWorkspaceFormProps {
   /** Dipanggil dengan nama yang sudah di-trim; lempar error untuk menampilkannya. */
@@ -39,12 +41,20 @@ export function CreateWorkspaceForm({ onCreate, onCancel }: CreateWorkspaceFormP
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} aria-label="Buat Workspace" noValidate>
-      <div className={styles.field}>
-        <label htmlFor={inputId}>Nama Workspace baru</label>
-        <input
+    <form
+      className="flex flex-wrap items-end gap-2"
+      onSubmit={handleSubmit}
+      aria-label="Buat Workspace"
+      noValidate
+    >
+      <Field
+        className="min-w-64 flex-1"
+        data-invalid={error ? true : undefined}
+        data-disabled={pending || undefined}
+      >
+        <FieldLabel htmlFor={inputId}>Nama Workspace baru</FieldLabel>
+        <Input
           id={inputId}
-          className={styles.input}
           value={name}
           maxLength={MAX_WORKSPACE_NAME_LENGTH}
           onChange={(e) => setName(e.target.value)}
@@ -57,19 +67,19 @@ export function CreateWorkspaceForm({ onCreate, onCancel }: CreateWorkspaceFormP
           disabled={pending}
           autoComplete="off"
         />
-      </div>
-      <button type="submit" className={styles.button} disabled={pending}>
+      </Field>
+      <Button type="submit" disabled={pending}>
         {pending ? "Membuat" : "Buat Workspace"}
-      </button>
+      </Button>
       {onCancel && (
-        <button type="button" onClick={onCancel} disabled={pending}>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={pending}>
           Batal
-        </button>
+        </Button>
       )}
       {error && (
-        <p id={errorId} role="alert" className={styles.error} style={{ flexBasis: "100%" }}>
+        <FieldError id={errorId} className="basis-full">
           {error}
-        </p>
+        </FieldError>
       )}
     </form>
   );

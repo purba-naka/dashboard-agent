@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Design tokens. One accent (blue), neutral slate surfaces, light + dark.
-   Legacy names (--surface, --accent, ...) feed CSS Modules; shadcn names map onto them. */
+   Base names (--surface, --accent, ...) feed the shadcn names below. */
 :root {
   color-scheme: light;
   --bg: #f6f7f9;
@@ -112,8 +112,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Base layer: utilities and CSS Modules override this. Legacy control styles skip
-   shadcn parts ([data-slot]). ponytail: drop the legacy control block in phase 8. */
+/* Base layer: utilities override this. Controls come from shadcn components. */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -159,7 +158,7 @@
     font-weight: 600;
   }
 
-  /* Preflight strips list markers; restore the browser default the modules expect. */
+  /* Preflight strips list markers; restore the browser default. Lists opt out with list-none. */
   ul {
     list-style: disc;
   }
@@ -178,90 +177,9 @@
     cursor: pointer;
   }
 
-  button:not([data-slot]) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    min-height: 2rem;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    font-size: 0.875rem;
-    font-weight: 500;
-    white-space: nowrap;
-    transition:
-      background-color 150ms ease,
-      border-color 150ms ease,
-      color 150ms ease;
-  }
-
-  button:not([data-slot]):hover:not(:disabled) {
-    background: var(--surface-2);
-  }
-
-  button:not([data-slot]):active:not(:disabled) {
-    transform: translateY(1px);
-  }
-
-  button:not([data-slot])[type="submit"] {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--on-accent);
-  }
-
-  button:not([data-slot])[type="submit"]:hover:not(:disabled) {
-    border-color: var(--accent-hover);
-    background: var(--accent-hover);
-  }
-
-  button:not([data-slot]):disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  input:not([data-slot]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-  select:not([data-slot]),
-  textarea:not([data-slot]) {
-    min-height: 2.25rem;
-    padding: 0.4rem 0.625rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    transition: border-color 150ms ease;
-  }
-
   input::placeholder,
   textarea::placeholder {
     color: var(--text-muted);
-  }
-
-  input[type="checkbox"]:not([data-slot]),
-  input[type="radio"]:not([data-slot]) {
-    accent-color: var(--accent);
-    width: 1rem;
-    height: 1rem;
-  }
-
-  input[type="file"] {
-    font-size: 0.875rem;
-  }
-
-  input[type="file"]::file-selector-button {
-    margin-right: 0.625rem;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  label:not([data-slot]) {
-    font-size: 0.8125rem;
-    font-weight: 500;
   }
 
   :focus-visible {
