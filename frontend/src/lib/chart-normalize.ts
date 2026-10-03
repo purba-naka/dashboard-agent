@@ -6,7 +6,7 @@
  */
 import { colorAt, parseColor, readableOn, TEXT_DARK, TEXT_LIGHT } from "./contrast";
 import { formatNumber } from "./format-number";
-import { colorFor, PALETTE } from "./echarts-theme";
+import { colorFor, STEP_PALETTE } from "./echarts-theme";
 
 type O = Record<string, any>;
 
@@ -76,8 +76,8 @@ export function orderCategories(values: unknown[]): unknown[] {
   return uniq;
 }
 
-/** Warna langkah waterfall dari kolom `step_kind`: total biru, turun oranye, naik hijau. */
-export const STEP_COLORS: Record<string, string> = { total: PALETTE[0], down: PALETTE[1], up: PALETTE[4] };
+/** Warna langkah waterfall dari kolom `step_kind`: total biru, turun merah, naik hijau. */
+export const STEP_COLORS: Record<string, string> = STEP_PALETTE;
 
 const asArray = (v: unknown): any[] => (Array.isArray(v) ? v : v == null ? [] : [v]);
 

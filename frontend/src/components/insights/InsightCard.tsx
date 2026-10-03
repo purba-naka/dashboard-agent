@@ -1,9 +1,14 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { formatScalar } from "@/lib/filters";
 import type { FilterSet, InsightItem, QueryDetail } from "@/lib/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   computedWithDifferentFilters,
   defaultInsightClient,
@@ -12,7 +17,6 @@ import {
   isStale,
   type InsightClient,
 } from "./client";
-import styles from "./insights.module.css";
 
 export interface InsightCardProps {
   insight: InsightItem;
@@ -81,124 +85,76 @@ export function InsightCard({
   }
 
   return (
-    <article className={styles.card} aria-label={`Insight: ${insight.title}`}>
+    <article className="flex h-full min-h-0 flex-col gap-2 overflow-hidden" aria-label={`Insight: ${insight.title}`}>
       {/* Judul tampil di header sel Canvas; kartu hanya badge tipe. */}
-      <span className={styles.type}>{insightTypeLabel(insight.insight_type)}</span>
+      <Badge variant="secondary">{insightTypeLabel(insight.insight_type)}</Badge>
 
-      <p ref={textRef} className={styles.text}>
+      {/* ponytail: 2 baris karena tinggi tile grid tetap; naikkan bila tile ikut tinggi isi. max-h pengaman export. */}
+      <p ref={textRef} className="m-0 line-clamp-2 max-h-[3em] shrink-0 leading-normal">
         {insight.text}
       </p>
       {clamped && (
-        <button type="button" className={styles.more} onClick={openDetail}>
+        <Button variant="link" size="sm" className="h-auto self-start p-0" onClick={openDetail}>
           Lihat selengkapnya
-        </button>
+        </Button>
       )}
 
       {(differentFilters || stale) && (
-        <div className={styles.badges}>
+        <div className="flex flex-wrap gap-1.5">
           {differentFilters && (
-            <span className={`${styles.badge} ${styles.badgeWarn}`}>
+            <Badge variant="secondary" className="bg-warn-soft text-warn">
               Dihitung dengan filter berbeda
-            </span>
+            </Badge>
           )}
-          {stale && (
-            <span className={`${styles.badge} ${styles.badgeStale}`}>
-              Data sumber sudah berubah
-            </span>
-          )}
+          {stale && <Badge variant="destructive">Data sumber sudah berubah</Badge>}
         </div>
       )}
 
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.button}
-          onClick={openDetail}
-          disabled={busy !== null}
-        >
+      <div className="flex gap-2" data-export-hide>
+        <Button variant="outline" size="sm" onClick={openDetail} disabled={busy !== null}>
           Detail
-        </button>
-        <button
-          type="button"
-          className={styles.button}
-          onClick={onRefresh}
-          disabled={busy !== null}
-        >
-          {busy === "refresh" ? "Menyegarkan…" : "Segarkan"}
-        </button>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onRefresh} disabled={busy !== null}>
+          {busy === "refresh" ? "Menyegarkan" : "Segarkan"}
+        </Button>
       </div>
 
       {error && (
-        <p role="alert" className={styles.error}>
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      {detailOpen && (
-        <InsightDetail
-          insight={insight}
-          detail={detail}
-          loading={busy === "detail"}
-          onClose={() => setDetailOpen(false)}
-        />
-      )}
+      {/* Dialog Radix dirender via portal: lolos dari transform + overflow sel grid. */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{insight.title}</DialogTitle>
+            <DialogDescription className="whitespace-pre-wrap text-foreground">{insight.text}</DialogDescription>
+          </DialogHeader>
+
+          <section className="flex flex-col gap-2">
+            <h4 className="text-sm font-semibold">SQL sumber</h4>
+            {busy === "detail" && !detail ? (
+              <Skeleton className="h-20 w-full" aria-busy="true" aria-label="Memuat SQL" />
+            ) : (
+              <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-[0.8125rem] whitespace-pre-wrap">
+                {detail?.sql ?? insight.sql}
+              </pre>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h4 className="text-sm font-semibold">Tabel bukti</h4>
+            <EvidenceTableView
+              columns={(detail?.columns ?? insight.evidence.columns).map((c) => c.name)}
+              rows={detail?.rows ?? insight.evidence.rows}
+              rowCount={detail?.row_count ?? insight.evidence.row_count}
+            />
+          </section>
+        </DialogContent>
+      </Dialog>
     </article>
-  );
-}
-
-function InsightDetail({
-  insight,
-  detail,
-  loading,
-  onClose,
-}: {
-  insight: InsightItem;
-  detail: QueryDetail | null;
-  loading: boolean;
-  onClose: () => void;
-}) {
-  // Portal: sel grid memakai `transform` + `overflow: hidden`, yang menjebak
-  // `position: fixed` sehingga modal terpotong di dalam kartu.
-  return createPortal(
-    <div
-      className={styles.backdrop}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Detail insight: ${insight.title}`}
-      onClick={onClose}
-    >
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.header}>
-          <h3 className={styles.title}>{insight.title}</h3>
-          <button type="button" className={styles.button} onClick={onClose}>
-            Tutup
-          </button>
-        </div>
-
-        <p className={styles.fullText}>{insight.text}</p>
-
-        <div>
-          <h4>SQL sumber</h4>
-          {loading && !detail ? (
-            <p aria-busy="true" className={styles.muted}>
-              Memuat…
-            </p>
-          ) : (
-            <pre className={styles.sql}>{detail?.sql ?? insight.sql}</pre>
-          )}
-        </div>
-
-        <div>
-          <h4>Tabel bukti</h4>
-          <EvidenceTableView
-            columns={(detail?.columns ?? insight.evidence.columns).map((c) => c.name)}
-            rows={detail?.rows ?? insight.evidence.rows}
-            rowCount={detail?.row_count ?? insight.evidence.row_count}
-          />
-        </div>
-      </div>
-    </div>,
-    document.body,
   );
 }
 
@@ -212,30 +168,30 @@ function EvidenceTableView({
   rowCount: number;
 }) {
   if (columns.length === 0) {
-    return <p className={styles.muted}>Tidak ada kolom bukti.</p>;
+    return <p className="text-[0.8125rem] text-muted-foreground">Tidak ada kolom bukti.</p>;
   }
   return (
     <>
-      <table className={styles.table}>
-        <thead>
-          <tr>
+      <Table className="tabular-nums">
+        <TableHeader>
+          <TableRow>
             {columns.map((c) => (
-              <th key={c}>{c}</th>
+              <TableHead key={c}>{c}</TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {rows.map((row, i) => (
-            <tr key={i}>
+            <TableRow key={i}>
               {row.map((cell, j) => (
-                <td key={j}>{formatScalar(cell)}</td>
+                <TableCell key={j}>{formatScalar(cell)}</TableCell>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       {rowCount > rows.length && (
-        <p className={styles.muted}>
+        <p className="text-[0.8125rem] text-muted-foreground">
           Menampilkan {rows.length} dari {rowCount.toLocaleString("id-ID")} baris.
         </p>
       )}

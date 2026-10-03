@@ -4,7 +4,30 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useContainerWidth, GridLayout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
+import { DotsThreeIcon, SealCheckIcon, TrashIcon } from "@phosphor-icons/react/ssr";
+import { cn } from "@/lib/utils";
 import { InsightCard } from "@/components/insights";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { KpiTile } from "./KpiTile";
 import { toggleCrossFilter } from "@/lib/filters";
 import { normalizeChart } from "@/lib/chart-normalize";
@@ -27,7 +50,6 @@ import {
   sortedItemIds,
   type CanvasClient,
 } from "./client";
-import styles from "./canvas.module.css";
 
 export interface CanvasProps {
   snapshot: DashboardSnapshot;
@@ -56,6 +78,8 @@ const KPI_REQUEST =
 // Prop ECharts konstan: objek baru tiap render memicu resize/rebind di echarts-for-react.
 const ECHARTS_OPTS = { renderer: "canvas" } as const;
 const ECHARTS_STYLE = { height: "100%", minHeight: 0 } as const;
+const DRAG_HANDLE = "canvas-drag-handle";
+const PLACEHOLDER = "flex flex-1 items-center justify-center p-4 text-center text-sm text-muted-foreground";
 
 interface GridEntry {
   i: string;
@@ -156,6 +180,9 @@ export function Canvas({
       });
   }
 
+  /** Item yang menunggu konfirmasi hapus (AlertDialog). */
+  const [removeId, setRemoveId] = useState<string | null>(null);
+
   function onRemove(itemId: string) {
     client
       .command(snapshot.id, version, { type: "remove_item", id: itemId })
@@ -179,11 +206,10 @@ export function Canvas({
   }
 
   // Handler lewat ref agar identitasnya stabil untuk `Cell` (memo).
-  const handlersRef = useRef({ onRemove, onChartElementClick });
+  const handlersRef = useRef({ onChartElementClick });
   useEffect(() => {
-    handlersRef.current = { onRemove, onChartElementClick };
+    handlersRef.current = { onChartElementClick };
   });
-  const stableRemove = useCallback((id: string) => handlersRef.current.onRemove(id), []);
   const stableChartClick = useCallback(
     (id: string, params: { name?: unknown; value?: unknown }) =>
       handlersRef.current.onChartElementClick(id, params),
@@ -221,49 +247,56 @@ export function Canvas({
     [visibleIds, content.layout],
   );
 
-  const renderItems = rendered;
+  const removeTitle = removeId ? (content.items[removeId]?.title ?? removeId) : "";
 
   return (
-    <div className={styles.canvas} data-canvas-version={version}>
-      <div className={styles.toolbar}>
-        <h2 className={styles.title}>{content.title}</h2>
-        <span className={styles.muted}>v{version}</span>
+    <div className="flex min-h-0 flex-col gap-3" data-canvas-version={version}>
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="m-0 text-lg font-semibold">{content.title}</h2>
+        <span className="text-[0.8125rem] text-muted-foreground tabular-nums">v{version}</span>
         {hasFilters && (
-          <button type="button" className={styles.itemAction} data-export-hide onClick={resetFilters}>
+          <Button variant="ghost" size="sm" data-export-hide onClick={resetFilters}>
             Reset semua filter
-          </button>
+          </Button>
         )}
         {onAskAgent && ids.length > 0 && !hasKpi && (
-          <button type="button" className={styles.itemAction} data-export-hide onClick={() => onAskAgent(KPI_REQUEST)}>
+          <Button variant="ghost" size="sm" data-export-hide onClick={() => onAskAgent(KPI_REQUEST)}>
             Buat KPI di atas dashboard
-          </button>
-        )}
-        {renderError && (
-          <span role="alert" className={styles.error}>
-            {renderError}
-          </span>
+          </Button>
         )}
       </div>
+      {renderError && (
+        <Alert variant="destructive">
+          <AlertDescription>{renderError}</AlertDescription>
+        </Alert>
+      )}
 
-      <div ref={containerRef} className={styles.grid}>
+      <div ref={containerRef} className="relative">
         {width > 0 && (
           <GridLayout
             width={width}
             gridConfig={{ cols: GRID_COLUMNS, rowHeight: ROW_HEIGHT }}
-            dragConfig={{ enabled: true, handle: `.${styles.dragHandle}` }}
+            dragConfig={{ enabled: true, handle: `.${DRAG_HANDLE}` }}
             layout={layout}
             onLayoutChange={onLayoutChange}
           >
             {visibleIds.map((id) => (
-              <div key={id} className={styles.cell}>
+              <div
+                key={id}
+                className={cn(
+                  "relative flex flex-col overflow-hidden rounded-lg border bg-card shadow-xs transition-colors [contain:layout_paint] hover:border-input focus-within:border-input",
+                  // Motif KPI: garis aksen tipis di atas tile.
+                  content.items[id]?.kind === "kpi" && "border-t-2 border-t-primary",
+                )}
+              >
                 <Cell
                   id={id}
                   snapshot={snapshot}
-                  rendered={renderItems[id]}
+                  rendered={rendered[id]}
                   crossFilters={crossFilters}
                   datasetVersions={datasetVersions}
                   renderInsight={renderInsight}
-                  onRemove={stableRemove}
+                  onRemove={setRemoveId}
                   onChartElementClick={stableChartClick}
                   onVerify={client.verify ? stableVerify : undefined}
                   verified={verifiedIds.has(id)}
@@ -281,16 +314,39 @@ export function Canvas({
       </div>
 
       {(hiddenCount > 0 || (expanded && ids.length > MAX_VISIBLE_VIEWS)) && (
-        <button type="button" className={styles.moreViews} onClick={() => setExpanded((v) => !v)}>
+        <Button variant="outline" size="sm" className="self-center" data-export-hide onClick={() => setExpanded((v) => !v)}>
           {expanded ? "Ringkas dashboard" : `Tampilkan ${hiddenCount} item lainnya`}
-        </button>
+        </Button>
       )}
 
       {ids.length === 0 && (
-        <p className={styles.empty}>
+        <p className="rounded-lg border border-dashed border-input px-4 py-10 text-center text-muted-foreground">
           Dashboard masih kosong. Minta agent di panel chat untuk membuat chart.
         </p>
       )}
+
+      <AlertDialog open={removeId !== null} onOpenChange={(open) => !open && setRemoveId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus “{removeTitle}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Item hilang dari dashboard. Batalkan lewat Undo bila perlu.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (removeId) onRemove(removeId);
+                setRemoveId(null);
+              }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -341,81 +397,99 @@ const Cell = memo(function Cell({
   const crossFilterActive =
     isChartItem && item.spec.cross_filter_column !== null && crossFilters.length > 0;
 
+  const canVerify = onVerify && item && item.kind !== "insight";
+
   return (
     <div
-      className={`${styles.cellBody} ${highlighted ? styles.highlighted : ""}`}
+      className={cn(
+        "flex min-h-0 flex-1 flex-col transition-shadow",
+        highlighted && "shadow-[inset_0_0_0_2px_var(--ring)]",
+      )}
       onMouseEnter={item?.kind === "insight" ? () => onHoverQuery?.(item.query_id) : undefined}
       onMouseLeave={item?.kind === "insight" ? () => onHoverQuery?.(null) : undefined}
     >
-      <div className={styles.cellHeader}>
+      <div className="flex min-h-11 items-center justify-between gap-2 border-b py-1 pr-1.5 pl-3">
         <button
           type="button"
-          className={styles.dragHandle}
+          data-slot="drag-handle"
+          className={cn(
+            DRAG_HANDLE,
+            "flex min-w-0 flex-1 cursor-grab flex-col items-start justify-center overflow-hidden text-left active:cursor-grabbing",
+          )}
           aria-label={`Pindah item ${title}`}
         >
-          <span className={styles.cellTitle}>{title}</span>
+          <span className="line-clamp-2 text-sm leading-tight font-semibold">{title}</span>
           {normalized?.subtitle && (
-            <span className={styles.cellSubtitle}>{normalized.subtitle}</span>
+            <span className="block w-full truncate text-xs text-muted-foreground">{normalized.subtitle}</span>
           )}
         </button>
-        <span className={styles.badges}>
-          {crossFilterActive && (
-            <span className={`${styles.badge} ${styles.crossFilter}`}>
-              Cross_Filter
-            </span>
+        <span className="flex shrink-0 items-center gap-1">
+          {crossFilterActive && <Badge variant="outline">Cross_Filter</Badge>}
+          {badges.map((b) =>
+            b === "invalid" ? (
+              <Badge key={b} variant="destructive">Tidak valid</Badge>
+            ) : (
+              // ponytail: belum ada varian Badge "warn"; tambah varian bila dipakai di >1 tempat.
+              <Badge key={b} variant="secondary" className="bg-warn-soft text-warn">Data berubah</Badge>
+            ),
           )}
-          {badges.map((b) => (
-            <span
-              key={b}
-              className={`${styles.badge} ${
-                b === "invalid" ? styles.badgeInvalid : styles.badgeStale
-              }`}
-            >
-              {b === "invalid" ? "Tidak valid" : "Data berubah"}
-            </span>
-          ))}
-          {onVerify && item && item.kind !== "insight" && (
-            <button
-              type="button"
-              className={styles.itemAction}
-              aria-label={`Tandai terverifikasi ${title}`}
-              title="Tandai hasil ini benar. Agent memakainya sebagai contoh untuk pertanyaan serupa."
-              disabled={verified}
-              onClick={() => onVerify(id)}
-            >
-              {verified ? "✓ Hasil benar" : "Tandai benar"}
-            </button>
+          {verified && (
+            <Badge variant="secondary">
+              <SealCheckIcon data-icon="inline-start" weight="fill" />
+              Hasil benar
+            </Badge>
           )}
-          <button
-            type="button"
-            className={styles.remove}
-            aria-label={`Hapus item ${title}`}
-            onClick={() => onRemove(id)}
-          >
-            ✕
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={`Aksi untuk ${title}`} data-export-hide>
+                <DotsThreeIcon weight="bold" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {canVerify && (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem disabled={verified} onSelect={() => onVerify(id)}>
+                      <SealCheckIcon />
+                      <span className="flex flex-col">
+                        Tandai benar
+                        <span className="text-xs text-muted-foreground">Jadi contoh untuk pertanyaan serupa</span>
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuGroup>
+                <DropdownMenuItem variant="destructive" onSelect={() => onRemove(id)}>
+                  <TrashIcon />
+                  Hapus
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </span>
       </div>
 
       {isChartItem ? (
         normalized?.error ? (
-          <div className={styles.placeholder} role="alert">
+          <div className={PLACEHOLDER} role="alert">
             Chart tidak dapat ditampilkan: {normalized.error}
           </div>
         ) : normalized ? (
           <Chart id={id} option={normalized.option} onClick={onChartElementClick} />
         ) : (
-          <div className={styles.placeholder}>
+          <div className={PLACEHOLDER}>
             {rendered?.status && rendered.status !== "ok"
               ? `Chart tidak dapat dirender (${rendered.status}).`
-              : "Menyiapkan chart…"}
+              : "Menyiapkan chart"}
           </div>
         )
       ) : item?.kind === "kpi" ? (
         <KpiTile item={item} rendered={rendered} />
       ) : item?.kind === "insight" ? (
         renderInsight ? (
-          <div className={styles.insightSlot}>
+          <div className="min-h-0 flex-1 overflow-hidden px-2.5 py-2">
             <InsightCard
               insight={item}
               dashboardId={snapshot.id}
@@ -426,7 +500,7 @@ const Cell = memo(function Cell({
           </div>
         ) : null
       ) : (
-        <div className={styles.placeholder}>Item tidak dikenal.</div>
+        <div className={PLACEHOLDER}>Item tidak dikenal.</div>
       )}
     </div>
   );

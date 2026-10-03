@@ -137,9 +137,10 @@ describe("InsightCard", () => {
     );
     await user.click(screen.getByRole("button", { name: "Detail" }));
     const dialog = await screen.findByRole("dialog");
-    const card = screen.getByRole("article");
+    // Modal Radix memberi aria-hidden pada sisa halaman.
+    const card = screen.getByRole("article", { hidden: true });
     expect(card.contains(dialog)).toBe(false);
-    expect(dialog.parentElement).toBe(document.body);
+    expect(document.body.contains(dialog)).toBe(true);
   });
 
   it("memanggil refresh dengan base_version (Req 15.1)", async () => {

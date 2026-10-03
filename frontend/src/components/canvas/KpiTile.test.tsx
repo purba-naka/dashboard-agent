@@ -55,12 +55,12 @@ describe("KpiTile", () => {
     );
     expect(screen.getByText("Rp 17,6 juta")).toBeTruthy();
     const delta = screen.getByText(/\+Rp 1,2 juta/);
-    expect(delta.className).toMatch(/kpi_positive/);
+    expect(delta.getAttribute("data-sentiment")).toBe("positive");
   });
 
   it("sentimen negatif memakai kelas negatif", () => {
     render(<KpiTile item={kpi({ good_direction: "down" })} rendered={rendered("negative")} />);
-    expect(screen.getByText(/\+Rp 1,2 juta/).className).toMatch(/kpi_negative/);
+    expect(screen.getByText(/\+Rp 1,2 juta/).getAttribute("data-sentiment")).toBe("negative");
     expect(kpiAriaLabel(kpi(), rendered("negative"))).toContain("memburuk");
   });
 
@@ -131,8 +131,9 @@ describe("Canvas ekstensi", () => {
   it("Tandai terverifikasi memanggil verify (Req 34.2)", async () => {
     const c = client();
     render(<Canvas snapshot={snapshot()} crossFilters={[]} client={c} />);
-    await userEvent.click(await screen.findByRole("button", { name: "Tandai terverifikasi Revenue" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Aksi untuk Revenue" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: /Tandai benar/ }));
     expect(c.verify).toHaveBeenCalledWith("db_1", "k1");
-    expect(await screen.findByText("✓ Hasil benar")).toBeTruthy();
+    expect(await screen.findByText("Hasil benar")).toBeTruthy();
   });
 });

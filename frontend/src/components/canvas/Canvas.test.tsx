@@ -4,7 +4,7 @@
 // memiliki layout sungguhan (clientWidth selalu 0) dan canvas ECharts berat;
 // prop grid ditangkap agar `onLayoutChange` dapat dipicu manual.
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -141,7 +141,7 @@ describe("Canvas", () => {
       <Canvas snapshot={snapshot()} crossFilters={[]} client={client} />,
     );
     // ins_1 (y=0) tampil sebelum ch_1 (y=1).
-    const buttons = await screen.findAllByRole("button", { name: /^Hapus item/ });
+    const buttons = await screen.findAllByRole("button", { name: /^Aksi untuk/ });
     const labels = buttons.map((b) => b.getAttribute("aria-label"));
     expect(labels[0]).toContain("Kontributor teratas");
     expect(labels[1]).toContain("Penjualan per bulan");
@@ -195,11 +195,15 @@ describe("Canvas", () => {
     expect(screen.getByText("Cross_Filter")).toBeTruthy();
   });
 
-  it("tombol hapus mengirim command remove_item dengan versi dasar (Req 23.3)", async () => {
+  it("hapus lewat menu + konfirmasi mengirim command remove_item dengan versi dasar (Req 23.3)", async () => {
     const user = userEvent.setup();
     const client = memoryClient();
     render(<Canvas snapshot={snapshot()} crossFilters={[]} client={client} />);
-    await user.click(screen.getByRole("button", { name: "Hapus item Penjualan per bulan" }));
+    await user.click(screen.getByRole("button", { name: "Aksi untuk Penjualan per bulan" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Hapus" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(client.command).not.toHaveBeenCalled();
+    await user.click(within(dialog).getByRole("button", { name: "Hapus" }));
     expect(client.command).toHaveBeenCalledWith("db_1", 3, {
       type: "remove_item",
       id: "ch_1",
