@@ -18,7 +18,17 @@ import type {
   Scalar,
 } from "@/lib/types";
 import { defaultFilterClient, errorMessage, isTimeColumn, type FilterClient } from "./client";
-import styles from "./filters.module.css";
+import { XIcon } from "@phosphor-icons/react/ssr";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+const MUTED = "text-[0.8125rem] text-muted-foreground";
+const CONTROL = "relative m-0 min-w-0 rounded-md border bg-muted px-2.5 py-1.5";
+const CONTROL_NAME = "p-0 text-xs text-muted-foreground";
+const CHIP = "inline-flex items-center gap-1 rounded-full border bg-muted py-0.5 pr-1 pl-2.5 text-[0.8125rem] whitespace-nowrap";
+const CHECK = "size-4 accent-foreground";
 
 export interface GlobalFilterPanelProps {
   workspaceId: string;
@@ -103,16 +113,16 @@ export function GlobalFilterPanel({
   });
 
   return (
-    <section aria-label="Filter" className={styles.panel}>
-      <h2 className={styles.title}>Saring data</h2>
-      <p className={styles.muted}>Berlaku ke semua chart di dashboard.</p>
+    <section aria-label="Filter" className="flex flex-col gap-2.5 rounded-lg border bg-card px-4 py-3.5">
+      <h2 className="text-base font-semibold">Saring data</h2>
+      <p className={MUTED}>Berlaku ke semua chart di dashboard.</p>
 
       {datasets.length === 0 ? (
-        <p className={styles.muted}>Unggah dataset untuk mulai menyaring data.</p>
+        <p className={MUTED}>Unggah dataset untuk mulai menyaring data.</p>
       ) : controls.length === 0 ? (
-        <p className={styles.muted}>Memuat kolom…</p>
+        <p className={MUTED}>Memuat kolom</p>
       ) : (
-        <div className={styles.controls}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] items-start gap-2">
           {controls.map((c) =>
             c.time ? (
               <DateRangeControl
@@ -139,40 +149,40 @@ export function GlobalFilterPanel({
       )}
 
       {(globalLabels.length > 0 || crossLabels.length > 0) && (
-        <ul className={styles.chips}>
+        <ul className="flex flex-wrap gap-1.5">
           {globalFilters.map((pred, i) => (
-            <li key={`g-${pred.table}.${pred.column}-${i}`} className={styles.chip}>
+            <li key={`g-${pred.table}.${pred.column}-${i}`} className={CHIP}>
               <span>{globalLabels[i]}</span>
-              <button
-                type="button"
-                className={styles.chipRemove}
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Hapus filter ${globalLabels[i]}`}
                 onClick={() => applyGlobal(removePredicate(globalFilters, pred))}
               >
-                ✕
-              </button>
+                <XIcon />
+              </Button>
             </li>
           ))}
           {crossFilters.map((pred, i) => (
-            <li key={`c-${pred.table}.${pred.column}-${i}`} className={`${styles.chip} ${styles.chipCross}`}>
+            <li key={`c-${pred.table}.${pred.column}-${i}`} className={cn(CHIP, "border-primary")}>
               <span>Dipilih di chart · {crossLabels[i]}</span>
-              <button
-                type="button"
-                className={styles.chipRemove}
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 aria-label={`Hapus Cross_Filter ${crossLabels[i]}`}
                 onClick={() => onCrossFiltersChange(removePredicate(crossFilters, pred))}
               >
-                ✕
-              </button>
+                <XIcon />
+              </Button>
             </li>
           ))}
         </ul>
       )}
 
       {error && (
-        <p role="alert" className={styles.error}>
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
     </section>
   );
@@ -238,31 +248,38 @@ function ValuesControl({
         : `${selected.length} dipilih`;
 
   return (
-    <details className={styles.control} onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary className={styles.controlSummary}>
-        <span className={styles.controlName}>{label}</span>
-        <span className={selected.length ? styles.controlActive : styles.controlValue}>{summary}</span>
+    <details className={CONTROL} onToggle={(e) => setOpen(e.currentTarget.open)}>
+      <summary className="flex cursor-pointer list-none flex-col rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+        <span className={CONTROL_NAME}>{label}</span>
+        <span className={cn("truncate text-sm", selected.length > 0 && "font-semibold")}>{summary}</span>
       </summary>
-      <div className={styles.dropdown}>
-        <input
+      <div className="mt-1.5 flex flex-col gap-1.5">
+        <Input
+          className="h-7"
           type="search"
           aria-label={`Cari ${label}`}
-          placeholder={`Cari ${label.toLowerCase()}…`}
+          placeholder={`Cari ${label.toLowerCase()}`}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <div className={styles.values} role="group" aria-label={label}>
+        <div
+          className="flex max-h-48 flex-col gap-1 overflow-auto rounded-md border bg-card px-3 py-2"
+          role="group"
+          aria-label={label}
+        >
           {options === null ? (
-            <span className={styles.muted}>Memuat nilai…</span>
+            <span className={MUTED}>Memuat nilai</span>
           ) : options.values.length === 0 ? (
-            <span className={styles.muted}>Tidak ada yang cocok.</span>
+            <span className={MUTED}>Tidak ada yang cocok.</span>
           ) : (
             options.values.map((v) => {
               const text = formatScalar(v);
               return (
-                <label key={text} className={styles.value}>
+                <label key={text} className="flex items-center gap-1.5 text-[0.8125rem]">
                   <input
                     type="checkbox"
+                    data-slot="checkbox"
+                    className={CHECK}
                     checked={selected.some((s) => s === v)}
                     onChange={() => toggle(v)}
                   />
@@ -272,7 +289,7 @@ function ValuesControl({
             })
           )}
           {options?.truncated && (
-            <span className={styles.muted}>Ketik untuk mempersempit daftar.</span>
+            <span className={MUTED}>Ketik untuk mempersempit daftar.</span>
           )}
         </div>
       </div>
@@ -301,12 +318,13 @@ function DateRangeControl({
   }
 
   return (
-    <fieldset className={styles.control}>
-      <legend className={styles.controlName}>{label}</legend>
-      <div className={styles.row}>
+    <fieldset className={CONTROL}>
+      <legend className={CONTROL_NAME}>{label}</legend>
+      <div className="flex flex-wrap gap-3 [&_label]:flex [&_label]:flex-col [&_label]:gap-1 [&_label]:text-[0.8125rem] [&_label]:text-muted-foreground">
         <label>
           Dari
-          <input
+          <Input
+            className="h-7"
             type="date"
             aria-label={`${label} dari`}
             value={start}
@@ -315,7 +333,8 @@ function DateRangeControl({
         </label>
         <label>
           Sampai
-          <input
+          <Input
+            className="h-7"
             type="date"
             aria-label={`${label} sampai`}
             value={end}

@@ -343,6 +343,6 @@ describe("DatasetsPanel", () => {
 
   it("menampilkan pesan kosong bila belum ada dataset", () => {
     renderPanel({ datasets: [] });
-    expect(screen.getByText("Belum ada dataset — unggah CSV atau XLSX.")).toBeTruthy();
+    expect(screen.getByText("Belum ada dataset. Unggah CSV atau XLSX.")).toBeTruthy();
   });
 });

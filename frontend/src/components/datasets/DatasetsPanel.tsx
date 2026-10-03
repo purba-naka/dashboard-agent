@@ -16,7 +16,18 @@ import {
   typeLabel,
   type DatasetClient,
 } from "./client";
-import styles from "./datasets.module.css";
+import { UploadSimpleIcon } from "@phosphor-icons/react/ssr";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export interface DatasetsPanelProps {
   workspaceId: string;
@@ -48,6 +59,7 @@ export function DatasetsPanel({
 }: DatasetsPanelProps) {
   // --- Upload baru -------------------------------------------------------
   const [file, setFile] = useState<globalThis.File | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -208,54 +220,70 @@ export function DatasetsPanel({
   const selected = datasets.find((d) => d.id === selectedId) ?? detail?.dataset ?? null;
 
   return (
-    <div className={styles.panel}>
-      <h2 className={styles.title}>Dataset</h2>
+    <div className="flex flex-col gap-3 rounded-lg border bg-card px-4 py-3.5">
+      <h2 className="text-base font-semibold">Dataset</h2>
 
       {/* Upload baru */}
-      <div className={styles.upload}>
-        <input
-          ref={uploadFileRef}
-          type="file"
-          aria-label="File dataset"
-          accept=".csv,.xlsx"
-          disabled={uploading}
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
-        <button
-          type="button"
-          className={styles.button}
-          disabled={!file || uploading}
-          onClick={handleUpload}
+      <div className="flex flex-col gap-2">
+        <label
+          data-dragging={dragging || undefined}
+          className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-input px-3 py-4 text-center text-sm transition-colors hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring/50 has-disabled:cursor-not-allowed has-disabled:opacity-50 data-dragging:border-primary data-dragging:bg-muted"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            if (!uploading) setFile(e.dataTransfer.files[0] ?? null);
+          }}
         >
-          {uploading ? "Mengunggah…" : "Unggah"}
-        </button>
+          <UploadSimpleIcon className="size-5 text-muted-foreground" aria-hidden />
+          <span className="truncate font-medium">{file ? file.name : "Pilih atau seret file"}</span>
+          <span className="text-xs text-muted-foreground">CSV atau XLSX</span>
+          <input
+            data-slot="file-input"
+            ref={uploadFileRef}
+            type="file"
+            aria-label="File dataset"
+            accept=".csv,.xlsx"
+            className="sr-only"
+            disabled={uploading}
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        <Button variant="outline" disabled={!file || uploading} onClick={handleUpload}>
+          {uploading ? "Mengunggah" : "Unggah"}
+        </Button>
         {uploading && (
           <div
             role="progressbar"
             aria-valuenow={progressPercent(uploadProgress)}
             aria-valuemin={0}
             aria-valuemax={100}
-            className={styles.progress}
+            className="relative h-5 overflow-hidden rounded-md border border-primary bg-card"
           >
-            <div className={styles.progressBar} style={{ width: `${progressPercent(uploadProgress)}%` }} />
-            <span className={styles.progressLabel}>{progressPercent(uploadProgress)}%</span>
+            <div className="h-full bg-primary/15 transition-[width] duration-300 motion-reduce:transition-none" style={{ width: `${progressPercent(uploadProgress)}%` }} />
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">{progressPercent(uploadProgress)}%</span>
           </div>
         )}
         {uploadError && (
-          <p role="alert" className={styles.error}>
-            {uploadError}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
         )}
       </div>
 
       {/* Pemilih sheet XLSX */}
       {picker && (
-        <fieldset className={styles.picker} aria-label="Pemilih sheet">
+        <fieldset className="flex flex-col gap-1.5 rounded-md border px-3 py-2 [&>legend]:px-1 [&>legend]:text-[0.8125rem] [&>legend]:text-muted-foreground" aria-label="Pemilih sheet">
           <legend>Pilih sheet XLSX</legend>
           {picker.sheets.map((s) => (
-            <label key={s.name} className={styles.value}>
+            <label key={s.name} className="flex items-center gap-1.5 text-sm">
               <input
                 type="checkbox"
+                data-slot="checkbox" className="size-4 accent-foreground"
                 checked={chosenSheets.includes(s.name)}
                 onChange={(e) =>
                   setChosenSheets((prev) =>
@@ -264,19 +292,20 @@ export function DatasetsPanel({
                 }
               />
               {s.name}
-              {s.rows_hint !== null && <span className={styles.muted}> · {s.rows_hint} baris</span>}
+              {s.rows_hint !== null && <span className="text-[0.8125rem] text-muted-foreground"> · {s.rows_hint} baris</span>}
             </label>
           ))}
-          <button
-            type="button"
-            className={styles.button}
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
             disabled={chosenSheets.length === 0}
             onClick={handleSelectSheets}
           >
             Konversi sheet terpilih
-          </button>
+          </Button>
           {sheetJobs.map((j) => (
-            <p key={j.sheet} className={j.state === "failed" ? styles.error : styles.muted}>
+            <p key={j.sheet} className={j.state === "failed" ? "text-[0.8125rem] text-destructive" : "text-[0.8125rem] text-muted-foreground"}>
               {j.sheet}: {j.state === "failed" ? j.error : `${progressPercent(j.progress)}%`}
             </p>
           ))}
@@ -285,22 +314,23 @@ export function DatasetsPanel({
 
       {/* Daftar dataset */}
       {datasets.length === 0 ? (
-        <p className={styles.muted}>Belum ada dataset — unggah CSV atau XLSX.</p>
+        <p className="text-[0.8125rem] text-muted-foreground">Belum ada dataset. Unggah CSV atau XLSX.</p>
       ) : (
-        <ul className={styles.list}>
+        <ul className="flex flex-col gap-1">
           {datasets.map((d) => (
             <li key={d.id}>
               <button
                 type="button"
-                className={`${styles.row} ${d.id === selectedId ? styles.rowActive : ""}`}
+                data-slot="dataset-row"
+                className="flex w-full min-w-0 flex-col items-start gap-0.5 rounded-md border bg-card px-2.5 py-2 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:border-primary aria-pressed:bg-muted [&>span]:max-w-full"
                 aria-pressed={d.id === selectedId}
                 onClick={() => setSelectedId(d.id === selectedId ? null : d.id)}
               >
-                <span className={styles.rowName}>
+                <span className="block truncate font-semibold">
                   {d.source_name}
                   {d.sheet_name ? ` · ${d.sheet_name}` : ""}
                 </span>
-                <span className={styles.muted}>
+                <span className="text-[0.8125rem] text-muted-foreground">
                   {d.row_count.toLocaleString("id-ID")} baris · v{d.data_version}
                 </span>
               </button>
@@ -311,19 +341,20 @@ export function DatasetsPanel({
 
       {/* Detail dataset */}
       {selected && (
-        <section aria-label={`Detail dataset ${selected.source_name}`} className={styles.detail}>
-          <h3 className={styles.detailTitle}>
+        <section aria-label={`Detail dataset ${selected.source_name}`} className="flex flex-col gap-2 border-t pt-3 [&_code]:[overflow-wrap:anywhere]">
+          <h3 className="text-[0.9375rem] font-semibold">
             {selected.source_name}
             {selected.sheet_name ? ` · ${selected.sheet_name}` : ""}
           </h3>
-          <p className={styles.muted}>
+          <p className="text-[0.8125rem] text-muted-foreground">
             Tabel <code>{selected.table_name}</code> · {selected.row_count.toLocaleString("id-ID")}{" "}
             baris · data v{selected.data_version}
           </p>
 
-          <label className={styles.value}>
+          <label className="flex items-center gap-1.5 text-sm">
             <input
               type="checkbox"
+              data-slot="checkbox" className="size-4 accent-foreground"
               checked={selected.privacy_no_samples}
               disabled={privacyBusy}
               onChange={(e) => handlePrivacy(selected, e.target.checked)}
@@ -332,14 +363,14 @@ export function DatasetsPanel({
           </label>
 
           {detailError && (
-            <p role="alert" className={styles.error}>
-              {detailError}
-            </p>
+            <Alert variant="destructive">
+            <AlertDescription>{detailError}</AlertDescription>
+          </Alert>
           )}
 
           {/* Re-upload */}
-          <div className={styles.reupload}>
-            <input
+          <div className="flex flex-col gap-2">
+            <Input
               ref={detailFileRef}
               type="file"
               aria-label={`File re-upload ${selected.source_name}`}
@@ -356,17 +387,17 @@ export function DatasetsPanel({
                 aria-valuenow={progressPercent(reuploadProgress)}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                className={styles.progress}
+                className="relative h-5 overflow-hidden rounded-md border border-primary bg-card"
               >
                 <div
-                  className={styles.progressBar}
+                  className="h-full bg-primary/15 transition-[width] duration-300 motion-reduce:transition-none"
                   style={{ width: `${progressPercent(reuploadProgress)}%` }}
                 />
-                <span className={styles.progressLabel}>{progressPercent(reuploadProgress)}%</span>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">{progressPercent(reuploadProgress)}%</span>
               </div>
             )}
             {mismatch && (
-              <ul className={styles.mismatch} aria-label="Perbedaan skema">
+              <ul className="list-disc rounded-md bg-warn-soft py-1.5 pr-3 pl-6 text-[0.8125rem] text-warn" aria-label="Perbedaan skema">
                 {mismatch.map((line) => (
                   <li key={line}>{line}</li>
                 ))}
@@ -377,64 +408,64 @@ export function DatasetsPanel({
           {detail && (
             <>
               {/* Skema (Req 6.2) */}
-              <table className={styles.table} aria-label="Skema dataset">
-                <thead>
-                  <tr>
-                    <th>Kolom</th>
-                    <th>Tipe</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table className="text-[0.8125rem] tabular-nums" aria-label="Skema dataset">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kolom</TableHead>
+                    <TableHead>Tipe</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {detail.schema.map((c) => (
-                    <tr key={c.name}>
-                      <td>{c.name}</td>
-                      <td>{typeLabel(c.type)}</td>
-                    </tr>
+                    <TableRow key={c.name}>
+                      <TableCell>{c.name}</TableCell>
+                      <TableCell>{typeLabel(c.type)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
 
               {/* Profil kolom (Req 6.2) */}
-              <table className={styles.table} aria-label="Profil kolom">
-                <thead>
-                  <tr>
-                    <th>Kolom</th>
-                    <th>Peran</th>
-                    <th>Null</th>
-                    <th>Unik</th>
-                    <th>Nilai teratas</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table className="text-[0.8125rem] tabular-nums" aria-label="Profil kolom">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kolom</TableHead>
+                    <TableHead>Peran</TableHead>
+                    <TableHead>Null</TableHead>
+                    <TableHead>Unik</TableHead>
+                    <TableHead>Nilai teratas</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {detail.column_profiles.map((p) => (
-                    <tr key={p.name}>
-                      <td>{p.name}</td>
-                      <td>{p.role}</td>
-                      <td>{formatPct(p.null_pct)}</td>
-                      <td>{p.distinct_count}</td>
-                      <td>
+                    <TableRow key={p.name}>
+                      <TableCell>{p.name}</TableCell>
+                      <TableCell>{p.role}</TableCell>
+                      <TableCell>{formatPct(p.null_pct)}</TableCell>
+                      <TableCell>{p.distinct_count}</TableCell>
+                      <TableCell>
                         {p.top_values
                           .map(([v, n]) => `${String(v)} (${n})`)
-                          .join(", ") || "—"}
-                      </td>
-                    </tr>
+                          .join(", ") || "-"}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
 
               {/* Kualitas data (Req 6.2) */}
-              <div className={styles.quality}>
-                <h4 className={styles.detailTitle}>Kualitas data</h4>
-                <p className={styles.muted}>
+              <div className="flex flex-col gap-1">
+                <h4 className="text-[0.9375rem] font-semibold">Kualitas data</h4>
+                <p className="text-[0.8125rem] text-muted-foreground">
                   Baris duplikat: {detail.quality.duplicate_rows.toLocaleString("id-ID")}
                 </p>
                 {detail.quality.mixed_type_columns.length > 0 && (
-                  <p className={styles.warn}>
+                  <p className="text-[0.8125rem] text-warn">
                     Kolom tipe campuran: {detail.quality.mixed_type_columns.join(", ")}
                   </p>
                 )}
                 {renamedColumns(detail.column_mapping).length > 0 && (
-                  <p className={styles.muted}>
+                  <p className="text-[0.8125rem] text-muted-foreground">
                     Nama kolom dinormalisasi:{" "}
                     {renamedColumns(detail.column_mapping)
                       .map((m) => `${m.original} → ${m.normalized}`)
