@@ -117,7 +117,7 @@ describe("ChatPanel", () => {
       { event: "thought.delta", data: { agent: "root", text: "User menyapa. " } },
       { event: "thought.delta", data: { agent: "root", text: "Balas singkat." } },
     );
-    const details = screen.getByText("Sedang berpikir…").closest("details")!;
+    const details = screen.getByText("Sedang berpikir").closest("details")!;
     expect(details.open).toBe(true);
 
     await emit({ event: "text.delta", data: { agent: "root", text: "Halo!" } });

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { SemanticDraftCardData } from "@/lib/types";
-import styles from "./chat.module.css";
+import { CANDIDATE_ROW, ChatCard, ChatCardSection, DecisionActions } from "./ChatCard";
 
 export interface SemanticDraftCardProps {
   data: SemanticDraftCardData;
@@ -37,112 +39,102 @@ export function SemanticDraftCard({
     }
   };
 
-  const entryActions = (id: string, status: string, label: string) =>
-    statusOf(id, status) === "candidate" ? (
-      <span className={styles.actions}>
-        <button
-          type="button"
-          disabled={disabled || busy !== null}
-          aria-label={`Konfirmasi ${label}`}
-          onClick={() => run(id, () => onDecide(id, true))}
-        >
-          Konfirmasi
-        </button>
-        <button
-          type="button"
-          disabled={disabled || busy !== null}
-          aria-label={`Tolak ${label}`}
-          onClick={() => run(id, () => onDecide(id, false))}
-        >
-          Tolak
-        </button>
-      </span>
-    ) : (
-      <span className={styles.muted}>{statusOf(id, status) === "confirmed" ? "Dikonfirmasi" : "Ditolak"}</span>
-    );
+  const entryActions = (id: string, status: string, label: string) => (
+    <DecisionActions
+      status={statusOf(id, status)}
+      label={label}
+      disabled={disabled || busy !== null}
+      onDecide={(confirm) => run(id, () => onDecide(id, confirm))}
+    />
+  );
 
   const pending =
     data.metrics.some((m) => statusOf(m.id, m.status) === "candidate") ||
     data.columns_highlight.some((c) => statusOf(c.id, c.status) === "candidate");
 
   return (
-    <section className={styles.card} aria-label="Pemahaman data">
-      <h3 className={styles.cardTitle}>Pemahaman data</h3>
-      {data.domain && <p>Domain dugaan: <strong>{data.domain}</strong></p>}
+    <ChatCard
+      label="Pemahaman data"
+      title="Pemahaman data"
+      footer={
+        <>
+          <Button size="sm" disabled={disabled || busy !== null || !pending} onClick={() => run("all", onConfirmAll)}>
+            Konfirmasi semua
+          </Button>
+          <form
+            className="flex min-w-0 flex-1 gap-1.5"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!correction.trim()) return;
+              onCorrect(`Koreksi pemahaman data: ${correction.trim()}`);
+              setCorrection("");
+            }}
+          >
+            <Input
+              className="h-7 min-w-0 flex-1"
+              aria-label="Koreksi pemahaman data"
+              placeholder="Koreksi, mis. 'amount dalam USD'"
+              value={correction}
+              onChange={(e) => setCorrection(e.target.value)}
+              disabled={disabled}
+            />
+            <Button type="submit" variant="outline" size="sm" disabled={disabled || !correction.trim()}>
+              Kirim koreksi
+            </Button>
+          </form>
+        </>
+      }
+    >
+      {data.domain && (
+        <p>
+          Domain dugaan: <strong>{data.domain}</strong>
+        </p>
+      )}
       {data.summary && <p>{data.summary}</p>}
 
       {data.metrics.length > 0 && (
-        <>
-          <h4 className={styles.cardSubtitle}>Metrik usulan</h4>
-          <ul className={styles.plain}>
+        <ChatCardSection title="Metrik usulan">
+          <ul className="flex flex-col gap-2">
             {data.metrics.map((m) => (
-              <li key={m.id} className={styles.relation}>
-                <span>
-                  <strong>{m.label || m.name}</strong> <code>{m.expr}</code>
+              <li key={m.id} className={CANDIDATE_ROW}>
+                <span className="min-w-0">
+                  <strong>{m.label || m.name}</strong>{" "}
+                  <code className="rounded bg-muted px-1 text-[0.85em]">{m.expr}</code>
                 </span>
                 {entryActions(m.id, m.status, `metrik ${m.label || m.name}`)}
               </li>
             ))}
           </ul>
-        </>
+        </ChatCardSection>
       )}
 
       {data.columns_highlight.length > 0 && (
-        <>
-          <h4 className={styles.cardSubtitle}>Kolom penting</h4>
-          <ul className={styles.plain}>
+        <ChatCardSection title="Kolom penting">
+          <ul className="flex flex-col gap-2">
             {data.columns_highlight.map((c) => (
-              <li key={c.id} className={styles.relation}>
-                <span>
-                  <strong>{c.label || c.column}</strong> ({c.table}.{c.column}) · {c.description}
+              <li key={c.id} className={CANDIDATE_ROW}>
+                <span className="min-w-0">
+                  <strong>{c.label || c.column}</strong>{" "}
+                  <span className="text-muted-foreground">
+                    ({c.table}.{c.column}) · {c.description}
+                  </span>
                 </span>
                 {entryActions(c.id, c.status, `kolom ${c.label || c.column}`)}
               </li>
             ))}
           </ul>
-        </>
+        </ChatCardSection>
       )}
 
       {data.assumptions.length > 0 && (
-        <>
-          <h4 className={styles.cardSubtitle}>Asumsi</h4>
-          <ul>
+        <ChatCardSection title="Asumsi">
+          <ul className="flex list-disc flex-col gap-1 pl-5">
             {data.assumptions.map((a) => (
               <li key={a}>{a}</li>
             ))}
           </ul>
-        </>
+        </ChatCardSection>
       )}
-
-      <span className={styles.actions}>
-        <button
-          type="button"
-          disabled={disabled || busy !== null || !pending}
-          onClick={() => run("all", onConfirmAll)}
-        >
-          Konfirmasi semua
-        </button>
-      </span>
-      <form
-        className={styles.inlineForm}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!correction.trim()) return;
-          onCorrect(`Koreksi pemahaman data: ${correction.trim()}`);
-          setCorrection("");
-        }}
-      >
-        <input
-          aria-label="Koreksi pemahaman data"
-          placeholder="Koreksi, mis. 'amount dalam USD'"
-          value={correction}
-          onChange={(e) => setCorrection(e.target.value)}
-          disabled={disabled}
-        />
-        <button type="submit" disabled={disabled || !correction.trim()}>
-          Kirim koreksi
-        </button>
-      </form>
-    </section>
+    </ChatCard>
   );
 }

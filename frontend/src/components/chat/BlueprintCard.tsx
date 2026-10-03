@@ -1,14 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import type {
   BlueprintSlot,
   BlueprintSlotStatus,
   DashboardBlueprint,
   VisualType,
 } from "@/lib/types";
+import { ChatCard } from "./ChatCard";
 import { Markdown } from "./Markdown";
-import styles from "./chat.module.css";
 
 const VISUALS: VisualType[] = ["kpi", "line", "bar", "pie", "scatter", "heatmap", "waterfall", "insight"];
 
@@ -25,11 +29,24 @@ const VISUAL_LABELS: Record<VisualType, string> = {
 
 const STATUS_LABELS: Record<BlueprintSlotStatus, string> = {
   pending: "Menunggu",
-  building: "Dibangun…",
+  building: "Dibangun",
   done: "Selesai",
   failed: "Gagal",
   skipped: "Dilewati",
 };
+
+const STATUS_VARIANT: Record<BlueprintSlotStatus, "secondary" | "outline" | "destructive"> = {
+  pending: "outline",
+  building: "outline",
+  done: "secondary",
+  failed: "destructive",
+  skipped: "outline",
+};
+
+// ponytail: native <select>, bukan Radix Select, agar tetap sempit di baris slot dan
+// teruji via selectOptions. data-slot melepas gaya kontrol legacy.
+const NATIVE_SELECT =
+  "h-7 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
 
 export interface BlueprintCardProps {
   summary: string;
@@ -109,21 +126,54 @@ export function BlueprintCard({
     });
 
   return (
-    <section className={styles.card} aria-label="Rancangan dashboard">
-      <h3 className={styles.cardTitle}>Rancangan dashboard</h3>
+    <ChatCard
+      label="Rancangan dashboard"
+      title="Rancangan dashboard"
+      footer={
+        approved ? (
+          <span className="text-muted-foreground">Disetujui ({shown.size} slot)</span>
+        ) : (
+          <>
+            <Button
+              size="sm"
+              disabled={disabled || selected.size === 0 || edited}
+              onClick={() => onApprove(slots.filter((s) => selected.has(s.slot_id)).map((s) => s.slot_id))}
+            >
+              Setujui terpilih ({selected.size})
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={disabled || edited}
+              onClick={() => onApprove(slots.map((s) => s.slot_id))}
+            >
+              Setujui semua
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={disabled}
+              onClick={() => onRevise(revisionMessage(slots, edits, selected))}
+            >
+              Revisi
+            </Button>
+          </>
+        )
+      }
+    >
       <Markdown text={summary} />
       {blueprint.brief.purpose && (
-        <p className={styles.muted}>
+        <p className="text-muted-foreground">
           Tujuan: {blueprint.brief.purpose}
           {blueprint.brief.audience ? ` · Audiens: ${blueprint.brief.audience}` : ""}
         </p>
       )}
       {blueprint.brief.assumptions.length > 0 && (
-        <p className={styles.muted}>Asumsi: {blueprint.brief.assumptions.join("; ")}</p>
+        <p className="text-muted-foreground">Asumsi: {blueprint.brief.assumptions.join("; ")}</p>
       )}
 
       <div
-        className={styles.wireframe}
+        className="grid grid-cols-12 gap-[3px] rounded-md border border-dashed border-input bg-background p-1.5"
         role="img"
         aria-label={`Wireframe ${slots.length} slot`}
         style={{ gridTemplateRows: `repeat(${rows}, 10px)` }}
@@ -132,7 +182,11 @@ export function BlueprintCard({
           s.layout ? (
             <div
               key={s.slot_id}
-              className={`${styles.wireSlot} ${shown.has(s.slot_id) ? "" : styles.wireSlotOff}`}
+              className={cn(
+                "flex items-center justify-center overflow-hidden rounded-[3px] bg-secondary text-[0.6875rem] font-semibold whitespace-nowrap text-secondary-foreground ring-1 ring-foreground/10 transition-opacity motion-reduce:transition-none",
+                s.section === "kpi_row" && "bg-foreground text-background",
+                !shown.has(s.slot_id) && "opacity-25",
+              )}
               data-section={s.section}
               style={{
                 gridColumn: `${s.layout.x + 1} / span ${s.layout.w}`,
@@ -146,15 +200,17 @@ export function BlueprintCard({
         )}
       </div>
 
-      <ul className={styles.plain}>
+      <ul className="flex flex-col gap-2">
         {slots.map((s) => {
           const status = progress[s.slot_id];
           const e = edits[s.slot_id];
           return (
-            <li key={s.slot_id} className={styles.slotRow}>
+            <li key={s.slot_id} className="flex flex-wrap items-center gap-1.5">
               {!approved && (
                 <input
                   type="checkbox"
+                  data-slot="checkbox"
+                  className="size-4 accent-foreground"
                   checked={selected.has(s.slot_id)}
                   onChange={() => toggle(s.slot_id)}
                   aria-label={`Pilih slot ${s.slot_id}`}
@@ -162,12 +218,14 @@ export function BlueprintCard({
                 />
               )}
               {approved ? (
-                <span>
+                <span className="min-w-0 flex-1">
                   <strong>{VISUAL_LABELS[s.visual]}</strong> · {s.purpose}
                 </span>
               ) : (
                 <>
                   <select
+                    data-slot="native-select"
+                    className={NATIVE_SELECT}
                     aria-label={`Visual slot ${s.slot_id}`}
                     value={e?.visual ?? s.visual}
                     onChange={(ev) => edit(s, { visual: ev.target.value as VisualType })}
@@ -179,8 +237,8 @@ export function BlueprintCard({
                       </option>
                     ))}
                   </select>
-                  <input
-                    className={styles.slotPurpose}
+                  <Input
+                    className="h-7 min-w-40 flex-1"
                     aria-label={`Tujuan slot ${s.slot_id}`}
                     value={e?.purpose ?? s.purpose}
                     onChange={(ev) => edit(s, { purpose: ev.target.value })}
@@ -189,40 +247,14 @@ export function BlueprintCard({
                 </>
               )}
               {status && (
-                <span className={`${styles.badge} ${styles[`slot_${status}`] ?? ""}`}>{STATUS_LABELS[status]}</span>
+                <Badge variant={STATUS_VARIANT[status]} className={cn(status === "building" && "border-dashed")}>
+                  {STATUS_LABELS[status]}
+                </Badge>
               )}
             </li>
           );
         })}
       </ul>
-
-      {approved ? (
-        <span className={styles.muted}>Disetujui ({shown.size} slot)</span>
-      ) : (
-        <span className={styles.actions}>
-          <button
-            type="button"
-            disabled={disabled || selected.size === 0 || edited}
-            onClick={() => onApprove(slots.filter((s) => selected.has(s.slot_id)).map((s) => s.slot_id))}
-          >
-            Setujui terpilih ({selected.size})
-          </button>
-          <button
-            type="button"
-            disabled={disabled || edited}
-            onClick={() => onApprove(slots.map((s) => s.slot_id))}
-          >
-            Setujui semua
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onRevise(revisionMessage(slots, edits, selected))}
-          >
-            Revisi
-          </button>
-        </span>
-      )}
-    </section>
+    </ChatCard>
   );
 }

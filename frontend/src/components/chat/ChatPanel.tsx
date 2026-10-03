@@ -11,7 +11,13 @@ import {
   type FormEvent,
   type Ref,
 } from "react";
+import { ChatCircleDotsIcon, PaperPlaneRightIcon, StopIcon } from "@phosphor-icons/react/ssr";
 import { formatCardinality, formatOverlap, relationTitle } from "@/components/relations/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { isAbortError } from "@/lib/api";
 import type { Dataset, PatchEvent, Relation } from "@/lib/types";
 import { suggestQuestions } from "./suggestions";
@@ -25,10 +31,10 @@ import {
   type ChatEntry,
 } from "./client";
 import { BlueprintCard } from "./BlueprintCard";
+import { CANDIDATE_ROW, ChatCard, DecisionActions } from "./ChatCard";
 import { Markdown } from "./Markdown";
 import { ReviewCard } from "./ReviewCard";
 import { SemanticDraftCard } from "./SemanticDraftCard";
-import styles from "./chat.module.css";
 
 /** Jarak dari dasar log yang masih dianggap "di bawah". */
 const SCROLL_STICK_PX = 48;
@@ -220,15 +226,26 @@ export function ChatPanel({
   const renderEntry = (entry: ChatEntry) => {
     switch (entry.kind) {
       case "user":
-        return <p className={styles.user}>{entry.text}</p>;
+        return (
+          <p className="ml-auto w-fit max-w-[85%] rounded-lg rounded-br-sm bg-secondary px-3 py-2 whitespace-pre-wrap text-secondary-foreground [overflow-wrap:anywhere]">
+            {entry.text}
+          </p>
+        );
       case "agent":
         return (
-          <div className={styles.agent}>
-            <span className={styles.author}>{agentLabel(entry.agent)}</span>
+          <div className="flex max-w-[92%] flex-col gap-1">
+            <span className="text-xs font-semibold text-muted-foreground">{agentLabel(entry.agent)}</span>
             {entry.thought && (
-              <details className={styles.thought} open={!entry.text || undefined}>
-                <summary>{entry.text ? "Proses berpikir" : "Sedang berpikir…"}</summary>
-                <p className={styles.thoughtText}>{entry.thought}</p>
+              <details
+                className="border-l-2 border-input pl-2.5 text-[0.8125rem] text-muted-foreground"
+                open={!entry.text || undefined}
+              >
+                <summary className="w-fit cursor-pointer rounded-sm font-medium select-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
+                  {entry.text ? "Proses berpikir" : "Sedang berpikir"}
+                </summary>
+                <p className="mt-1.5 max-h-64 overflow-y-auto leading-normal whitespace-pre-wrap [overflow-wrap:anywhere]">
+                  {entry.thought}
+                </p>
               </details>
             )}
             {entry.text && <Markdown text={entry.text} />}
@@ -236,50 +253,35 @@ export function ChatPanel({
         );
       case "profile":
         return (
-          <section className={styles.card} aria-label="Ringkasan profil dataset">
-            <h3 className={styles.cardTitle}>Ringkasan profil</h3>
+          <ChatCard label="Ringkasan profil dataset" title="Ringkasan profil">
             <Markdown text={entry.summary} />
-          </section>
+          </ChatCard>
         );
       case "relations":
         return (
-          <section className={styles.card} aria-label="Kandidat relasi">
-            <h3 className={styles.cardTitle}>Kandidat relasi</h3>
-            <ul className={styles.plain}>
+          <ChatCard label="Kandidat relasi" title="Kandidat relasi">
+            <ul className="flex flex-col gap-2">
               {entry.relations.map((r) => {
                 const title = relationTitle(r);
                 return (
-                  <li key={r.id} className={styles.relation}>
-                    <span>
-                      <strong>{title}</strong> · {formatCardinality(r.cardinality)} · overlap {formatOverlap(r.overlap_pct)}
-                    </span>
-                    {r.status === "candidate" ? (
-                      <span className={styles.actions}>
-                        <button
-                          type="button"
-                          disabled={busyRelation === r.id}
-                          aria-label={`Konfirmasi ${title}`}
-                          onClick={() => decideRelation(r, true)}
-                        >
-                          Konfirmasi
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busyRelation === r.id}
-                          aria-label={`Tolak ${title}`}
-                          onClick={() => decideRelation(r, false)}
-                        >
-                          Tolak
-                        </button>
+                  <li key={r.id} className={CANDIDATE_ROW}>
+                    <span className="min-w-0">
+                      <strong>{title}</strong>{" "}
+                      <span className="text-muted-foreground tabular-nums">
+                        · {formatCardinality(r.cardinality)} · overlap {formatOverlap(r.overlap_pct)}
                       </span>
-                    ) : (
-                      <span className={styles.muted}>{r.status === "confirmed" ? "Dikonfirmasi" : "Ditolak"}</span>
-                    )}
+                    </span>
+                    <DecisionActions
+                      status={r.status}
+                      label={title}
+                      disabled={busyRelation === r.id}
+                      onDecide={(confirm) => decideRelation(r, confirm)}
+                    />
                   </li>
                 );
               })}
             </ul>
-          </section>
+          </ChatCard>
         );
       case "semantic":
         return (
@@ -310,43 +312,49 @@ export function ChatPanel({
           );
         }
         return (
-          <section className={styles.card} aria-label="Permintaan persetujuan">
-            <h3 className={styles.cardTitle}>Usulan perubahan Dashboard</h3>
+          <ChatCard
+            label="Permintaan persetujuan"
+            title="Usulan perubahan Dashboard"
+            footer={
+              entry.approved ? (
+                <span className="text-muted-foreground">Disetujui</span>
+              ) : (
+                <Button size="sm" disabled={state.running} onClick={() => approve(entry.proposalId)}>
+                  Setujui
+                </Button>
+              )
+            }
+          >
             <Markdown text={entry.summary} />
             {entry.themes.length > 0 && (
-              <ul>
+              <ul className="flex list-disc flex-col gap-1 pl-5">
                 {entry.themes.map((t) => (
                   <li key={t}>{t}</li>
                 ))}
               </ul>
             )}
-            {entry.approved ? (
-              <span className={styles.muted}>Disetujui</span>
-            ) : (
-              <button type="button" disabled={state.running} onClick={() => approve(entry.proposalId)}>
-                Setujui
-              </button>
-            )}
-          </section>
+          </ChatCard>
         );
       case "error":
         return (
-          <p className={styles.error} role="alert">
-            {entry.agent ? `${agentLabel(entry.agent)}: ` : ""}
-            {entry.message}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>
+              {entry.agent ? `${agentLabel(entry.agent)}: ` : ""}
+              {entry.message}
+            </AlertDescription>
+          </Alert>
         );
       case "notice":
-        return <p className={styles.muted}>{entry.text}</p>;
+        return <p className="text-sm text-muted-foreground">{entry.text}</p>;
     }
   };
 
   const { running, activeAgent, runningTool } = state;
 
   return (
-    <section className={styles.panel} aria-label="Chat">
+    <section className="flex h-full min-h-0 flex-1 flex-col gap-3" aria-label="Chat">
       <ol
-        className={styles.log}
+        className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto overscroll-contain pr-1"
         ref={logRef}
         onScroll={(e) => {
           const el = e.currentTarget;
@@ -354,15 +362,33 @@ export function ChatPanel({
         }}
       >
         {state.entries.length === 0 && (
-          <li className={styles.empty}>
-            <p className={styles.muted}>
-              {datasets.length ? "Coba tanyakan:" : "Unggah dataset, lalu mulai bertanya."}
-            </p>
-            {suggestQuestions(datasets).map((q) => (
-              <button key={q} type="button" className={styles.suggestion} disabled={running} onClick={() => onSend(q)}>
-                {q}
-              </button>
-            ))}
+          <li className="flex flex-1">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <ChatCircleDotsIcon />
+                </EmptyMedia>
+                <EmptyTitle>Tanya tentang data Anda</EmptyTitle>
+                <EmptyDescription>
+                  {datasets.length ? "Coba tanyakan:" : "Unggah dataset, lalu mulai bertanya."}
+                </EmptyDescription>
+              </EmptyHeader>
+              {datasets.length > 0 && (
+                <EmptyContent className="items-stretch">
+                  {suggestQuestions(datasets).map((q) => (
+                    <Button
+                      key={q}
+                      variant="outline"
+                      className="h-auto justify-start py-2 text-left whitespace-normal"
+                      disabled={running}
+                      onClick={() => onSend(q)}
+                    >
+                      {q}
+                    </Button>
+                  ))}
+                </EmptyContent>
+              )}
+            </Empty>
           </li>
         )}
         {state.entries.map((e) => (
@@ -371,10 +397,10 @@ export function ChatPanel({
       </ol>
 
       {running && (
-        <div className={styles.status} role="status">
-          {activeAgent ? `Agent ${agentLabel(activeAgent)} aktif` : "Memproses…"}
+        <div className="rounded-md bg-muted px-2.5 py-1.5 text-[0.8125rem] text-muted-foreground" role="status">
+          {activeAgent ? `Agent ${agentLabel(activeAgent)} aktif` : "Memproses"}
           {runningTool && ` · menjalankan ${runningTool.tool}`}
-          {runningTool?.argsSummary && <span className={styles.muted}> ({runningTool.argsSummary})</span>}
+          {runningTool?.argsSummary && <span> ({runningTool.argsSummary})</span>}
         </div>
       )}
 
@@ -407,16 +433,16 @@ const Composer = memo(function Composer({
     setDraft("");
   };
   return (
-    <form className={styles.form} onSubmit={onSubmit}>
-      <label className={styles.srOnly} htmlFor="chat-input">
+    <form className="flex items-end gap-2 border-t pt-3" onSubmit={onSubmit}>
+      <Label className="sr-only" htmlFor="chat-input">
         Pesan
-      </label>
-      <textarea
+      </Label>
+      <Textarea
         id="chat-input"
-        className={styles.input}
+        className="max-h-40 min-h-11 flex-1 resize-y"
         rows={2}
         value={draft}
-        placeholder="Tanyakan sesuatu tentang data Anda…"
+        placeholder="Tanyakan sesuatu tentang data Anda"
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
@@ -426,13 +452,15 @@ const Composer = memo(function Composer({
         }}
       />
       {running ? (
-        <button type="button" onClick={onStop} disabled={!canStop}>
+        <Button type="button" variant="outline" onClick={onStop} disabled={!canStop}>
+          <StopIcon data-icon="inline-start" weight="fill" />
           Stop
-        </button>
+        </Button>
       ) : (
-        <button type="submit" disabled={!draft.trim()}>
+        <Button type="submit" disabled={!draft.trim()}>
+          <PaperPlaneRightIcon data-icon="inline-start" />
           Kirim
-        </button>
+        </Button>
       )}
     </form>
   );

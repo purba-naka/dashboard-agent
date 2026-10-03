@@ -1,7 +1,9 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { ReviewFinding } from "@/lib/types";
-import styles from "./chat.module.css";
+import { ChatCard } from "./ChatCard";
 
 export interface ReviewCardProps {
   findings: readonly ReviewFinding[];
@@ -18,34 +20,33 @@ export function applyMessage(finding: ReviewFinding): string {
 /** Temuan review desain BI; tidak ada yang diterapkan otomatis (Req 39.6). */
 export function ReviewCard({ findings, disabled, onApply }: ReviewCardProps) {
   return (
-    <section className={styles.card} aria-label="Review desain">
-      <h3 className={styles.cardTitle}>Review desain BI</h3>
+    <ChatCard label="Review desain" title="Review desain BI">
       {findings.length === 0 ? (
-        <p className={styles.muted}>Tidak ada temuan. Dashboard sudah mengikuti prinsip desain dasar.</p>
+        <p className="text-muted-foreground">Tidak ada temuan. Dashboard sudah mengikuti prinsip desain dasar.</p>
       ) : (
-        <ul className={styles.plain}>
+        <ul className="flex flex-col gap-3">
           {findings.map((f) => (
-            <li key={`${f.code}:${f.item_ids.join(",")}`} className={styles.finding}>
-              <span>
-                <span className={`${styles.badge} ${f.severity === "warning" ? styles.badgeWarn : ""}`}>
+            <li key={`${f.code}:${f.item_ids.join(",")}`} className="flex items-start justify-between gap-2">
+              <div className="flex flex-col gap-1">
+                <Badge variant={f.severity === "warning" ? "destructive" : "secondary"}>
                   {f.severity === "warning" ? "Perlu diperbaiki" : "Saran"}
-                </span>{" "}
-                {f.message}
-                <br />
-                <span className={styles.muted}>{f.suggestion}</span>
-              </span>
-              <button
-                type="button"
+                </Badge>
+                <p>{f.message}</p>
+                <p className="text-muted-foreground">{f.suggestion}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={disabled}
                 aria-label={`Terapkan saran ${f.code}`}
                 onClick={() => onApply(applyMessage(f))}
               >
                 Terapkan saran
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
       )}
-    </section>
+    </ChatCard>
   );
 }
