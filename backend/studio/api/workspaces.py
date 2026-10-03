@@ -42,6 +42,7 @@ from studio.api.schemas import (
     RenameWorkspaceRequest,
     WorkspaceDetail,
     WorkspaceOut,
+    WorkspaceSummaryOut,
 )
 from studio.core.identifiers import safe_join
 from studio.store.repos import Repositories
@@ -93,9 +94,9 @@ async def create_workspace(
     return WorkspaceOut.from_record(record)
 
 
-@router.get("/workspaces", response_model=list[WorkspaceOut])
-async def list_workspaces(repos: Repositories = Depends(_repos)) -> list[WorkspaceOut]:
-    return [WorkspaceOut.from_record(r) for r in await repos.workspaces.list()]
+@router.get("/workspaces", response_model=list[WorkspaceSummaryOut])
+async def list_workspaces(repos: Repositories = Depends(_repos)) -> list[WorkspaceSummaryOut]:
+    return [WorkspaceSummaryOut.from_summary(s) for s in await repos.workspaces.list_summaries()]
 
 
 @router.get("/workspaces/{workspace_id}", response_model=WorkspaceDetail)

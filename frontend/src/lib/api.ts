@@ -43,6 +43,7 @@ import type {
   UploadResponse,
   Workspace,
   WorkspaceDetail,
+  WorkspaceSummary,
   XlsxUploadResponse,
   BlueprintRecordResponse,
   SemanticEntry,
@@ -333,7 +334,7 @@ function sendMultipart<T>(path: string, form: FormData, opts: UploadOptions = {}
 // Workspace (Req 1)
 // ---------------------------------------------------------------------------
 
-export function listWorkspaces(opts: RequestOptions = {}): Promise<Workspace[]> {
+export function listWorkspaces(opts: RequestOptions = {}): Promise<WorkspaceSummary[]> {
   return request("/workspaces", { method: "GET", ...opts });
 }
 

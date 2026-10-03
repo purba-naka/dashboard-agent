@@ -90,6 +90,20 @@ async def test_workspace_crud(repos: Repositories) -> None:
         assert exc_info.value.http_status == 404
 
 
+async def test_workspace_summaries_count_content(repos: Repositories) -> None:
+    empty = await repos.workspaces.create("Kosong")
+    full = await repos.workspaces.create("Isi")
+    await _dataset(repos, full.id, "customers")
+    await _dataset(repos, full.id, "orders")
+    dash = await repos.dashboards.create(full.id, "D")
+
+    by_id = {s.workspace.id: s for s in await repos.workspaces.list_summaries()}
+    assert (by_id[empty.id].dataset_count, by_id[empty.id].dashboard_count) == (0, 0)
+    assert by_id[empty.id].last_activity_at == empty.updated_at
+    assert (by_id[full.id].dataset_count, by_id[full.id].dashboard_count) == (2, 1)
+    assert by_id[full.id].last_activity_at >= dash.updated_at
+
+
 async def test_dataset_and_dashboard_inherit_local_owner(repos: Repositories) -> None:
     ws = await repos.workspaces.create("W")
     ds = await _dataset(repos, ws.id, "customers")

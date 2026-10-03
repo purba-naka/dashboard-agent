@@ -240,6 +240,16 @@ class WorkspaceRecord(_Record):
     updated_at: datetime
 
 
+@dataclass(frozen=True, slots=True)
+class WorkspaceSummaryRecord(_Record):
+    """Workspace + ringkasan isi untuk halaman daftar."""
+
+    workspace: WorkspaceRecord
+    dataset_count: int
+    dashboard_count: int
+    last_activity_at: datetime
+
+
 def _workspace(row: Any) -> WorkspaceRecord:
     return WorkspaceRecord(
         id=row["id"],
@@ -281,6 +291,36 @@ class WorkspaceRepo(_Repo):
                 "SELECT * FROM workspaces WHERE owner_id = ? ORDER BY created_at, id", (owner_id,)
             )
         return [_workspace(r) for r in rows]
+
+    async def list_summaries(self) -> list[WorkspaceSummaryRecord]:
+        """Semua Workspace + jumlah Dataset/Dashboard dalam satu query.
+
+        ``workspaces.updated_at`` hanya berubah saat rename, jadi aktivitas
+        terakhir diambil dari isi Workspace juga.
+        """
+        rows = await self.db.fetch_all(
+            "SELECT w.*,"
+            " (SELECT COUNT(*) FROM datasets d WHERE d.workspace_id = w.id) AS dataset_count,"
+            " (SELECT COUNT(*) FROM dashboards b WHERE b.workspace_id = w.id) AS dashboard_count,"
+            " (SELECT MAX(d.data_updated_at) FROM datasets d WHERE d.workspace_id = w.id)"
+            " AS dataset_activity,"
+            " (SELECT MAX(b.updated_at) FROM dashboards b WHERE b.workspace_id = w.id)"
+            " AS dashboard_activity"
+            " FROM workspaces w ORDER BY w.created_at, w.id"
+        )
+        summaries = []
+        for r in rows:
+            ws = _workspace(r)
+            activity = [ws.updated_at, _parse_ts(r["dataset_activity"]), _parse_ts(r["dashboard_activity"])]
+            summaries.append(
+                WorkspaceSummaryRecord(
+                    workspace=ws,
+                    dataset_count=int(r["dataset_count"]),
+                    dashboard_count=int(r["dashboard_count"]),
+                    last_activity_at=max(t for t in activity if t is not None),
+                )
+            )
+        return summaries
 
     async def rename(self, workspace_id: str, name: str) -> WorkspaceRecord:
         count = await self._update(

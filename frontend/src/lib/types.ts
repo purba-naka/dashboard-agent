@@ -41,6 +41,14 @@ export interface Workspace {
   updated_at: IsoDateTime;
 }
 
+/** Item `GET /workspaces`: Workspace + ringkasan isi. */
+export interface WorkspaceSummary extends Workspace {
+  dataset_count: number;
+  dashboard_count: number;
+  /** Terbaru dari rename, data Dataset, atau edit Dashboard. */
+  last_activity_at: IsoDateTime;
+}
+
 export interface ColumnMapping {
   original: string;
   normalized: string;

@@ -67,6 +67,7 @@ from studio.store.repos import (
     QueryRecord,
     RelationRecord,
     WorkspaceRecord,
+    WorkspaceSummaryRecord,
 )
 
 # ---------------------------------------------------------------------------
@@ -154,6 +155,23 @@ class WorkspaceOut(StudioModel):
             name=record.name,
             created_at=record.created_at,
             updated_at=record.updated_at,
+        )
+
+
+class WorkspaceSummaryOut(WorkspaceOut):
+    """Item ``GET /workspaces``: Workspace + ringkasan isi."""
+
+    dataset_count: int
+    dashboard_count: int
+    last_activity_at: UtcDateTime
+
+    @classmethod
+    def from_summary(cls, s: WorkspaceSummaryRecord) -> WorkspaceSummaryOut:
+        return cls(
+            **WorkspaceOut.from_record(s.workspace).model_dump(),
+            dataset_count=s.dataset_count,
+            dashboard_count=s.dashboard_count,
+            last_activity_at=s.last_activity_at,
         )
 
 
