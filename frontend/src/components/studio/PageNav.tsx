@@ -1,8 +1,21 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { PencilSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react/ssr";
 import type { DashboardSummary } from "@/lib/types";
-import styles from "./studio.module.css";
+import { IconAction } from "@/components/IconAction";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export interface PageNavProps {
   pages: readonly DashboardSummary[];
@@ -18,6 +31,7 @@ export interface PageNavProps {
 export function PageNav({ pages, activeId, busy, onSelect, onCreate, onRename, onDelete }: PageNavProps) {
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const active = pages.find((p) => p.id === activeId);
 
   const submit = (e: FormEvent) => {
@@ -28,13 +42,38 @@ export function PageNav({ pages, activeId, busy, onSelect, onCreate, onRename, o
   };
 
   return (
-    <nav aria-label="Halaman dashboard" className={styles.pageNav} data-export-hide>
-      <ul className={styles.pageList}>
+    <nav aria-label="Halaman dashboard" className="flex flex-col gap-2" data-export-hide>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">Halaman</h2>
+        <span className="flex items-center gap-0.5">
+          {active && (
+            <>
+              <IconAction
+                label="Ganti nama"
+                onClick={() => {
+                  setDraft(active.title);
+                  setEditing(active.id);
+                }}
+              >
+                <PencilSimpleIcon />
+              </IconAction>
+              <IconAction label="Hapus" disabled={pages.length <= 1} onClick={() => setConfirmDelete(true)}>
+                <TrashIcon />
+              </IconAction>
+            </>
+          )}
+          <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onCreate}>
+            <PlusIcon data-icon="inline-start" />
+            Halaman
+          </Button>
+        </span>
+      </div>
+      <ul className="flex flex-col gap-0.5">
         {pages.map((p) => (
           <li key={p.id}>
             {editing === p.id ? (
               <form onSubmit={submit}>
-                <input
+                <Input
                   aria-label="Nama halaman"
                   value={draft}
                   autoFocus
@@ -45,39 +84,36 @@ export function PageNav({ pages, activeId, busy, onSelect, onCreate, onRename, o
                 />
               </form>
             ) : (
-              <button
+              <Button
                 type="button"
-                className={styles.pageButton}
+                variant="ghost"
+                className="w-full justify-start border-l-2 border-transparent rounded-l-none aria-[current=page]:border-l-primary aria-[current=page]:bg-muted aria-[current=page]:font-semibold"
                 aria-current={p.id === activeId ? "page" : undefined}
                 onClick={() => onSelect(p.id)}
               >
-                {p.title}
-              </button>
+                <span className="truncate">{p.title}</span>
+              </Button>
             )}
           </li>
         ))}
       </ul>
-      <div className={styles.pageActions}>
-        <button type="button" disabled={busy} onClick={onCreate}>
-          + Halaman
-        </button>
-        {active && (
-          <>
-            <button
-              type="button"
-              onClick={() => {
-                setDraft(active.title);
-                setEditing(active.id);
-              }}
-            >
-              Ganti nama
-            </button>
-            <button type="button" disabled={pages.length <= 1} onClick={() => onDelete(active.id)}>
+
+      <AlertDialog open={confirmDelete && Boolean(active)} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus halaman “{active?.title}”?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Semua item di halaman ini ikut terhapus. Tindakan ini tidak bisa dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => active && onDelete(active.id)}>
               Hapus
-            </button>
-          </>
-        )}
-      </div>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </nav>
   );
 }

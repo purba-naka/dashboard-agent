@@ -11,7 +11,8 @@ import {
   formatExportTime,
   type ExportClient,
 } from "./client";
-import styles from "./export.module.css";
+import { FileImageIcon, FilePdfIcon } from "@phosphor-icons/react/ssr";
+import { Button } from "@/components/ui/button";
 
 export interface ExportBarProps {
   /** Node canvas yang ditangkap (chart + insight sesuai layout). */
@@ -81,25 +82,17 @@ export function ExportBar({
   }
 
   return (
-    <div className={styles.bar} role="toolbar" aria-label="Ekspor">
-      <button
-        type="button"
-        className={styles.button}
-        disabled={busy !== null}
-        onClick={() => void exportPng()}
-      >
-        {busy === "png" ? "Mengekspor…" : "Ekspor PNG"}
-      </button>
-      <button
-        type="button"
-        className={styles.button}
-        disabled={busy !== null}
-        onClick={() => void exportPdf()}
-      >
-        {busy === "pdf" ? "Mengekspor…" : "Ekspor PDF"}
-      </button>
+    <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Ekspor">
+      <Button variant="ghost" disabled={busy !== null} onClick={() => void exportPng()}>
+        <FileImageIcon data-icon="inline-start" />
+        {busy === "png" ? "Mengekspor" : "Ekspor PNG"}
+      </Button>
+      <Button disabled={busy !== null} onClick={() => void exportPdf()}>
+        <FilePdfIcon data-icon="inline-start" />
+        {busy === "pdf" ? "Mengekspor" : "Ekspor PDF"}
+      </Button>
       {error && (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}

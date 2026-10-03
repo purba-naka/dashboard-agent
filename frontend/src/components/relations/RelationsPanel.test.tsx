@@ -161,7 +161,7 @@ describe("RelationsPanel", () => {
   it("menampilkan pesan kosong bila belum ada relasi", () => {
     renderPanel({ relations: [] });
     expect(
-      screen.getByText(/Belum ada relasi — coba deteksi ulang/),
+      screen.getByText(/Belum ada relasi. Coba deteksi ulang/),
     ).toBeTruthy();
   });
 });

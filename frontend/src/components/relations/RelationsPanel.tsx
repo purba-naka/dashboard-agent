@@ -13,7 +13,9 @@ import {
   upsertRelation,
   type RelationClient,
 } from "./client";
-import styles from "./relations.module.css";
+import { ArrowsClockwiseIcon, TrashIcon, XIcon } from "@phosphor-icons/react/ssr";
+import { IconAction } from "@/components/IconAction";
+import { Button } from "@/components/ui/button";
 
 export interface RelationsPanelProps {
   workspaceId: string;
@@ -93,73 +95,63 @@ export function RelationsPanel({
   function renderGroup(title: string, items: readonly Relation[]) {
     if (items.length === 0) return null;
     return (
-      <section aria-label={`Relasi ${title}`} className={styles.group}>
-        <h3 className={styles.groupTitle}>{title}</h3>
-        <ul className={styles.list}>
-          {items.map((relation) => (
-            <li key={relation.id} className={styles.row}>
-              <div className={styles.rowMain}>
-                <span className={styles.rowTitle}>{relationTitle(relation, tableNames)}</span>
-                <span className={styles.rowMeta}>
-                  {formatCardinality(relation.cardinality)} · overlap {formatOverlap(relation.overlap_pct)}
-                </span>
-              </div>
-              <div className={styles.rowActions}>
-                {relation.status === "candidate" && (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.buttonPrimary}
-                      disabled={busyId === relation.id}
-                      onClick={() => void run(relation, "confirm")}
+      <section aria-label={`Relasi ${title}`} className="flex flex-col gap-1.5">
+        <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
+        <ul className="flex flex-col gap-1.5">
+          {items.map((relation) => {
+            const name = relationTitle(relation, tableNames);
+            const busy = busyId === relation.id;
+            return (
+              <li key={relation.id} className="flex items-start gap-2 rounded-md border px-2.5 py-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-sm font-medium break-words">{name}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {formatCardinality(relation.cardinality)} · overlap {formatOverlap(relation.overlap_pct)}
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  {relation.status === "candidate" ? (
+                    <>
+                      <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => void run(relation, "confirm")}>
+                        Konfirmasi
+                      </Button>
+                      <IconAction label="Tolak" disabled={busy} onClick={() => void run(relation, "reject")}>
+                        <XIcon />
+                      </IconAction>
+                    </>
+                  ) : (
+                    <IconAction
+                      label={`Hapus relasi ${name}`}
+                      tip="Hapus"
+                      disabled={busy}
+                      onClick={() => void run(relation, "remove")}
                     >
-                      Konfirmasi
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.button}
-                      disabled={busyId === relation.id}
-                      onClick={() => void run(relation, "reject")}
-                    >
-                      Tolak
-                    </button>
-                  </>
-                )}
-                {relation.status !== "candidate" && (
-                  <button
-                    type="button"
-                    className={styles.buttonDanger}
-                    disabled={busyId === relation.id}
-                    onClick={() => void run(relation, "remove")}
-                    aria-label={`Hapus relasi ${relationTitle(relation, tableNames)}`}
-                  >
-                    Hapus
-                  </button>
-                )}
-              </div>
-            </li>
-          ))}
+                      <TrashIcon />
+                    </IconAction>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
     );
   }
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>Relasi</h2>
-        <button
-          type="button"
-          className={styles.button}
-          disabled={detecting}
-          onClick={() => void detect()}
-        >
-          {detecting ? "Mendeteksi…" : "Deteksi ulang"}
-        </button>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold">Relasi</h2>
+        <Button type="button" variant="outline" size="sm" disabled={detecting} onClick={() => void detect()}>
+          <ArrowsClockwiseIcon data-icon="inline-start" />
+          {detecting ? "Mendeteksi" : "Deteksi ulang"}
+        </Button>
       </div>
 
       {list.length === 0 && (
-        <p className={styles.muted}>Belum ada relasi — coba deteksi ulang setelah mengunggah beberapa dataset.</p>
+        <p className="text-sm text-muted-foreground">
+          Belum ada relasi. Coba deteksi ulang setelah mengunggah beberapa dataset.
+        </p>
       )}
 
       {renderGroup("Kandidat", groups.candidate)}
@@ -167,7 +159,7 @@ export function RelationsPanel({
       {renderGroup("Ditolak", groups.rejected)}
 
       {error && (
-        <p role="alert" className={styles.error}>
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       )}

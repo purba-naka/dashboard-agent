@@ -24,7 +24,11 @@ import type {
   WorkspaceDetail,
 } from "@/lib/types";
 import { defaultStudioDeps, type StudioDeps } from "./deps";
-import styles from "./studio.module.css";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
+// Alert tidak punya varian warn; token semantik warn dipakai lewat className.
+const WARN_ALERT = "mb-3 border-transparent bg-warn-soft text-warn *:data-[slot=alert-description]:text-warn";
 
 export interface WorkspaceStudioProps {
   workspaceId: string;
@@ -56,6 +60,7 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
   const [relations, setRelations] = useState<Relation[]>([]);
   const [crossFilters, setCrossFilters] = useState<FilterSet>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [semanticPending, setSemanticPending] = useState(0);
   const [creating, setCreating] = useState(false);
   /** Halaman aktif (dari `?page=`); bila tak dikenal dipakai halaman tertua. */
   const [activeId, setActiveId] = useState<string | null>(pageFromUrl);
@@ -254,16 +259,14 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
       const canvasSlot = snapshot ? (
         <>
           {dashState.notice && (
-            <p role="alert" className={styles.notice}>
-              {dashState.notice.message}{" "}
-              <button
-                type="button"
-                className={styles.linkButton}
-                onClick={() => dispatch({ type: "noticeDismissed" })}
-              >
-                Tutup
-              </button>
-            </p>
+            <Alert className={WARN_ALERT}>
+              <AlertDescription>{dashState.notice.message}</AlertDescription>
+              <AlertAction>
+                <Button variant="link" size="xs" onClick={() => dispatch({ type: "noticeDismissed" })}>
+                  Tutup
+                </Button>
+              </AlertAction>
+            </Alert>
           )}
           <div ref={canvasRef}>
             <Canvas
@@ -279,15 +282,14 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
           </div>
         </>
       ) : (
-        <div className={styles.create}>
-          <p className={styles.muted}>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input px-4 py-10 text-center">
+          <p className="text-sm text-muted-foreground">
             {detail.dashboards.length === 0
               ? "Belum ada Dashboard di Workspace ini."
-              : "Memuat Dashboard…"}
+              : "Memuat Dashboard"}
           </p>
           {detail.dashboards.length === 0 && (
-            <button
-              type="button"
+            <Button
               disabled={creating}
               onClick={() => {
                 setCreating(true);
@@ -307,8 +309,8 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
                   .finally(() => setCreating(false));
               }}
             >
-              {creating ? "Membuat…" : "Buat Dashboard"}
-            </button>
+              {creating ? "Membuat" : "Buat Dashboard"}
+            </Button>
           )}
         </div>
       );
@@ -348,8 +350,6 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
               );
           }}
           onDelete={(id) => {
-            const title = detail.dashboards.find((d) => d.id === id)?.title ?? "halaman ini";
-            if (!window.confirm(`Hapus halaman "${title}"?`)) return;
             deps
               .deleteDashboard(id)
               .then(() => {
@@ -385,7 +385,12 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
           />
         ),
         semantic: (
-          <SemanticPanel workspaceId={workspaceId} refreshKey={semanticKey} client={deps.semantic} />
+          <SemanticPanel
+            workspaceId={workspaceId}
+            refreshKey={semanticKey}
+            client={deps.semantic}
+            onCandidatesChange={setSemanticPending}
+          />
         ),
         brief: snapshot ? <BriefPanel snapshot={snapshot} client={deps.brief} /> : undefined,
         filters: snapshot ? (
@@ -398,7 +403,7 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
             client={deps.filters}
           />
         ) : (
-          <p className={styles.muted}>Buat Dashboard untuk mulai memfilter.</p>
+          <p className="text-sm text-muted-foreground">Buat Dashboard untuk mulai memfilter.</p>
         ),
         canvas: canvasSlot,
         chat: (
@@ -440,11 +445,15 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
         renderSlots={renderSlots}
         activeSessionId={chatSessionId}
         onSelectSession={setChatSessionId}
+        pending={{
+          relations: relations.filter((r) => r.status === "candidate").length,
+          semantic: semanticPending,
+        }}
       />
       {studioError && (
-        <p role="alert" className={styles.notice}>
-          {studioError}
-        </p>
+        <Alert className={WARN_ALERT}>
+          <AlertDescription>{studioError}</AlertDescription>
+        </Alert>
       )}
     </>
   );
