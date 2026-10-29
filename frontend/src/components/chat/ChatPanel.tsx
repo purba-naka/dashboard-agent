@@ -11,15 +11,26 @@ import {
   type FormEvent,
   type Ref,
 } from "react";
-import { ChatCircleDotsIcon, PaperPlaneRightIcon, StopIcon } from "@phosphor-icons/react/ssr";
+import { ArrowDownIcon, CaretDownIcon, CheckIcon, ClockCounterClockwiseIcon, PlusIcon, ChatCircleDotsIcon, PaperPlaneRightIcon, StopIcon } from "@phosphor-icons/react/ssr";
 import { formatCardinality, formatOverlap, relationTitle } from "@/components/relations/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { isAbortError } from "@/lib/api";
-import type { Dataset, PatchEvent, Relation } from "@/lib/types";
+import { toast } from "sonner";
+import { focusTile } from "@/lib/focus-tile";
+import { groupByDate } from "@/lib/group-by-date";
+import type { ChatSession, Dataset, PatchEvent, Relation } from "@/lib/types";
 import { suggestQuestions } from "./suggestions";
 import {
   agentLabel,
@@ -38,6 +49,12 @@ import { SemanticDraftCard } from "./SemanticDraftCard";
 
 /** Jarak dari dasar log yang masih dianggap "di bawah". */
 const SCROLL_STICK_PX = 48;
+
+/** Tracked new messages when user scrolled away. */
+interface NewMessageState {
+  count: number;
+  lastEntryId: number;
+}
 
 export interface ChatPanelHandle {
   /** Kirim pesan secara programatik (mis. setelah `job.done` upload). */
@@ -59,6 +76,12 @@ export interface ChatPanelProps {
   onSessionChange?: (sessionId: string) => void;
   /** Halaman aktif; dikirim tiap giliran agar agent mengedit halaman yang sama dengan UI. */
   dashboardId?: string | null;
+  /** Mulai percakapan baru (parent mengosongkan `sessionId`). */
+  onNewSession?: () => void;
+  /** Sesi tersimpan untuk dropdown riwayat. */
+  sessions?: readonly ChatSession[];
+  /** Pilih sesi dari dropdown. */
+  onSelectSession?: (id: string) => void;
   ref?: Ref<ChatPanelHandle>;
 }
 
@@ -71,10 +94,14 @@ export function ChatPanel({
   onRelationsChanged,
   onSessionChange,
   dashboardId = null,
+  onNewSession,
+  sessions = [],
+  onSelectSession,
   ref,
 }: ChatPanelProps) {
   const [state, dispatch] = useReducer(chatReducer, sessionId, initialChatState);
   const [busyRelation, setBusyRelation] = useState<string | null>(null);
+  const [newMessages, setNewMessages] = useState<NewMessageState>({ count: 0, lastEntryId: -1 });
   const stateRef = useRef(state);
   const callbacks = useRef({ onPatch, onRelationsChanged, onSessionChange, dashboardId });
   useEffect(() => {
@@ -85,6 +112,15 @@ export function ChatPanel({
   const logRef = useRef<HTMLOListElement>(null);
   /** Sesi yang dibuat oleh run panel ini sendiri. */
   const ownSessionRef = useRef<string | null>(null);
+  /** Detected tile additions from patches. */
+  const [tileAdded, setTileAdded] = useState<{ id: string; timestamp: number } | null>(null);
+
+  // Auto-hide tile action card after 6 seconds
+  useEffect(() => {
+    if (!tileAdded) return;
+    const timeout = setTimeout(() => setTileAdded(null), 6000);
+    return () => clearTimeout(timeout);
+  }, [tileAdded]);
 
   useEffect(() => {
     // Sesi yang baru dibuat run ini (`run.started`) sudah ada di state; memuat
@@ -105,11 +141,35 @@ export function ChatPanel({
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  // Parent mengosongkan sesi ("Percakapan baru"): bersihkan panel. Mount awal dilewati.
+  const hadSessionRef = useRef(sessionId !== null);
+  useEffect(() => {
+    if (sessionId) {
+      hadSessionRef.current = true;
+      return;
+    }
+    if (!hadSessionRef.current || stateRef.current.running) return;
+    hadSessionRef.current = false;
+    ownSessionRef.current = null;
+    dispatch({ type: "reset" });
+  }, [sessionId]);
+
   /** Ikuti stream hanya bila pengguna sudah di dasar log (tidak sedang membaca ke atas). */
   const stickRef = useRef(true);
   useEffect(() => {
     const el = logRef.current;
-    if (el && stickRef.current) el.scrollTop = el.scrollHeight;
+    if (el && stickRef.current) {
+      el.scrollTop = el.scrollHeight;
+      // Reset new message indicator when auto-scrolling
+      setNewMessages({ count: 0, lastEntryId: state.entries[state.entries.length - 1]?.id ?? -1 });
+    } else if (!stickRef.current && state.entries.length > 0) {
+      // Track new messages when not at bottom
+      const lastId = state.entries[state.entries.length - 1].id;
+      setNewMessages((prev) => {
+        if (lastId === prev.lastEntryId) return prev;
+        return { count: prev.count + 1, lastEntryId: lastId };
+      });
+    }
   }, [state.entries]);
 
   const send = useCallback(
@@ -141,7 +201,11 @@ export function ChatPanel({
           {
             onEvent: (event) => {
               dispatch({ type: "event", event });
-              if (event.event === "patch.applied") callbacks.current.onPatch?.(event.data);
+              if (event.event === "patch.applied") {
+                callbacks.current.onPatch?.(event.data);
+                const added = event.data.ops.find((o) => o.op === "add_item");
+                if (added) setTileAdded({ id: added.item.id, timestamp: Date.now() });
+              }
               if (event.event === "run.started" && event.data.session_id !== sid) {
                 ownSessionRef.current = event.data.session_id;
                 callbacks.current.onSessionChange?.(event.data.session_id);
@@ -227,14 +291,14 @@ export function ChatPanel({
     switch (entry.kind) {
       case "user":
         return (
-          <p className="ml-auto w-fit max-w-[85%] rounded-lg rounded-br-sm bg-secondary px-3 py-2 whitespace-pre-wrap text-secondary-foreground [overflow-wrap:anywhere]">
+          <p className="ml-auto w-fit max-w-[88%] rounded-lg rounded-br-sm bg-surface-2 px-3 py-2 text-sm whitespace-pre-wrap text-foreground [overflow-wrap:anywhere]">
             {entry.text}
           </p>
         );
       case "agent":
         return (
-          <div className="flex max-w-[92%] flex-col gap-1">
-            <span className="text-xs font-semibold text-muted-foreground">{agentLabel(entry.agent)}</span>
+          <div className="flex min-w-0 flex-col gap-1.5 border-l-2 border-primary/40 pl-3 text-sm">
+            <span className="section-label normal-case tracking-normal">{agentLabel(entry.agent)}</span>
             {entry.thought && (
               <details
                 className="border-l-2 border-input pl-2.5 text-[0.8125rem] text-muted-foreground"
@@ -351,40 +415,87 @@ export function ChatPanel({
 
   const { running, activeAgent, runningTool } = state;
 
+  const scrollToBottom = useCallback(() => {
+    const el = logRef.current;
+    if (el) {
+      stickRef.current = true;
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      setNewMessages({ count: 0, lastEntryId: state.entries[state.entries.length - 1]?.id ?? -1 });
+    }
+  }, [state.entries]);
+
   return (
     <section className="flex h-full min-h-0 flex-1 flex-col gap-3" aria-label="Chat">
+      <header className="flex shrink-0 items-center justify-between gap-2">
+        <h2 className="text-sm font-medium">Asisten data</h2>
+        <div className="flex items-center gap-1">
+          {onSelectSession && sessions.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="ghost" title="Riwayat percakapan" disabled={running}>
+                  <ClockCounterClockwiseIcon data-icon="inline-start" />
+                  Riwayat
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-80 w-64 overflow-y-auto">
+                {groupByDate(sessions).map(({ group, items }) => (
+                  <DropdownMenuGroup key={group}>
+                    <DropdownMenuLabel>{group}</DropdownMenuLabel>
+                    {items.map((s) => (
+                      <DropdownMenuItem key={s.id} onSelect={() => onSelectSession(s.id)}>
+                        <span className="min-w-0 flex-1 truncate">{s.title || "Percakapan"}</span>
+                        {s.id === state.sessionId && <CheckIcon aria-label="Sesi aktif" weight="bold" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {onNewSession && (
+            <Button size="sm" variant="ghost" title="Percakapan baru" disabled={running} onClick={onNewSession}>
+              <PlusIcon data-icon="inline-start" />
+              Percakapan baru
+            </Button>
+          )}
+        </div>
+      </header>
       <ol
-        className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto overscroll-contain pr-1"
+        className="-mr-2 flex min-h-0 flex-1 list-none flex-col gap-4 overflow-y-auto overscroll-contain pr-2 [scrollbar-gutter:stable]"
         ref={logRef}
+        aria-live="polite"
         onScroll={(e) => {
           const el = e.currentTarget;
           stickRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_STICK_PX;
+          if (stickRef.current) setNewMessages((p) => (p.count ? { ...p, count: 0 } : p));
         }}
       >
         {state.entries.length === 0 && (
-          <li className="flex flex-1">
-            <Empty>
-              <EmptyHeader>
+          <li className="flex flex-1 items-center justify-center">
+            <Empty className="max-w-md p-0 text-center">
+              <EmptyHeader className="items-center text-center">
                 <EmptyMedia variant="icon">
                   <ChatCircleDotsIcon />
                 </EmptyMedia>
                 <EmptyTitle>Tanya tentang data Anda</EmptyTitle>
-                <EmptyDescription>
-                  {datasets.length ? "Coba tanyakan:" : "Unggah dataset, lalu mulai bertanya."}
+                <EmptyDescription className="text-center">
+                  {datasets.length
+                    ? "Asisten menjawab dari dataset di workspace ini."
+                    : "Unggah dataset, lalu mulai bertanya."}
                 </EmptyDescription>
               </EmptyHeader>
               {datasets.length > 0 && (
-                <EmptyContent className="items-stretch">
+                <EmptyContent className="max-w-none items-center gap-2">
                   {suggestQuestions(datasets).map((q) => (
-                    <Button
+                    <button
                       key={q}
-                      variant="outline"
-                      className="h-auto justify-start py-2 text-left whitespace-normal"
+                      type="button"
+                      className="rounded-full border border-border bg-surface px-4 py-2 text-sm transition-colors hover:border-border-strong hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                       disabled={running}
                       onClick={() => onSend(q)}
                     >
                       {q}
-                    </Button>
+                    </button>
                   ))}
                 </EmptyContent>
               )}
@@ -396,11 +507,64 @@ export function ChatPanel({
         ))}
       </ol>
 
-      {running && (
-        <div className="rounded-md bg-muted px-2.5 py-1.5 text-[0.8125rem] text-muted-foreground" role="status">
+      {newMessages.count > 0 && (
+        <button
+          type="button"
+          className="self-center rounded-full border border-border bg-surface px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={scrollToBottom}
+        >
+          <ArrowDownIcon data-icon="inline-start" weight="bold" />
+          {newMessages.count === 1 ? "Pesan baru" : `${newMessages.count} pesan baru`}
+        </button>
+      )}
+
+      {tileAdded && (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface p-3 text-sm shadow-sm">
+          <span>
+            <strong>Tile ditambahkan</strong>
+            <span className="ml-2 text-muted-foreground">·</span>
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              if (!focusTile(tileAdded.id)) toast.info("Tile ada di halaman lain atau belum tampil.");
+              setTileAdded(null);
+            }}
+          >
+            Lihat
+          </Button>
+        </div>
+      )}
+
+      {running && runningTool && (
+        <details className="group rounded-lg border border-border bg-surface text-sm">
+          <summary
+            role="status"
+            className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          >
+            <span aria-hidden className="size-1.5 shrink-0 animate-pulse rounded-full bg-primary" />
+            <span className="min-w-0 flex-1">
+              {activeAgent ? `Agent ${agentLabel(activeAgent)} aktif` : "Memproses"} · menjalankan {runningTool.tool}
+            </span>
+            {runningTool.argsSummary && (
+              <CaretDownIcon aria-hidden className="size-4 transition-transform group-open:rotate-180" weight="bold" />
+            )}
+          </summary>
+          {runningTool.argsSummary && (
+            <div className="border-t border-border px-3 py-2 text-muted-foreground">
+              {runningTool.argsSummary}
+            </div>
+          )}
+        </details>
+      )}
+      {running && !runningTool && (
+        <div
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          role="status"
+        >
+          <span aria-hidden className="size-1.5 shrink-0 animate-pulse rounded-full bg-primary" />
           {activeAgent ? `Agent ${agentLabel(activeAgent)} aktif` : "Memproses"}
-          {runningTool && ` · menjalankan ${runningTool.tool}`}
-          {runningTool?.argsSummary && <span> ({runningTool.argsSummary})</span>}
         </div>
       )}
 
@@ -433,13 +597,16 @@ const Composer = memo(function Composer({
     setDraft("");
   };
   return (
-    <form className="flex items-end gap-2 border-t pt-3" onSubmit={onSubmit}>
+    <form
+      className="flex shrink-0 flex-col gap-2 rounded-lg border bg-background p-2 focus-within:border-ring"
+      onSubmit={onSubmit}
+    >
       <Label className="sr-only" htmlFor="chat-input">
         Pesan
       </Label>
       <Textarea
         id="chat-input"
-        className="max-h-40 min-h-11 flex-1 resize-y"
+        className="max-h-48 min-h-11 resize-none border-0 bg-transparent px-1 py-1 shadow-none focus-visible:ring-0 dark:bg-transparent"
         rows={2}
         value={draft}
         placeholder="Tanyakan sesuatu tentang data Anda"
@@ -451,17 +618,18 @@ const Composer = memo(function Composer({
           }
         }}
       />
-      {running ? (
-        <Button type="button" variant="outline" onClick={onStop} disabled={!canStop}>
-          <StopIcon data-icon="inline-start" weight="fill" />
-          Stop
-        </Button>
-      ) : (
-        <Button type="submit" disabled={!draft.trim()}>
-          <PaperPlaneRightIcon data-icon="inline-start" />
-          Kirim
-        </Button>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs text-muted-foreground">Enter kirim · Shift+Enter baris baru</span>
+        {running ? (
+          <Button type="button" size="icon-sm" variant="outline" title="Stop" aria-label="Stop" onClick={onStop} disabled={!canStop}>
+            <StopIcon weight="fill" />
+          </Button>
+        ) : (
+          <Button type="submit" size="icon-sm" title="Kirim" aria-label="Kirim" disabled={!draft.trim()}>
+            <PaperPlaneRightIcon />
+          </Button>
+        )}
+      </div>
     </form>
   );
 });

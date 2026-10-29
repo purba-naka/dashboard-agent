@@ -35,7 +35,7 @@ function contentSummary(ws: WorkspaceSummary): string {
   return `${ws.dataset_count} dataset · ${ws.dashboard_count} dashboard`;
 }
 
-const TILE = "relative flex min-w-0 flex-col gap-1 rounded-lg border bg-card p-4 transition-colors";
+const TILE = "relative flex min-w-0 flex-col gap-1 rounded-xl border bg-card p-4 transition-colors";
 
 /** Kartu Workspace: seluruh kartu menuju studio, aksi ada di menu. */
 export function WorkspaceRow({ workspace, onRename, onRequestDelete }: WorkspaceRowProps) {

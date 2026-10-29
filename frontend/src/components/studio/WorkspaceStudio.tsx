@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { Canvas } from "@/components/canvas";
+import { Canvas, OpenUICanvas, errorMessage } from "@/components/canvas";
 import { ChatPanel, type ChatPanelHandle } from "@/components/chat";
 import { DatasetsPanel } from "@/components/datasets";
 import { ExportBar } from "@/components/export";
@@ -36,6 +36,9 @@ export interface WorkspaceStudioProps {
 }
 
 const PAGE_PARAM = "page";
+
+/** Flag dev refactor OpenUI (D12); dashboard ber-`statements` selalu dirender OpenUI. */
+const CANVAS_ENGINE = process.env.NEXT_PUBLIC_CANVAS_ENGINE === "openui" ? "openui" : "legacy";
 
 function pageFromUrl(): string | null {
   if (typeof window === "undefined") return null;
@@ -268,21 +271,54 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
               </AlertAction>
             </Alert>
           )}
+          {CANVAS_ENGINE === "openui" &&
+            Object.keys(snapshot.content.items).length > 0 &&
+            deps.canvas.convertToCanvas && (
+              <Alert data-export-hide>
+                <AlertDescription>Dashboard ini masih memakai canvas lama.</AlertDescription>
+                <AlertAction>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={() => {
+                      deps.canvas.convertToCanvas!(snapshot.id).then(
+                        (snap) => dispatch({ type: "snapshotLoaded", snapshot: snap }),
+                        (err: unknown) => setStudioError(errorMessage(err)),
+                      );
+                    }}
+                  >
+                    Konversi ke canvas OpenUI
+                  </Button>
+                </AlertAction>
+              </Alert>
+            )}
           <div ref={canvasRef}>
-            <Canvas
-              snapshot={snapshot}
-              crossFilters={crossFilters}
-              datasetVersions={datasetVersions}
-              datasets={detail.datasets}
-              onCrossFiltersChange={setCrossFilters}
-              renderKey={renderKey}
-              onAskAgent={(message) => void chatRef.current?.send(message)}
-              client={deps.canvas}
-            />
+            {Object.keys(snapshot.content.statements ?? {}).length > 0 ? (
+              <OpenUICanvas
+                snapshot={snapshot}
+                crossFilters={crossFilters}
+                datasetVersions={datasetVersions}
+                datasets={detail.datasets}
+                onCrossFiltersChange={setCrossFilters}
+                renderKey={renderKey}
+                client={deps.canvas}
+              />
+            ) : (
+              <Canvas
+                snapshot={snapshot}
+                crossFilters={crossFilters}
+                datasetVersions={datasetVersions}
+                datasets={detail.datasets}
+                onCrossFiltersChange={setCrossFilters}
+                renderKey={renderKey}
+                onAskAgent={(message) => void chatRef.current?.send(message)}
+                client={deps.canvas}
+              />
+            )}
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-input px-4 py-10 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-input px-4 py-10 text-center">
           <p className="text-sm text-muted-foreground">
             {detail.dashboards.length === 0
               ? "Belum ada Dashboard di Workspace ini."
@@ -416,6 +452,9 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
             onPatch={(patch) => dispatch({ type: "patchReceived", patch })}
             onRelationsChanged={() => void reloadRelations()}
             onSessionChange={setChatSessionId}
+            onNewSession={() => setChatSessionId(null)}
+            sessions={detail.chat_sessions}
+            onSelectSession={setChatSessionId}
             dashboardId={snapshot?.id ?? null}
           />
         ),
@@ -445,14 +484,22 @@ export function WorkspaceStudio({ workspaceId, deps = defaultStudioDeps }: Works
         renderSlots={renderSlots}
         activeSessionId={chatSessionId}
         onSelectSession={setChatSessionId}
+        onSelectPage={selectPage}
+        onAskAssistant={(text) => void chatRef.current?.send(text)}
         pending={{
           relations: relations.filter((r) => r.status === "candidate").length,
           semantic: semanticPending,
         }}
       />
+      {/* Shell setinggi layar: pesan melayang agar tetap terlihat. */}
       {studioError && (
-        <Alert className={WARN_ALERT}>
+        <Alert className="fixed bottom-4 left-1/2 z-50 w-[min(32rem,calc(100vw-2rem))] -translate-x-1/2 border-transparent bg-warn-soft text-warn shadow-(--shadow-lg) *:data-[slot=alert-description]:text-warn">
           <AlertDescription>{studioError}</AlertDescription>
+          <AlertAction>
+            <Button variant="link" size="xs" onClick={() => setStudioError(null)}>
+              Tutup
+            </Button>
+          </AlertAction>
         </Alert>
       )}
     </>

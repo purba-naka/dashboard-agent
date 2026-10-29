@@ -149,9 +149,9 @@ export function SemanticPanel({
 
   return (
     <section className="flex flex-col gap-3" aria-label="Model semantik">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Model semantik</h2>
-        <span className="flex flex-wrap items-center gap-1">
+      <header className="flex flex-col gap-2">
+        <h2 className="section-label">Model semantik</h2>
+        <span className="flex flex-wrap items-center gap-1.5">
           <Button
             type="button"
             variant="outline"
@@ -263,10 +263,10 @@ export function SemanticPanel({
               {groups[kind].map((entry) => {
                 const title = entryTitle(entry);
                 return (
-                  <li key={entry.id} className="flex items-start gap-2 rounded-md border px-2.5 py-2">
-                    <div className="flex min-w-0 flex-1 flex-col gap-1 text-sm break-words">
+                  <li key={entry.id} className="flex flex-col gap-2 rounded-md border px-3 py-2.5">
+                    <div className="flex min-w-0 flex-col gap-1.5 text-sm break-words">
+                      <strong className="font-medium break-all">{title}</strong>
                       <span className="flex flex-wrap items-center gap-1">
-                        <strong className="font-medium">{title}</strong>
                         <Badge variant={STATUS_BADGE[entry.status]}>{STATUS_LABELS[entry.status]}</Badge>
                         {!entry.valid && <Badge variant="destructive">Tidak valid</Badge>}
                         {entry.source === "user" && <Badge variant="outline">Diedit pengguna</Badge>}
@@ -311,7 +311,7 @@ export function SemanticPanel({
                         </form>
                       )}
                     </div>
-                    <span className="flex shrink-0 items-center gap-0.5">
+                    <span className="flex items-center gap-1 border-t pt-2">
                       {entry.status !== "confirmed" && (
                         <Button
                           type="button"
@@ -324,6 +324,7 @@ export function SemanticPanel({
                           Konfirmasi
                         </Button>
                       )}
+                      <span className="ml-auto flex items-center gap-0.5">
                       {entry.status !== "rejected" && (
                         <IconAction
                           label={`Tolak ${title}`}
@@ -339,6 +340,7 @@ export function SemanticPanel({
                           <PencilSimpleIcon />
                         </IconAction>
                       )}
+                      </span>
                     </span>
                   </li>
                 );

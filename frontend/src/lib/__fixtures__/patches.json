@@ -10,7 +10,8 @@
         "items": {},
         "layout": {},
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -334,7 +335,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -431,14 +433,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -501,8 +504,8 @@
                 "kind": "insight"
               },
               "layout": {
-                "x": 0,
-                "y": 4,
+                "x": 6,
+                "y": 0,
                 "w": 6,
                 "h": 3
               }
@@ -560,8 +563,8 @@
                 "kind": "insight"
               },
               "layout": {
-                "x": 0,
-                "y": 4,
+                "x": 6,
+                "y": 0,
                 "w": 6,
                 "h": 3
               }
@@ -614,7 +617,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -664,7 +668,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -858,7 +863,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -908,7 +914,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -1370,7 +1377,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -1467,14 +1475,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -1783,14 +1792,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -1887,14 +1897,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -1927,8 +1938,8 @@
                 {
                   "id": "item_02",
                   "before": {
-                    "x": 0,
-                    "y": 4,
+                    "x": 6,
+                    "y": 0,
                     "w": 6,
                     "h": 3
                   },
@@ -1970,8 +1981,8 @@
                     "h": 5
                   },
                   "after": {
-                    "x": 0,
-                    "y": 4,
+                    "x": 6,
+                    "y": 0,
                     "w": 6,
                     "h": 3
                   }
@@ -2080,7 +2091,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -2177,14 +2189,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -2459,14 +2472,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -2563,14 +2577,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -2689,14 +2704,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -2707,7 +2723,8 @@
         "items": {},
         "layout": {},
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -3085,7 +3102,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -3182,14 +3200,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -3218,6 +3237,21 @@
                     "w": 12,
                     "h": 4
                   }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  }
                 }
               ]
             }
@@ -3239,6 +3273,21 @@
                     "y": 0,
                     "w": 6,
                     "h": 4
+                  }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
                   }
                 }
               ]
@@ -3272,6 +3321,21 @@
                     "w": 6,
                     "h": 4
                   }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
+                  }
                 }
               ]
             }
@@ -3293,6 +3357,21 @@
                     "y": 0,
                     "w": 12,
                     "h": 4
+                  }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
                   }
                 }
               ]
@@ -3326,6 +3405,21 @@
                     "w": 12,
                     "h": 4
                   }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  }
                 }
               ]
             }
@@ -3347,6 +3441,21 @@
                     "y": 0,
                     "w": 6,
                     "h": 4
+                  }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
                   }
                 }
               ]
@@ -3380,6 +3489,21 @@
                     "w": 6,
                     "h": 4
                   }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
+                  }
                 }
               ]
             }
@@ -3401,6 +3525,21 @@
                     "y": 0,
                     "w": 12,
                     "h": 4
+                  }
+                },
+                {
+                  "id": "item_02",
+                  "before": {
+                    "x": 6,
+                    "y": 0,
+                    "w": 6,
+                    "h": 3
+                  },
+                  "after": {
+                    "x": 6,
+                    "y": 4,
+                    "w": 6,
+                    "h": 3
                   }
                 }
               ]
@@ -3548,14 +3687,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -3652,14 +3792,15 @@
             "h": 4
           },
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -4052,8 +4193,8 @@
         },
         "layout": {
           "item_02": {
-            "x": 0,
-            "y": 4,
+            "x": 6,
+            "y": 0,
             "w": 6,
             "h": 3
           },
@@ -4065,7 +4206,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -4115,7 +4257,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -4465,7 +4608,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       }
     },
     {
@@ -4515,7 +4659,8 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
       },
       "patches": [
         {
@@ -5019,7 +5164,903 @@
           }
         },
         "global_filters": [],
-        "brief": null
+        "brief": null,
+        "statements": {}
+      }
+    },
+    {
+      "name": "canvas_statements",
+      "description": "set_statement: tambah, ganti, undo/redo, hapus, undo hapus",
+      "initial": {
+        "title": "Canvas",
+        "items": {},
+        "layout": {},
+        "global_filters": [],
+        "brief": null,
+        "statements": {}
+      },
+      "patches": [
+        {
+          "id": "patch_01",
+          "dashboard_id": "dash_fixture",
+          "version": 1,
+          "base_version": 0,
+          "source": "agent",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_statement",
+              "name": "root",
+              "before": null,
+              "after": {
+                "name": "root",
+                "source": "root = VContainer([chart])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [
+                  "chart"
+                ],
+                "props": {
+                  "children": [
+                    {
+                      "$ref": "chart"
+                    }
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            },
+            {
+              "op": "set_statement",
+              "name": "q1",
+              "before": null,
+              "after": {
+                "name": "q1",
+                "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+                "kind": "query",
+                "component": "Query",
+                "refs": [],
+                "props": {},
+                "query": {
+                  "tool": "render_query",
+                  "args": {
+                    "query": "q_sales"
+                  }
+                },
+                "insight": null
+              }
+            },
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": null,
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": null
+            },
+            {
+              "op": "set_statement",
+              "name": "q1",
+              "before": {
+                "name": "q1",
+                "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+                "kind": "query",
+                "component": "Query",
+                "refs": [],
+                "props": {},
+                "query": {
+                  "tool": "render_query",
+                  "args": {
+                    "query": "q_sales"
+                  }
+                },
+                "insight": null
+              },
+              "after": null
+            },
+            {
+              "op": "set_statement",
+              "name": "root",
+              "before": {
+                "name": "root",
+                "source": "root = VContainer([chart])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [
+                  "chart"
+                ],
+                "props": {
+                  "children": [
+                    {
+                      "$ref": "chart"
+                    }
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": null
+            }
+          ],
+          "created_at": "2025-01-01T09:01:00Z"
+        },
+        {
+          "id": "patch_02",
+          "dashboard_id": "dash_fixture",
+          "version": 2,
+          "base_version": 1,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:02:00Z"
+        },
+        {
+          "id": "patch_03",
+          "dashboard_id": "dash_fixture",
+          "version": 3,
+          "base_version": 2,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:03:00Z"
+        },
+        {
+          "id": "patch_04",
+          "dashboard_id": "dash_fixture",
+          "version": 4,
+          "base_version": 3,
+          "source": "user",
+          "kind": "redo",
+          "target_patch_id": "patch_02",
+          "ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Revenue\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Revenue",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:04:00Z"
+        },
+        {
+          "id": "patch_05",
+          "dashboard_id": "dash_fixture",
+          "version": 5,
+          "base_version": 4,
+          "source": "user",
+          "kind": "normal",
+          "target_patch_id": null,
+          "ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": null
+            },
+            {
+              "op": "set_statement",
+              "name": "q1",
+              "before": {
+                "name": "q1",
+                "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+                "kind": "query",
+                "component": "Query",
+                "refs": [],
+                "props": {},
+                "query": {
+                  "tool": "render_query",
+                  "args": {
+                    "query": "q_sales"
+                  }
+                },
+                "insight": null
+              },
+              "after": null
+            },
+            {
+              "op": "set_statement",
+              "name": "root",
+              "before": {
+                "name": "root",
+                "source": "root = VContainer([chart])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [
+                  "chart"
+                ],
+                "props": {
+                  "children": [
+                    {
+                      "$ref": "chart"
+                    }
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "root",
+                "source": "root = VContainer([])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [],
+                "props": {
+                  "children": []
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_statement",
+              "name": "root",
+              "before": {
+                "name": "root",
+                "source": "root = VContainer([])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [],
+                "props": {
+                  "children": []
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "root",
+                "source": "root = VContainer([chart])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [
+                  "chart"
+                ],
+                "props": {
+                  "children": [
+                    {
+                      "$ref": "chart"
+                    }
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            },
+            {
+              "op": "set_statement",
+              "name": "q1",
+              "before": null,
+              "after": {
+                "name": "q1",
+                "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+                "kind": "query",
+                "component": "Query",
+                "refs": [],
+                "props": {},
+                "query": {
+                  "tool": "render_query",
+                  "args": {
+                    "query": "q_sales"
+                  }
+                },
+                "insight": null
+              }
+            },
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": null,
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:05:00Z"
+        },
+        {
+          "id": "patch_06",
+          "dashboard_id": "dash_fixture",
+          "version": 6,
+          "base_version": 5,
+          "source": "user",
+          "kind": "undo",
+          "target_patch_id": "patch_05",
+          "ops": [
+            {
+              "op": "set_statement",
+              "name": "root",
+              "before": {
+                "name": "root",
+                "source": "root = VContainer([])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [],
+                "props": {
+                  "children": []
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "root",
+                "source": "root = VContainer([chart])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [
+                  "chart"
+                ],
+                "props": {
+                  "children": [
+                    {
+                      "$ref": "chart"
+                    }
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            },
+            {
+              "op": "set_statement",
+              "name": "q1",
+              "before": null,
+              "after": {
+                "name": "q1",
+                "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+                "kind": "query",
+                "component": "Query",
+                "refs": [],
+                "props": {},
+                "query": {
+                  "tool": "render_query",
+                  "args": {
+                    "query": "q_sales"
+                  }
+                },
+                "insight": null
+              }
+            },
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": null,
+              "after": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "inverse_ops": [
+            {
+              "op": "set_statement",
+              "name": "chart",
+              "before": {
+                "name": "chart",
+                "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+                "kind": "component",
+                "component": "BarChart",
+                "refs": [
+                  "q1"
+                ],
+                "props": {
+                  "title": "Omzet",
+                  "data": {
+                    "$ref": "q1"
+                  },
+                  "x": "region",
+                  "y": [
+                    "revenue"
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": null
+            },
+            {
+              "op": "set_statement",
+              "name": "q1",
+              "before": {
+                "name": "q1",
+                "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+                "kind": "query",
+                "component": "Query",
+                "refs": [],
+                "props": {},
+                "query": {
+                  "tool": "render_query",
+                  "args": {
+                    "query": "q_sales"
+                  }
+                },
+                "insight": null
+              },
+              "after": null
+            },
+            {
+              "op": "set_statement",
+              "name": "root",
+              "before": {
+                "name": "root",
+                "source": "root = VContainer([chart])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [
+                  "chart"
+                ],
+                "props": {
+                  "children": [
+                    {
+                      "$ref": "chart"
+                    }
+                  ]
+                },
+                "query": null,
+                "insight": null
+              },
+              "after": {
+                "name": "root",
+                "source": "root = VContainer([])",
+                "kind": "component",
+                "component": "VContainer",
+                "refs": [],
+                "props": {
+                  "children": []
+                },
+                "query": null,
+                "insight": null
+              }
+            }
+          ],
+          "created_at": "2025-01-01T09:06:00Z"
+        }
+      ],
+      "expected": {
+        "title": "Canvas",
+        "items": {},
+        "layout": {},
+        "global_filters": [],
+        "brief": null,
+        "statements": {
+          "root": {
+            "name": "root",
+            "source": "root = VContainer([chart])",
+            "kind": "component",
+            "component": "VContainer",
+            "refs": [
+              "chart"
+            ],
+            "props": {
+              "children": [
+                {
+                  "$ref": "chart"
+                }
+              ]
+            },
+            "query": null,
+            "insight": null
+          },
+          "q1": {
+            "name": "q1",
+            "source": "q1 = Query(\"render_query\", {query: \"q_sales\"}, {rows: []})",
+            "kind": "query",
+            "component": "Query",
+            "refs": [],
+            "props": {},
+            "query": {
+              "tool": "render_query",
+              "args": {
+                "query": "q_sales"
+              }
+            },
+            "insight": null
+          },
+          "chart": {
+            "name": "chart",
+            "source": "chart = BarChart(\"Omzet\", q1, \"region\", [\"revenue\"])",
+            "kind": "component",
+            "component": "BarChart",
+            "refs": [
+              "q1"
+            ],
+            "props": {
+              "title": "Omzet",
+              "data": {
+                "$ref": "q1"
+              },
+              "x": "region",
+              "y": [
+                "revenue"
+              ]
+            },
+            "query": null,
+            "insight": null
+          }
+        }
       }
     }
   ]

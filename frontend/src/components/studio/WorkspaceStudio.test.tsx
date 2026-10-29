@@ -248,7 +248,7 @@ describe("WorkspaceStudio", () => {
     // Slot terisi: panel dataset, relasi, filter, canvas, chat.
     expect((await screen.findAllByText(/sales\.csv/)).length).toBeGreaterThan(0);
     expect(await screen.findByText(/sales\.region → customers\.region/)).toBeTruthy();
-    expect(await screen.findByRole("button", { name: "Ekspor PNG" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Ekspor PDF" })).toBeTruthy();
     expect(await screen.findByLabelText(/File dataset/)).toBeTruthy();
     // Canvas memuat judul dashboard (panel ringkasan + judul canvas).
     expect((await screen.findAllByText("Dashboard Penjualan")).length).toBeGreaterThanOrEqual(2);

@@ -130,6 +130,7 @@ export type ChatAction =
   | { type: "send"; text: string }
   | { type: "event"; event: ChatSseEvent }
   | { type: "ended" }
+  | { type: "reset" }
   | { type: "failed"; message: string }
   | { type: "history"; sessionId: string; entries: HistoryEntry[] }
   | { type: "relation"; relation: Relation }
@@ -230,6 +231,8 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return applyEvent(state, action.event);
     case "ended":
       return { ...state, ...idle };
+    case "reset":
+      return { ...initialChatState(), nextId: state.nextId };
     case "failed":
       return push({ ...state, ...idle }, { kind: "error", code: "CLIENT", message: action.message });
     case "history": {

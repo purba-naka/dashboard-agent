@@ -1,8 +1,12 @@
 "use client";
 
+import { formatNumber } from "@/lib/format-number";
 import { useLayoutEffect, useRef, useState } from "react";
 import { formatScalar } from "@/lib/filters";
 import type { FilterSet, InsightItem, QueryDetail } from "@/lib/types";
+import { ArrowClockwiseIcon } from "@phosphor-icons/react/ssr";
+import { IconAction } from "@/components/IconAction";
+import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,8 +93,8 @@ export function InsightCard({
       {/* Judul tampil di header sel Canvas; kartu hanya badge tipe. */}
       <Badge variant="secondary">{insightTypeLabel(insight.insight_type)}</Badge>
 
-      {/* ponytail: 2 baris karena tinggi tile grid tetap; naikkan bila tile ikut tinggi isi. max-h pengaman export. */}
-      <p ref={textRef} className="m-0 line-clamp-2 max-h-[3em] shrink-0 leading-normal">
+      {/* Section Insight: tinggi ikut isi, jadi 3 baris. */}
+      <p ref={textRef} className="m-0 line-clamp-3 shrink-0 text-sm leading-5">
         {insight.text}
       </p>
       {clamped && (
@@ -110,13 +114,17 @@ export function InsightCard({
         </div>
       )}
 
-      <div className="flex gap-2" data-export-hide>
-        <Button variant="outline" size="sm" onClick={openDetail} disabled={busy !== null}>
+      {/* Aksi muncul saat hover/fokus kartu (`group/tile` di Canvas); selalu tampil di layar sentuh. */}
+      <div
+        className="mt-auto flex items-center gap-1 transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover/tile:opacity-100 group-focus-within/tile:opacity-100"
+        data-export-hide
+      >
+        <Button variant="ghost" size="sm" onClick={openDetail} disabled={busy !== null}>
           Detail
         </Button>
-        <Button variant="ghost" size="sm" onClick={onRefresh} disabled={busy !== null}>
-          {busy === "refresh" ? "Menyegarkan" : "Segarkan"}
-        </Button>
+        <IconAction label={busy === "refresh" ? "Menyegarkan" : "Segarkan"} onClick={onRefresh} disabled={busy !== null}>
+          <ArrowClockwiseIcon className={cn(busy === "refresh" && "animate-spin")} />
+        </IconAction>
       </div>
 
       {error && (
@@ -192,7 +200,7 @@ function EvidenceTableView({
       </Table>
       {rowCount > rows.length && (
         <p className="text-[0.8125rem] text-muted-foreground">
-          Menampilkan {rows.length} dari {rowCount.toLocaleString("id-ID")} baris.
+          Menampilkan {rows.length} dari {formatNumber(rowCount)} baris.
         </p>
       )}
     </>

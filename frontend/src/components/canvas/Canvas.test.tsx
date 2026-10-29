@@ -20,14 +20,17 @@ import { Canvas } from "./Canvas";
 import type { CanvasClient } from "./client";
 
 // Prop GridLayout mock terakhir, dipakai untuk memicu `onLayoutChange`.
+type GridCb = (layout: unknown[]) => void;
 const gridState = vi.hoisted(() => ({
-  props: undefined as { onLayoutChange?: (layout: unknown[]) => void } | undefined,
+  props: undefined as
+    | { layout?: unknown[]; onDragStart?: GridCb; onDragStop?: GridCb; onLayoutChange?: GridCb }
+    | undefined,
 }));
 
 vi.mock("react-grid-layout", () => ({
   useContainerWidth: () => ({ containerRef: { current: null }, width: 800 }),
   GridLayout: (props: { children?: React.ReactNode } & Record<string, unknown>) => {
-    gridState.props = props as { onLayoutChange?: (layout: unknown[]) => void };
+    gridState.props = props as typeof gridState.props;
     return <div data-testid="grid">{props.children}</div>;
   },
 }));
@@ -135,17 +138,18 @@ function lastGridProps() {
 }
 
 describe("Canvas", () => {
-  it("mengurutkan item berdasarkan layout y lalu x (Req 23.3)", async () => {
+  it("mengurutkan item berdasarkan layout y lalu x; tampil per section KPI → chart → insight (Req 23.3)", async () => {
     const client = memoryClient();
     render(
       <Canvas snapshot={snapshot()} crossFilters={[]} client={client} />,
     );
-    // ins_1 (y=0) tampil sebelum ch_1 (y=1).
+    // Urutan baca data tetap y lalu x: ins_1 (y=0) sebelum ch_1 (y=1).
+    expect(client.render).toHaveBeenCalledWith("db_1", ["ins_1", "ch_1"], [], expect.anything());
+    // Tampilan: chart di grid lebih dulu, insight di section Insight sesudahnya.
     const buttons = await screen.findAllByRole("button", { name: /^Aksi untuk/ });
     const labels = buttons.map((b) => b.getAttribute("aria-label"));
-    expect(labels[0]).toContain("Kontributor teratas");
-    expect(labels[1]).toContain("Penjualan per bulan");
-    expect(client.render).toHaveBeenCalled();
+    expect(labels[0]).toContain("Penjualan per bulan");
+    expect(labels[1]).toContain("Kontributor teratas");
   });
 
   it("menampilkan badge invalid dan stale dari item_status (Req 26.2)", () => {
@@ -210,18 +214,54 @@ describe("Canvas", () => {
     });
   });
 
-  it("perubahan tata letak mengirim command set_layout (Req 17.4)", () => {
+  it("drag selesai mengirim set_layout dalam koordinat tersimpan (Req 17.4)", () => {
     const client = memoryClient();
     render(<Canvas snapshot={snapshot()} crossFilters={[]} client={client} />);
     const props = lastGridProps();
-    if (!props?.onLayoutChange) throw new Error("onLayoutChange tidak terpasang");
-    props.onLayoutChange([
-      { i: "ch_1", x: 3, y: 2, w: 6, h: 4 },
-      { i: "ins_1", x: 6, y: 0, w: 6, h: 2 },
-    ]);
+    if (!props?.onDragStart || !props.onDragStop) throw new Error("callback drag tidak terpasang");
+    // Grid hanya berisi chart; y dinormalisasi ke 0 (ch_1 tersimpan di y=1).
+    expect(props.layout).toEqual([{ i: "ch_1", x: 0, y: 0, w: 6, h: 4 }]);
+    props.onDragStart([{ i: "ch_1", x: 0, y: 0, w: 6, h: 4 }]);
+    props.onDragStop([{ i: "ch_1", x: 3, y: 2, w: 6, h: 4 }]);
     expect(client.command).toHaveBeenCalledWith("db_1", 3, {
       type: "set_layout",
-      changes: { ch_1: { x: 3, y: 2, w: 6, h: 4 } },
+      changes: { ch_1: { x: 3, y: 3, w: 6, h: 4 } },
+    });
+    // Pemadatan grid saat mount (onLayoutChange) tidak menulis layout.
+    expect(props.onLayoutChange).toBeUndefined();
+  });
+
+  it("tombol Rapikan mengirim command tidy_layout", async () => {
+    const user = userEvent.setup();
+    const client = memoryClient();
+    render(<Canvas snapshot={snapshot()} crossFilters={[]} client={client} />);
+    await user.click(screen.getByRole("button", { name: "Rapikan tata letak" }));
+    expect(client.command).toHaveBeenCalledWith("db_1", 3, { type: "tidy_layout" });
+  });
+
+  it("mengelompokkan insight di section Insight terpisah dari grid chart", async () => {
+    render(<Canvas snapshot={snapshot()} crossFilters={[]} client={memoryClient()} />);
+    const section = await screen.findByRole("region", { name: "Insight" });
+    expect(within(section).getByText("Produk A menyumbang 1.200 penjualan.")).toBeTruthy();
+    expect(within(screen.getByTestId("grid")).queryByText(/Produk A/)).toBeNull();
+  });
+
+  it("Pindahkan ke bawah menukar posisi dengan tile berikutnya di section yang sama", async () => {
+    const user = userEvent.setup();
+    const client = memoryClient();
+    const two = snapshot({
+      content: {
+        ...snapshot().content,
+        items: { ch_1: chart(), ch_2: chart({ id: "ch_2", title: "Kedua" }) },
+        layout: { ch_1: { x: 0, y: 0, w: 6, h: 4 }, ch_2: { x: 6, y: 0, w: 6, h: 4 } },
+      },
+    });
+    render(<Canvas snapshot={two} crossFilters={[]} client={client} />);
+    await user.click(screen.getByRole("button", { name: "Aksi untuk Penjualan per bulan" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Pindahkan ke bawah" }));
+    expect(client.command).toHaveBeenCalledWith("db_1", 3, {
+      type: "set_layout",
+      changes: { ch_1: { x: 6, y: 0, w: 6, h: 4 }, ch_2: { x: 0, y: 0, w: 6, h: 4 } },
     });
   });
 

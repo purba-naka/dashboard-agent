@@ -40,7 +40,10 @@ function quantile(sorted: number[], q: number): number {
 function divergingMap(m: O, values: number[], ref: number): O {
   const sorted = [...values].sort((a, b) => a - b);
   const half = Math.max(ref - sorted[0], quantile(sorted, 0.95) - ref, 1);
-  return { ...m, type: "continuous", min: ref - half, max: ref + half, inRange: { color: DIVERGING }, calculable: false };
+  // Ujung legend menjelaskan arti warna relatif terhadap acuan netral (tengah = acuan).
+  // Pendek agar tidak terpotong di tepi kanan; tooltip sel memuat selisih lengkap.
+  const text = [`> ${formatNumber(ref)}`, `< ${formatNumber(ref)}`];
+  return { ...m, type: "continuous", min: ref - half, max: ref + half, inRange: { color: DIVERGING }, calculable: false, text };
 }
 
 function signed(d: number): string {

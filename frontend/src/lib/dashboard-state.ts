@@ -23,6 +23,7 @@
  */
 
 import type {
+  CanvasStatement,
   DashboardContent,
   DashboardItem,
   DashboardSnapshot,
@@ -158,6 +159,10 @@ export function applyOps(content: DashboardContent, ops: readonly Op[]): Dashboa
   const layout: Record<string, LayoutRect> = { ...content.layout };
   let filters = [...content.global_filters];
   let brief: DesignBrief | null | undefined = content.brief;
+  // Salinan dibuat saat dibutuhkan; `undefined` dipertahankan untuk konten lama.
+  let statements: Record<string, CanvasStatement> | undefined = content.statements
+    ? { ...content.statements }
+    : undefined;
 
   ops.forEach((op, index) => {
     const where: InvalidOpDetails = { op_index: index, op: op.op };
@@ -266,6 +271,20 @@ export function applyOps(content: DashboardContent, ops: readonly Op[]): Dashboa
         break;
       }
 
+      case "set_statement": {
+        statements ??= {};
+        const current = has(statements, op.name) ? statements[op.name] : null;
+        if (!jsonEqual(current, op.before ?? null)) {
+          throw new InvalidOpError(
+            `set_statement: before statement '${op.name}' tidak sama dengan state saat ini.`,
+            { ...where, name: op.name },
+          );
+        }
+        if (op.after === null) delete statements[op.name];
+        else statements[op.name] = op.after;
+        break;
+      }
+
       default: {
         const unknownOp: { op?: unknown } = op;
         throw new InvalidOpError(`Op tidak dikenal: ${String(unknownOp.op)}.`, {
@@ -279,6 +298,12 @@ export function applyOps(content: DashboardContent, ops: readonly Op[]): Dashboa
   const next: DashboardContent = { title, items, layout, global_filters: filters };
   // `brief` hanya disertakan bila sudah dikenal (konten lama tanpa field ini).
   if (brief !== undefined) next.brief = brief;
+  if (statements !== undefined) next.statements = statements;
+  if (Object.keys(items).length > 0 && statements && Object.keys(statements).length > 0) {
+    throw new InvalidOpError("Hasil ops melanggar invariant Dashboard.", {
+      reason: "items legacy dan statements canvas tidak boleh terisi bersamaan",
+    });
+  }
   return next;
 }
 
@@ -367,6 +392,7 @@ function itemIdsTouched(ops: readonly Op[]): string[] {
   for (const op of ops) {
     if (op.op === "add_item" || op.op === "remove_item") ids.push(op.item.id);
     else if (op.op === "set_item") ids.push(op.id);
+    else if (op.op === "set_statement") ids.push(op.name);
   }
   return ids;
 }
@@ -381,7 +407,7 @@ function nextItemStatus(
   const next: Record<string, ItemStatus> = {};
   const drop = new Set(touched);
   for (const [id, status] of Object.entries(current)) {
-    if (!drop.has(id) && has(content.items, id)) next[id] = status;
+    if (!drop.has(id) && (has(content.items, id) || has(content.statements ?? {}, id))) next[id] = status;
   }
   return next;
 }

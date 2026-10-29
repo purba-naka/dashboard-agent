@@ -91,6 +91,15 @@ export interface DatasetQuality {
   null_pct: Record<string, number>;
 }
 
+/** Satu halaman baris dataset (`GET .../datasets/{id}/rows`). */
+export interface DatasetRowsPage {
+  columns: ColumnInfo[];
+  rows: Scalar[][];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 export interface DatasetDetail {
   dataset: Dataset;
   schema: ColumnInfo[];
@@ -335,11 +344,35 @@ export interface DashboardContent {
   global_filters: FilterSet;
   /** Design_Brief opsional; konten lama tidak memiliki field ini. */
   brief?: DesignBrief | null;
+  /** Program canvas OpenUI Lang per nama statement (docs/plan-openui-canvas.md). */
+  statements?: Record<string, CanvasStatement>;
+}
+
+export type StatementKind = "component" | "query" | "mutation" | "state" | "value";
+
+/** Satu statement program canvas; `props` bernama, rujukan = `{ $ref: nama }`. */
+export interface CanvasStatement {
+  name: string;
+  source: string;
+  kind: StatementKind;
+  component: string | null;
+  refs: string[];
+  props: Record<string, unknown>;
+  query: { tool: string | null; args: unknown } | null;
+  /** Lampiran Insight_Card untuk komponen `Insight`. */
+  insight: InsightItem | null;
 }
 
 // ---------------------------------------------------------------------------
 // Ops (hasil resolve command, self-contained) & Command
 // ---------------------------------------------------------------------------
+
+export interface SetStatementOp {
+  op: "set_statement";
+  name: string;
+  before: CanvasStatement | null;
+  after: CanvasStatement | null;
+}
 
 export interface AddItemOp {
   op: "add_item";
@@ -396,7 +429,8 @@ export type Op =
   | SetLayoutOp
   | SetFiltersOp
   | SetTitleOp
-  | SetBriefOp;
+  | SetBriefOp
+  | SetStatementOp;
 
 export type OpKind = Op["op"];
 
@@ -409,11 +443,13 @@ export type Command =
   | { type: "update_insight"; id: string; changes: Partial<Omit<InsightItem, "id" | "kind">> }
   | { type: "remove_item"; id: string }
   | { type: "set_layout"; changes: Record<string, LayoutRect> }
+  | { type: "tidy_layout" }
   | { type: "set_global_filters"; filters: FilterSet }
   | { type: "set_title"; title: string }
   | { type: "add_kpi"; title: string; spec: KpiSpec; layout?: LayoutRect }
   | { type: "update_kpi"; id: string; spec: KpiSpec; title?: string }
-  | { type: "set_brief"; brief: DesignBrief | null };
+  | { type: "set_brief"; brief: DesignBrief | null }
+  | { type: "apply_canvas_patch"; patch: string; allowed_components?: string[] | null };
 
 export type CommandType = Command["type"];
 
@@ -587,6 +623,33 @@ export interface RenderedItem {
 export interface RenderResponse {
   version: number;
   items: Record<string, RenderedItem>;
+}
+
+/** Satu panggilan `Query(tool, args)` dari runtime OpenUI. */
+export interface CanvasQueryRequest {
+  key: string;
+  tool: string;
+  args: Record<string, unknown>;
+}
+
+export interface CanvasRenderRequest {
+  queries: CanvasQueryRequest[];
+  cross_filters: Predicate[];
+}
+
+export interface CanvasQueryResult {
+  status: RenderItemStatus;
+  columns?: string[];
+  rows?: Record<string, Scalar>[];
+  kpi?: RenderedKpi;
+  formatted?: RenderedKpi["formatted"];
+  filter_unaffected: boolean;
+  error?: ErrorEnvelope["error"];
+}
+
+export interface CanvasRenderResponse {
+  version: number;
+  results: Record<string, CanvasQueryResult>;
 }
 
 export interface RefreshInsightRequest {

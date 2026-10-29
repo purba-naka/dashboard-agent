@@ -7,13 +7,18 @@
 
 import {
   applyCommand,
+  convertToCanvas,
   isApiError,
+  renderCanvas,
   renderDashboard,
   verifyDashboardItem,
   type RequestOptions,
 } from "@/lib/api";
 import type {
+  CanvasRenderRequest,
+  CanvasRenderResponse,
   Command,
+  DashboardSnapshot,
   DashboardItem,
   Dataset,
   LayoutChange,
@@ -41,9 +46,15 @@ export interface CanvasClient {
   ): Promise<PatchEvent>;
   /** "Tandai terverifikasi": query item menjadi Verified_Query (Req 34.2). Opsional. */
   verify?(dashboardId: string, itemId: string, opts?: RequestOptions): Promise<void>;
+  /** Batch `Query(...)` canvas OpenUI (docs/plan-openui-canvas.md D7). */
+  renderCanvas?(dashboardId: string, body: CanvasRenderRequest, opts?: RequestOptions): Promise<CanvasRenderResponse>;
+  /** Migrasi Dashboard legacy → canvas OpenUI (D10). */
+  convertToCanvas?(dashboardId: string, opts?: RequestOptions): Promise<DashboardSnapshot>;
 }
 
 export const defaultCanvasClient: CanvasClient = {
+  renderCanvas: (dashboardId, body, opts) => renderCanvas(dashboardId, body, opts),
+  convertToCanvas: (dashboardId, opts) => convertToCanvas(dashboardId, opts),
   render: (dashboardId, itemIds, crossFilters, opts) =>
     renderDashboard(dashboardId, { item_ids: itemIds, cross_filters: crossFilters }, opts),
   command: (dashboardId, baseVersion, command, opts) =>

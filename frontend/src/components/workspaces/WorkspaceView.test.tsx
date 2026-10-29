@@ -107,6 +107,42 @@ describe("WorkspaceView", () => {
     expect(screen.getByText("Belum ada sesi chat.")).toBeTruthy();
   });
 
+  it("panel data dan asisten bisa ditutup/dibuka; lebar asisten diatur keyboard dalam batas", async () => {
+    window.localStorage.clear();
+    const { client } = createMemoryClient([makeWorkspace("ws_a", "Penjualan")]);
+    const user = userEvent.setup();
+    render(<WorkspaceView workspaceId="ws_a" client={client} />);
+    await screen.findByRole("heading", { level: 1, name: "Penjualan" });
+
+    const sidebar = document.getElementById("workspace-sidebar")!;
+    const chat = document.getElementById("workspace-chat")!;
+    expect(sidebar.hidden).toBe(false);
+    expect(chat.hidden).toBe(false);
+
+    await user.click(screen.getByRole("button", { name: "Sembunyikan panel data" }));
+    expect(sidebar.hidden).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Tutup asisten" }));
+    expect(chat.hidden).toBe(true);
+    expect(window.localStorage.getItem("studio.chat")).toBe("0");
+    await user.click(screen.getByRole("button", { name: "Tampilkan asisten" }));
+    expect(chat.hidden).toBe(false);
+
+    const handle = screen.getByRole("separator", { name: "Ubah lebar panel asisten" });
+    handle.focus();
+    for (let i = 0; i < 20; i++) await user.keyboard("{ArrowLeft}");
+    expect(handle.getAttribute("aria-valuenow")).toBe("560");
+    for (let i = 0; i < 40; i++) await user.keyboard("{ArrowRight}");
+    expect(handle.getAttribute("aria-valuenow")).toBe("320");
+
+    // Sidebar di kiri: panah kanan melebarkan; lebar tersimpan untuk reload.
+    await user.click(screen.getByRole("button", { name: "Tampilkan panel data" }));
+    const side = screen.getByRole("separator", { name: "Ubah lebar panel data" });
+    side.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(side.getAttribute("aria-valuenow")).toBe("276");
+    expect(window.localStorage.getItem("studio.sidebarWidth")).toBe("276");
+  }, 15_000); // banyak interaksi keyboard; default 5 s terlalu ketat saat suite penuh paralel
+
   it("menampilkan pesan tidak ditemukan untuk Workspace yang tidak ada", async () => {
     const { client } = createMemoryClient();
     render(<WorkspaceView workspaceId="ws_x" client={client} />);

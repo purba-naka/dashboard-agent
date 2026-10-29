@@ -34,6 +34,8 @@ import type {
   RenameWorkspaceRequest,
   RenderRequest,
   RenderResponse,
+  CanvasRenderRequest,
+  CanvasRenderResponse,
   ReuploadResponse,
   SchemaMismatchDetails,
   SelectSheetsRequest,
@@ -612,6 +614,20 @@ export function renderDashboard(
   opts: RequestOptions = {},
 ): Promise<RenderResponse> {
   return request(`/dashboards/${seg(dashboardId)}/render`, { method: "POST", body, ...opts });
+}
+
+/** Batch `Query(...)` canvas OpenUI dengan filter aktif; tanpa LLM. */
+export function renderCanvas(
+  dashboardId: string,
+  body: CanvasRenderRequest,
+  opts: RequestOptions = {},
+): Promise<CanvasRenderResponse> {
+  return request(`/dashboards/${seg(dashboardId)}/canvas/render`, { method: "POST", body, ...opts });
+}
+
+/** Migrasi satu arah Dashboard legacy → canvas OpenUI. */
+export function convertToCanvas(dashboardId: string, opts: RequestOptions = {}): Promise<DashboardSnapshot> {
+  return request(`/dashboards/${seg(dashboardId)}/canvas/convert`, { method: "POST", ...opts });
 }
 
 /**

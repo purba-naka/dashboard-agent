@@ -117,6 +117,7 @@ describe("fixture patches.json (paritas dengan core/patches.py)", () => {
         "set_filters",
         "set_item",
         "set_layout",
+        "set_statement",
         "set_title",
       ].sort(),
     );

@@ -109,14 +109,15 @@ export function BriefPanel({ snapshot, client = defaultBriefClient, onSaved }: B
   return (
     <Card size="sm" className="py-0">
       <Collapsible>
-        <CollapsibleTrigger className="group flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold">
-          <span className="min-w-0 flex-1 truncate">
-            Design Brief{brief?.purpose ? `: ${brief.purpose}` : " (belum diisi)"}
+        <CollapsibleTrigger className="group flex w-full items-center gap-2 rounded-lg px-3.5 py-2.5 text-left text-sm outline-none hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50">
+          <span className="min-w-0 flex-1 truncate font-medium" title={brief?.purpose || undefined}>
+            Design Brief{brief?.purpose ? `: ${brief.purpose}` : <span className="font-normal text-muted-foreground"> belum diisi</span>}
           </span>
+          {!brief?.purpose && <span className="text-xs font-medium text-primary group-data-[state=open]:hidden">Isi brief</span>}
           <CaretDownIcon className="shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <form onSubmit={onSubmit} className="border-t px-3 pt-3 pb-3">
+          <form onSubmit={onSubmit} className="border-t px-3.5 pt-3 pb-3.5">
             <FieldGroup className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-3">
               <Field>
                 <FieldLabel htmlFor="brief-purpose">Tujuan</FieldLabel>

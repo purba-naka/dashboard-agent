@@ -1,3 +1,4 @@
+export { DatasetPreview, type DatasetPreviewProps } from "./DatasetPreview";
 export { DatasetsPanel, type DatasetsPanelProps } from "./DatasetsPanel";
 export {
   combinedProgress,

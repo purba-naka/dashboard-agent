@@ -143,7 +143,7 @@ export function WorkspaceList({ client = defaultWorkspaceClient }: WorkspaceList
       </div>
 
       {showForm && (
-        <div className="rounded-lg border bg-card p-4">
+        <div className="rounded-xl border bg-card p-4">
           <CreateWorkspaceForm
             onCreate={handleCreate}
             onCancel={isEmpty ? undefined : () => setCreating(false)}

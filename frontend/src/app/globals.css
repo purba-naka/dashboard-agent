@@ -8,13 +8,18 @@
    Base names (--surface, --accent, ...) feed the shadcn names below. */
 :root {
   color-scheme: light;
-  --bg: #f6f7f9;
+  --bg: #f7f7f8;
+  /* Sidebar + panel asisten: satu langkah dari --bg, di bawah kartu. */
+  --panel: #fbfbfc;
   --surface: #ffffff;
-  --surface-2: #f1f3f6;
-  --border: #e2e5ea;
-  --border-strong: #c9ced6;
+  --surface-2: #f1f1f3;
+  --surface-3: #ffffff;
+  --border: rgb(0 0 0 / 0.07);
+  --border-strong: rgb(0 0 0 / 0.12);
   --text: #16191f;
   --text-muted: #5b6472;
+  /* >= 4.5:1 di --surface-2 (spec #9a9ba3 hanya 2.8:1). */
+  --text-subtle: #6b6c75;
   --accent: #1d4ed8;
   --accent-hover: #1e40af;
   --accent-soft: #e8eefc;
@@ -24,15 +29,22 @@
   --warn: #8a4b06;
   --warn-soft: #fdf3e1;
   --success: #15803d;
+  --success-soft: #e7f6ec;
   --ring: #2563eb;
-  --shadow: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 4px 16px rgb(16 24 40 / 0.1);
   --shadow-lg: 0 12px 32px rgb(16 24 40 / 0.18);
+  --shadow: var(--shadow-sm);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
   /* >= 3:1 vs --bg and --surface (WCAG 1.4.11 non-text contrast). */
   --scrollbar-thumb: #848d9b;
 
   --radius-sm: 6px;
   --radius: 8px;
   --radius-lg: 12px;
+  --radius-full: 9999px;
 
   --font-sans: var(--font-plex), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
@@ -44,7 +56,7 @@
   --foreground: var(--text);
   --card: var(--surface);
   --card-foreground: var(--text);
-  --popover: var(--surface);
+  --popover: var(--surface-3);
   --popover-foreground: var(--text);
   --primary: var(--accent);
   --primary-foreground: var(--on-accent);
@@ -58,13 +70,17 @@
 
 .dark {
   color-scheme: dark;
-  --bg: #0e1116;
-  --surface: #161a21;
-  --surface-2: #1d222b;
-  --border: #2a303b;
-  --border-strong: #3a4250;
-  --text: #e6e9ee;
-  --text-muted: #9aa3b2;
+  --bg: #09090b;
+  --panel: #0c0d10;
+  --surface: #121317;
+  --surface-2: #1a1b20;
+  --surface-3: #222329;
+  --border: rgb(255 255 255 / 0.06);
+  --border-strong: rgb(255 255 255 / 0.1);
+  --text: #ededef;
+  --text-muted: #8b8d98;
+  /* >= 4.5:1 di --surface-2 (spec #62636c hanya 3.1:1). */
+  --text-subtle: #82838d;
   --accent: #6b9bff;
   --accent-hover: #8fb3ff;
   --accent-soft: #1b2a47;
@@ -74,15 +90,28 @@
   --warn: #f0b860;
   --warn-soft: #362812;
   --success: #5fd08a;
+  --success-soft: #12261b;
   --ring: #8fb3ff;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.55);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.45);
   --scrollbar-thumb: #677080;
 }
 
 @theme inline {
   --font-heading: var(--font-sans);
+  /* Angka KPI (role `display`, 28/32). */
+  --text-display: 1.75rem;
+  --text-display--line-height: 2rem;
   --color-ring: var(--ring);
+  --color-panel: var(--panel);
+  --color-accent-soft: var(--accent-soft);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-text-subtle: var(--text-subtle);
+  --color-success-soft: var(--success-soft);
+  --color-danger-soft: var(--danger-soft);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
@@ -103,13 +132,28 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Satu skala: 6 (chip) / 8 (control) / 12 (card, panel, dialog) / full (pill).
+     shadcn memakai lg untuk control dan xl untuk card, jadi nama dipetakan ke skala ini. */
+  --radius: 6px;
+  --radius-xs: 6px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
+  --radius-4xl: 9999px;
+}
+/* Shadow pakai shadow-(--shadow-sm|md|lg) agar ikut berganti saat .dark. */
+
+/* Label seksi sidebar/toolbar: satu gaya untuk semua judul kelompok kecil. */
+@utility section-label {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
 }
 
 /* Base layer: utilities override this. Controls come from shadcn components. */
@@ -136,6 +180,8 @@
     @apply bg-background text-foreground;
     font-size: 0.9375rem;
     line-height: 1.5;
+    /* Angka sejajar di mana pun (KPI, tabel, meta). */
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -179,7 +225,7 @@
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--text-muted);
+    color: var(--text-subtle);
   }
 
   :focus-visible {
@@ -200,6 +246,28 @@
 
   ::selection {
     background: var(--accent-soft);
+  }
+}
+
+/* react-grid-layout: placeholder aksen lembut (bawaan merah); kartu terangkat saat diseret.
+   `scale` terpisah dari `transform` yang dipakai grid untuk posisi. */
+.react-grid-item.react-grid-placeholder {
+  background: var(--accent);
+  opacity: 0.12;
+  border-radius: var(--radius-lg);
+}
+.react-grid-item.react-draggable-dragging,
+.react-grid-item.resizing {
+  z-index: 3;
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+.react-grid-item.react-draggable-dragging {
+  scale: 1.01;
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-grid-item.react-draggable-dragging {
+    scale: none;
   }
 }
 
@@ -245,5 +313,13 @@
   *::after {
     transition-duration: 0ms !important;
     animation-duration: 0ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+/* Sorotan tile setelah "Lihat" dari Asisten. */
+[data-tile-id][data-highlight="true"] {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  box-shadow: var(--shadow-md);
 }

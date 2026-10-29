@@ -44,7 +44,9 @@ export function PageNav({ pages, activeId, busy, onSelect, onCreate, onRename, o
   return (
     <nav aria-label="Halaman dashboard" className="flex flex-col gap-2" data-export-hide>
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Halaman</h2>
+        <h2 className="section-label flex items-center gap-2">
+          Halaman <span className="font-normal tabular-nums">{pages.length}</span>
+        </h2>
         <span className="flex items-center gap-0.5">
           {active && (
             <>
@@ -62,10 +64,9 @@ export function PageNav({ pages, activeId, busy, onSelect, onCreate, onRename, o
               </IconAction>
             </>
           )}
-          <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onCreate}>
-            <PlusIcon data-icon="inline-start" />
-            Halaman
-          </Button>
+          <IconAction label="Halaman" tip="Tambah halaman" disabled={busy} onClick={onCreate}>
+            <PlusIcon />
+          </IconAction>
         </span>
       </div>
       <ul className="flex flex-col gap-0.5">
@@ -87,8 +88,9 @@ export function PageNav({ pages, activeId, busy, onSelect, onCreate, onRename, o
               <Button
                 type="button"
                 variant="ghost"
-                className="w-full justify-start border-l-2 border-transparent rounded-l-none aria-[current=page]:border-l-primary aria-[current=page]:bg-muted aria-[current=page]:font-semibold"
+                className="w-full justify-start rounded-md border-l-2 border-transparent px-2 font-normal aria-[current=page]:border-l-primary aria-[current=page]:bg-muted aria-[current=page]:font-medium"
                 aria-current={p.id === activeId ? "page" : undefined}
+                title={p.title}
                 onClick={() => onSelect(p.id)}
               >
                 <span className="truncate">{p.title}</span>

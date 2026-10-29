@@ -7,6 +7,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
 import type { Predicate } from "@/lib/types";
 import { ExportBar } from "./ExportBar";
 import {
@@ -18,6 +19,13 @@ import {
   type ExportClient,
   type PdfDocLike,
 } from "./client";
+
+// Tooltip Radix memakai ResizeObserver, tidak ada di jsdom.
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 const toPngMock = vi.hoisted(() => vi.fn(async () => "data:image/png;base64,MOCK"));
 
@@ -132,10 +140,16 @@ describe("ExportBar", () => {
     return utils;
   }
 
+  /** PNG ada di menu split button Ekspor. */
+  async function clickPng(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: "Opsi ekspor" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Ekspor PNG" }));
+  }
+
   it("ekspor PNG menangkap node canvas (Req 25.1)", async () => {
     const user = userEvent.setup();
     setup();
-    await user.click(screen.getByRole("button", { name: "Ekspor PNG" }));
+    await clickPng(user);
     await waitFor(() => expect(toPngMock).toHaveBeenCalled());
     expect(toPngMock).toHaveBeenCalledWith(
       screen.getByTestId("canvas-node"),
@@ -195,14 +209,11 @@ describe("ExportBar", () => {
       }),
     };
     setup({ client });
-    const png = screen.getByRole("button", { name: "Ekspor PNG" });
-    await user.click(png);
+    await clickPng(user);
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("gagal menangkap gambar");
     // State tetap: tombol aktif kembali (tidak ada perubahan state Dashboard).
-    expect(screen.getByRole("button", { name: "Ekspor PNG" }).hasAttribute("disabled")).toBe(
-      false,
-    );
+    expect(screen.getByRole("button", { name: "Opsi ekspor" }).hasAttribute("disabled")).toBe(false);
   });
 
   it("canvas belum tersedia → pesan error tanpa menangkap (Req 25.3)", async () => {
@@ -216,7 +227,7 @@ describe("ExportBar", () => {
         clock={() => new Date("2026-01-01T14:05:00Z")}
       />,
     );
-    await user.click(screen.getByRole("button", { name: "Ekspor PNG" }));
+    await clickPng(user);
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Canvas belum tersedia");
     expect(toPngMock).not.toHaveBeenCalled();

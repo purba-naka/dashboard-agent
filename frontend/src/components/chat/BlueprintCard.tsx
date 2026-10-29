@@ -183,7 +183,7 @@ export function BlueprintCard({
             <div
               key={s.slot_id}
               className={cn(
-                "flex items-center justify-center overflow-hidden rounded-[3px] bg-secondary text-[0.6875rem] font-semibold whitespace-nowrap text-secondary-foreground ring-1 ring-foreground/10 transition-opacity motion-reduce:transition-none",
+                "flex items-center justify-center overflow-hidden rounded-xs bg-secondary text-[0.6875rem] font-semibold whitespace-nowrap text-secondary-foreground ring-1 ring-foreground/10 transition-opacity motion-reduce:transition-none",
                 s.section === "kpi_row" && "bg-foreground text-background",
                 !shown.has(s.slot_id) && "opacity-25",
               )}

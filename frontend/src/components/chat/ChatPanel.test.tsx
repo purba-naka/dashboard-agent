@@ -4,6 +4,7 @@ import { createRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ChatStreamHandlers, ChatStreamResult } from "@/lib/sse";
 import type { ChatRequest, ChatSseEvent, Relation } from "@/lib/types";
+import { fireEvent } from "@testing-library/react";
 import { ChatPanel, type ChatPanelHandle } from "./ChatPanel";
 import { mapHistory, type ChatClient } from "./client";
 
@@ -226,6 +227,85 @@ describe("ChatPanel", () => {
     });
     expect(onPatch).toHaveBeenCalledWith(patch);
     expect(screen.getByRole("alert").textContent).toBe("Query: Query gagal setelah 3 percobaan");
+  });
+
+  it("patch add_item menampilkan kartu Tile ditambahkan", async () => {
+    const user = userEvent.setup();
+    const { client, emit } = fakeClient();
+    render(<ChatPanel workspaceId="ws" client={client} />);
+
+    await user.type(screen.getByLabelText("Pesan"), "x{Enter}");
+    const patch = { dashboard_id: "d", version: 2, ops: [{ op: "add_item", item: { id: "t1" } }] } as never;
+    await emit(started, { event: "patch.applied", data: patch });
+    expect(screen.getByText("Tile ditambahkan")).toBeTruthy();
+  });
+
+  it("tombol Pesan baru muncul saat user scroll ke atas dan hilang setelah diklik", async () => {
+    const user = userEvent.setup();
+    const { client, emit } = fakeClient();
+    render(<ChatPanel workspaceId="ws" client={client} />);
+    await user.type(screen.getByLabelText("Pesan"), "x{Enter}");
+    await emit(started);
+
+    const log = screen.getByRole("list");
+    Object.defineProperty(log, "scrollHeight", { configurable: true, value: 1000 });
+    Object.defineProperty(log, "clientHeight", { configurable: true, value: 300 });
+    log.scrollTop = 0;
+    log.scrollTo = vi.fn() as never;
+    fireEvent.scroll(log);
+    expect(screen.queryByRole("button", { name: /Pesan baru/ })).toBeNull();
+
+    await emit({ event: "text.delta", data: { agent: "root", text: "Halo" } });
+    await user.click(await screen.findByRole("button", { name: /Pesan baru/ }));
+    expect(screen.queryByRole("button", { name: /Pesan baru/ })).toBeNull();
+  });
+
+  it("Stop aktif saat streaming dan memanggil client.stop", async () => {
+    const user = userEvent.setup();
+    const { client, emit } = fakeClient();
+    render(<ChatPanel workspaceId="ws" client={client} />);
+    await user.type(screen.getByLabelText("Pesan"), "x{Enter}");
+    await emit(started, { event: "text.delta", data: { agent: "root", text: "Sebentar" } });
+    const stop = screen.getByRole("button", { name: "Stop" }) as HTMLButtonElement;
+    expect(stop.disabled).toBe(false);
+    await user.click(stop);
+    expect(client.stop).toHaveBeenCalledWith("ws", "run_1");
+  });
+
+  it("dropdown sesi memanggil onSelectSession", async () => {
+    const user = userEvent.setup();
+    const { client } = fakeClient();
+    const onSelectSession = vi.fn();
+    const sessions = [
+      { id: "s_a", workspace_id: "ws", title: "Sesi Alfa", created_at: new Date().toISOString(), last_agent_version: 1 },
+    ];
+    render(<ChatPanel workspaceId="ws" client={client} sessions={sessions} onSelectSession={onSelectSession} />);
+    await user.click(screen.getByRole("button", { name: /Riwayat/ }));
+    await user.click(await screen.findByRole("menuitem", { name: /Sesi Alfa/ }));
+    expect(onSelectSession).toHaveBeenCalledWith("s_a");
+  });
+
+  it("Percakapan baru memanggil onNewSession dan nonaktif saat running", async () => {
+    const user = userEvent.setup();
+    const { client, emit } = fakeClient();
+    const onNewSession = vi.fn();
+    render(<ChatPanel workspaceId="ws" client={client} onNewSession={onNewSession} />);
+    await user.click(screen.getByRole("button", { name: /Percakapan baru/ }));
+    expect(onNewSession).toHaveBeenCalledTimes(1);
+
+    await user.type(screen.getByLabelText("Pesan"), "x{Enter}");
+    await emit(started);
+    expect((screen.getByRole("button", { name: /Percakapan baru/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("chip saran mengirim pertanyaan", async () => {
+    const user = userEvent.setup();
+    const { client, requests } = fakeClient();
+    const datasets = [{ id: "ds", schema: [{ name: "nilai", type: "float" }, { name: "wilayah", type: "string" }] }] as never;
+    render(<ChatPanel workspaceId="ws" client={client} datasets={datasets} />);
+
+    await user.click(screen.getByRole("button", { name: /Buatkan dashboard ringkasan/ }));
+    expect(requests[0].message).toMatch(/Buatkan dashboard ringkasan/);
   });
 
   it("memuat riwayat sesi", async () => {

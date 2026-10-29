@@ -141,7 +141,7 @@ export function RelationsPanel({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Relasi</h2>
+        <h2 className="section-label">Relasi</h2>
         <Button type="button" variant="outline" size="sm" disabled={detecting} onClick={() => void detect()}>
           <ArrowsClockwiseIcon data-icon="inline-start" />
           {detecting ? "Mendeteksi" : "Deteksi ulang"}

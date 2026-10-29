@@ -4,7 +4,16 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { useContainerWidth, GridLayout } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
-import { DotsThreeIcon, SealCheckIcon, TrashIcon } from "@phosphor-icons/react/ssr";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  DotsSixVerticalIcon,
+  DotsThreeIcon,
+  SealCheckIcon,
+  SquaresFourIcon,
+  TrashIcon,
+} from "@phosphor-icons/react/ssr";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { InsightCard } from "@/components/insights";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,12 +46,12 @@ import type {
   DashboardSnapshot,
   Dataset,
   FilterSet,
-  LayoutChange,
   LayoutRect,
   Predicate,
   RenderedItem,
 } from "@/lib/types";
 import { GRID_COLUMNS } from "@/lib/dashboard-state";
+import { isApiError } from "@/lib/api";
 import {
   chartElementValue,
   defaultCanvasClient,
@@ -71,6 +81,12 @@ export interface CanvasProps {
 }
 
 const ROW_HEIGHT = 48;
+/** Kartu: elevasi lewat permukaan; border naik saat hover/fokus. Aksi muncul lewat `group/tile`. */
+const TILE =
+  "group/tile relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-(--shadow-sm) transition-colors [contain:layout_paint] hover:border-border-strong focus-within:border-border-strong";
+/** Aksi sekunder: tersembunyi di perangkat ber-mouse sampai hover/fokus; selalu tampil di layar sentuh. */
+const HOVER_REVEAL =
+  "transition-opacity pointer-fine:opacity-0 pointer-fine:group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 data-[state=open]:opacity-100";
 /** Chart + insight yang tampil sekaligus; KPI selalu tampil. Sisanya di-collapse. */
 const MAX_VISIBLE_VIEWS = 8;
 const KPI_REQUEST =
@@ -79,7 +95,10 @@ const KPI_REQUEST =
 const ECHARTS_OPTS = { renderer: "canvas" } as const;
 const ECHARTS_STYLE = { height: "100%", minHeight: 0 } as const;
 const DRAG_HANDLE = "canvas-drag-handle";
-const PLACEHOLDER = "flex flex-1 items-center justify-center p-4 text-center text-sm text-muted-foreground";
+const PLACEHOLDER = "flex flex-1 items-center justify-center p-4 text-center text-[0.8125rem] text-muted-foreground";
+/** Jarak antar kartu = gutter halaman; tanpa padding luar agar tepi kartu sejajar filter. */
+const GRID_MARGIN = [16, 16] as const;
+const GRID_PADDING = [0, 0] as const;
 
 interface GridEntry {
   i: string;
@@ -111,6 +130,9 @@ export function Canvas({
   // Hasil /render disimpan sebagai state agar re-render saat selesai.
   const [rendered, setRendered] = useState<Record<string, RenderedItem>>({});
   const [renderError, setRenderError] = useState<string | null>(null);
+  /** Naik saat pengguna menekan "Coba lagi" di tile gagal: memicu /render ulang. */
+  const [retryKey, setRetryKey] = useState(0);
+  const stableRetry = useCallback(() => setRetryKey((k) => k + 1), []);
   /** `query_id` insight yang sedang di-hover: chart bersumber sama disorot. */
   const [hoverQuery, setHoverQuery] = useState<string | null>(null);
 
@@ -153,32 +175,84 @@ export function Canvas({
       cancelled = true;
       ctrl.abort();
     };
-  }, [client, snapshot.id, snapshot.version, ids, crossFilters, renderKey]);
+  }, [client, snapshot.id, snapshot.version, ids, crossFilters, renderKey, retryKey]);
 
-  function onLayoutChange(next: readonly GridEntry[]) {
-    const changes: LayoutChange[] = [];
-    for (const entry of next) {
-      const before = content.layout[entry.i];
-      if (!before) continue;
-      const after: LayoutRect = { x: entry.x, y: entry.y, w: entry.w, h: entry.h };
-      if (
-        before.x !== after.x ||
-        before.y !== after.y ||
-        before.w !== after.w ||
-        before.h !== after.h
-      ) {
-        changes.push({ id: entry.i, before, after });
-      }
+  // KPI, chart, insight dirender di section terpisah; urutan dalam section tetap urutan layout.
+  // Pengelompokan hanya di layer render: layout tersimpan tidak dimigrasi.
+  const groups = useMemo(() => {
+    const kpi: string[] = [];
+    const chart: string[] = [];
+    const insight: string[] = [];
+    for (const id of visibleIds) {
+      const kind = content.items[id]?.kind;
+      (kind === "kpi" ? kpi : kind === "insight" ? insight : chart).push(id);
     }
-    if (changes.length === 0) return;
-    const after: Record<string, LayoutRect> = {};
-    for (const change of changes) after[change.id] = change.after;
+    return { kpi, chart, insight };
+  }, [visibleIds, content.items]);
+
+  /** Grid chart mulai di y=0; `chartBaseY` mengembalikan posisi ke koordinat tersimpan. */
+  const chartBaseY = useMemo(
+    () => (groups.chart.length ? Math.min(...groups.chart.map((id) => content.layout[id].y)) : 0),
+    [groups.chart, content.layout],
+  );
+
+  function sendLayout(changes: Record<string, LayoutRect>) {
+    if (Object.keys(changes).length === 0) return;
     client
-      .command(snapshot.id, version, { type: "set_layout", changes: after })
+      .command(snapshot.id, version, { type: "set_layout", changes })
       .catch(() => {
         // Gagal simpan tata letak → SSE `resync` akan memperbaiki state lokal.
       });
   }
+
+  function tidyLayout() {
+    client
+      .command(snapshot.id, version, { type: "tidy_layout" })
+      .then(() => toast.success("Tata letak dirapikan."))
+      .catch((err: unknown) => {
+        // NO_CHANGES = sudah rapi; selain itu SSE `resync` memperbaiki state lokal.
+        if (!(isApiError(err) && err.code === "NO_CHANGES")) toast.error(errorMessage(err));
+      });
+  }
+
+  // Simpan hanya setelah aksi pengguna (drag/resize). `onLayoutChange` juga terpanggil saat
+  // grid memadatkan layout ketika mount; menyimpannya berarti menulis ulang data tanpa diminta.
+  const beforeRef = useRef<readonly GridEntry[]>([]);
+  function onInteractionStart(current: readonly GridEntry[]) {
+    beforeRef.current = current;
+  }
+  function onInteractionStop(next: readonly GridEntry[]) {
+    const before = new Map(beforeRef.current.map((e) => [e.i, e]));
+    const changes: Record<string, LayoutRect> = {};
+    for (const e of next) {
+      const b = before.get(e.i);
+      if (!b || (b.x === e.x && b.y === e.y && b.w === e.w && b.h === e.h)) continue;
+      changes[e.i] = { x: e.x, y: e.y + chartBaseY, w: e.w, h: e.h };
+    }
+    sendLayout(changes);
+  }
+
+  /** Alternatif keyboard untuk drag: tukar posisi dengan tetangga di section yang sama. */
+  // ponytail: tukar x/y, ukuran tetap. Backend (push_down_collisions) menggeser item yang bertabrakan,
+  // jadi layout tersimpan tidak pernah tumpang tindih. Hasil akhir bisa meninggalkan celah vertikal.
+  const moveRef = useRef<(id: string, dir: -1 | 1) => void>(() => {});
+  useEffect(() => {
+    moveRef.current = (id, dir) => {
+      const kind = content.items[id]?.kind;
+      const order = kind === "kpi" ? groups.kpi : kind === "insight" ? groups.insight : groups.chart;
+      const other = order[order.indexOf(id) + dir];
+      if (!other) return;
+      const a = content.layout[id];
+      const b = content.layout[other];
+      const place = (r: LayoutRect, to: LayoutRect): LayoutRect => ({
+        ...r,
+        x: Math.min(to.x, GRID_COLUMNS - r.w),
+        y: to.y,
+      });
+      sendLayout({ [id]: place(a, b), [other]: place(b, a) });
+    };
+  });
+  const stableMove = useCallback((id: string, dir: -1 | 1) => moveRef.current(id, dir), []);
 
   /** Item yang menunggu konfirmasi hapus (AlertDialog). */
   const [removeId, setRemoveId] = useState<string | null>(null);
@@ -240,30 +314,86 @@ export function Canvas({
 
   const layout: GridEntry[] = useMemo(
     () =>
-      visibleIds.map((id) => {
+      groups.chart.map((id) => {
         const rect = content.layout[id];
-        return { i: id, x: rect.x, y: rect.y, w: rect.w, h: rect.h };
+        return { i: id, x: rect.x, y: rect.y - chartBaseY, w: rect.w, h: rect.h };
       }),
-    [visibleIds, content.layout],
+    [groups.chart, content.layout, chartBaseY],
+  );
+
+  const renderCell = (id: string, order: readonly string[], draggable = false) => (
+    <Cell
+      id={id}
+      snapshot={snapshot}
+      rendered={rendered[id]}
+      crossFilters={crossFilters}
+      datasetVersions={datasetVersions}
+      renderInsight={renderInsight}
+      draggable={draggable}
+      canMoveUp={order.indexOf(id) > 0}
+      canMoveDown={order.indexOf(id) < order.length - 1}
+      onMove={stableMove}
+      onRetry={stableRetry}
+      onRemove={setRemoveId}
+      onChartElementClick={stableChartClick}
+      onVerify={client.verify ? stableVerify : undefined}
+      verified={verifiedIds.has(id)}
+      highlighted={
+        hoverQuery !== null &&
+        content.items[id]?.kind === "chart" &&
+        content.items[id].spec.query_id === hoverQuery
+      }
+      onHoverQuery={setHoverQuery}
+    />
   );
 
   const removeTitle = removeId ? (content.items[removeId]?.title ?? removeId) : "";
 
   return (
-    <div className="flex min-h-0 flex-col gap-3" data-canvas-version={version}>
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="m-0 text-lg font-semibold">{content.title}</h2>
-        <span className="text-[0.8125rem] text-muted-foreground tabular-nums">v{version}</span>
-        {hasFilters && (
-          <Button variant="ghost" size="sm" data-export-hide onClick={resetFilters}>
-            Reset semua filter
+    <div className="flex min-h-0 flex-col gap-4" data-canvas-version={version}>
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 className="m-0 truncate text-xl leading-tight font-semibold tracking-[-0.01em]" title={content.title}>
+            {content.title}
+          </h2>
+          <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+            <span>v{version}</span>
+            <span aria-hidden>·</span>
+            <span>{ids.length} tile</span>
+            {hasFilters && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="font-medium text-primary">
+                  {content.global_filters.length + crossFilters.length} filter aktif
+                </span>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5" data-export-hide>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={ids.length === 0}
+            aria-label="Rapikan tata letak"
+            title="Rapikan tata letak"
+            onClick={tidyLayout}
+            data-slot="canvas-tidy"
+          >
+            <SquaresFourIcon aria-hidden />
+            Rapikan
           </Button>
-        )}
-        {onAskAgent && ids.length > 0 && !hasKpi && (
-          <Button variant="ghost" size="sm" data-export-hide onClick={() => onAskAgent(KPI_REQUEST)}>
-            Buat KPI di atas dashboard
-          </Button>
-        )}
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              Reset semua filter
+            </Button>
+          )}
+          {onAskAgent && ids.length > 0 && !hasKpi && (
+            <Button variant="outline" size="sm" onClick={() => onAskAgent(KPI_REQUEST)}>
+              Buat KPI di atas dashboard
+            </Button>
+          )}
+        </div>
       </div>
       {renderError && (
         <Alert variant="destructive">
@@ -271,47 +401,49 @@ export function Canvas({
         </Alert>
       )}
 
+      {groups.kpi.length > 0 && (
+        <section aria-label="KPI" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {groups.kpi.map((id) => (
+            <div key={id} data-tile-id={id} className={cn(TILE, "min-h-28")}>
+              {renderCell(id, groups.kpi)}
+            </div>
+          ))}
+        </section>
+      )}
+
       <div ref={containerRef} className="relative">
-        {width > 0 && (
+        {width > 0 && groups.chart.length > 0 && (
           <GridLayout
             width={width}
-            gridConfig={{ cols: GRID_COLUMNS, rowHeight: ROW_HEIGHT }}
+            gridConfig={{ cols: GRID_COLUMNS, rowHeight: ROW_HEIGHT, margin: GRID_MARGIN, containerPadding: GRID_PADDING }}
             dragConfig={{ enabled: true, handle: `.${DRAG_HANDLE}` }}
             layout={layout}
-            onLayoutChange={onLayoutChange}
+            onDragStart={onInteractionStart}
+            onResizeStart={onInteractionStart}
+            onDragStop={onInteractionStop}
+            onResizeStop={onInteractionStop}
           >
-            {visibleIds.map((id) => (
-              <div
-                key={id}
-                className={cn(
-                  "relative flex flex-col overflow-hidden rounded-lg border bg-card shadow-xs transition-colors [contain:layout_paint] hover:border-input focus-within:border-input",
-                  // Motif KPI: garis aksen tipis di atas tile.
-                  content.items[id]?.kind === "kpi" && "border-t-2 border-t-primary",
-                )}
-              >
-                <Cell
-                  id={id}
-                  snapshot={snapshot}
-                  rendered={rendered[id]}
-                  crossFilters={crossFilters}
-                  datasetVersions={datasetVersions}
-                  renderInsight={renderInsight}
-                  onRemove={setRemoveId}
-                  onChartElementClick={stableChartClick}
-                  onVerify={client.verify ? stableVerify : undefined}
-                  verified={verifiedIds.has(id)}
-                  highlighted={
-                    hoverQuery !== null &&
-                    content.items[id]?.kind === "chart" &&
-                    content.items[id].spec.query_id === hoverQuery
-                  }
-                  onHoverQuery={setHoverQuery}
-                />
+            {groups.chart.map((id) => (
+              <div key={id} data-tile-id={id} className={TILE}>
+                {renderCell(id, groups.chart, true)}
               </div>
             ))}
           </GridLayout>
         )}
       </div>
+
+      {groups.insight.length > 0 && renderInsight && (
+        <section aria-labelledby="canvas-insight" className="flex flex-col gap-3">
+          <h3 id="canvas-insight" className="section-label">Insight</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {groups.insight.map((id) => (
+              <div key={id} data-tile-id={id} className={TILE}>
+                {renderCell(id, groups.insight)}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {(hiddenCount > 0 || (expanded && ids.length > MAX_VISIBLE_VIEWS)) && (
         <Button variant="outline" size="sm" className="self-center" data-export-hide onClick={() => setExpanded((v) => !v)}>
@@ -320,9 +452,12 @@ export function Canvas({
       )}
 
       {ids.length === 0 && (
-        <p className="rounded-lg border border-dashed border-input px-4 py-10 text-center text-muted-foreground">
-          Dashboard masih kosong. Minta agent di panel chat untuk membuat chart.
-        </p>
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-input px-4 py-14 text-center">
+          <p className="font-medium">Dashboard masih kosong.</p>
+          <p className="text-[0.8125rem] text-muted-foreground">
+            Minta agent di panel chat untuk membuat chart, misalnya &ldquo;Buatkan dashboard ringkasan dari data ini.&rdquo;
+          </p>
+        </div>
       )}
 
       <AlertDialog open={removeId !== null} onOpenChange={(open) => !open && setRemoveId(null)}>
@@ -358,6 +493,11 @@ const Cell = memo(function Cell({
   crossFilters,
   datasetVersions,
   renderInsight,
+  draggable,
+  canMoveUp,
+  canMoveDown,
+  onMove,
+  onRetry,
   onRemove,
   onChartElementClick,
   onVerify,
@@ -371,6 +511,12 @@ const Cell = memo(function Cell({
   crossFilters: Predicate[];
   datasetVersions: Readonly<Record<string, number>>;
   renderInsight: boolean;
+  /** Hanya tile di grid chart yang bisa diseret. */
+  draggable: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onMove: (itemId: string, dir: -1 | 1) => void;
+  onRetry: () => void;
   onRemove: (itemId: string) => void;
   onChartElementClick: (
     itemId: string,
@@ -408,21 +554,50 @@ const Cell = memo(function Cell({
       onMouseEnter={item?.kind === "insight" ? () => onHoverQuery?.(item.query_id) : undefined}
       onMouseLeave={item?.kind === "insight" ? () => onHoverQuery?.(null) : undefined}
     >
-      <div className="flex min-h-11 items-center justify-between gap-2 border-b py-1 pr-1.5 pl-3">
-        <button
-          type="button"
-          data-slot="drag-handle"
-          className={cn(
-            DRAG_HANDLE,
-            "flex min-w-0 flex-1 cursor-grab flex-col items-start justify-center overflow-hidden text-left active:cursor-grabbing",
-          )}
-          aria-label={`Pindah item ${title}`}
-        >
-          <span className="line-clamp-2 text-sm leading-tight font-semibold">{title}</span>
-          {normalized?.subtitle && (
-            <span className="block w-full truncate text-xs text-muted-foreground">{normalized.subtitle}</span>
-          )}
-        </button>
+      <div className="flex min-h-10 shrink-0 items-start justify-between gap-2 pt-2.5 pr-1.5 pb-1 pl-4">
+        {(() => {
+          const heading = (
+            <>
+              <span
+                className={cn(
+                  "line-clamp-2 leading-snug",
+                  // KPI: judul sebagai label kecil di atas angka; chart: judul utama kartu.
+                  item?.kind === "kpi" ? "text-xs font-medium text-muted-foreground" : "text-sm font-medium",
+                )}
+              >
+                {title}
+              </span>
+              {normalized?.subtitle && (
+                <span className="mt-0.5 block w-full truncate text-xs text-muted-foreground">{normalized.subtitle}</span>
+              )}
+            </>
+          );
+          const tooltip = normalized?.subtitle ? `${title}\n${normalized.subtitle}` : title;
+          return draggable ? (
+            <button
+              type="button"
+              data-slot="drag-handle"
+              className={cn(
+                DRAG_HANDLE,
+                "relative flex min-w-0 flex-1 cursor-grab flex-col items-start justify-center text-left active:cursor-grabbing",
+              )}
+              aria-label={`Pindah item ${title}`}
+              title={tooltip}
+            >
+              <DotsSixVerticalIcon
+                aria-hidden
+                weight="bold"
+                className={cn("absolute top-0.5 -left-3.5 size-3.5 text-text-subtle", HOVER_REVEAL)}
+                data-export-hide
+              />
+              {heading}
+            </button>
+          ) : (
+            <div className="flex min-w-0 flex-1 flex-col items-start" title={tooltip}>
+              {heading}
+            </div>
+          );
+        })()}
         <span className="flex shrink-0 items-center gap-1">
           {crossFilterActive && <Badge variant="outline">Cross_Filter</Badge>}
           {badges.map((b) =>
@@ -441,7 +616,13 @@ const Cell = memo(function Cell({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label={`Aksi untuk ${title}`} data-export-hide>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className={cn("-mt-1 text-muted-foreground", HOVER_REVEAL)}
+                aria-label={`Aksi untuk ${title}`}
+                data-export-hide
+              >
                 <DotsThreeIcon weight="bold" />
               </Button>
             </DropdownMenuTrigger>
@@ -455,6 +636,21 @@ const Cell = memo(function Cell({
                         Tandai benar
                         <span className="text-xs text-muted-foreground">Jadi contoh untuk pertanyaan serupa</span>
                       </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {(canMoveUp || canMoveDown) && (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem disabled={!canMoveUp} onSelect={() => onMove(id, -1)}>
+                      <ArrowUpIcon />
+                      Pindahkan ke atas
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={!canMoveDown} onSelect={() => onMove(id, 1)}>
+                      <ArrowDownIcon />
+                      Pindahkan ke bawah
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
@@ -477,19 +673,29 @@ const Cell = memo(function Cell({
             Chart tidak dapat ditampilkan: {normalized.error}
           </div>
         ) : normalized ? (
-          <Chart id={id} option={normalized.option} onClick={onChartElementClick} />
-        ) : (
-          <div className={PLACEHOLDER}>
-            {rendered?.status && rendered.status !== "ok"
-              ? `Chart tidak dapat dirender (${rendered.status}).`
-              : "Menyiapkan chart"}
+          <div className="min-h-0 flex-1 px-1.5 pb-1.5">
+            <Chart id={id} option={normalized.option} onClick={onChartElementClick} />
           </div>
+        ) : (
+          rendered?.status && rendered.status !== "ok" ? (
+            <div className={cn(PLACEHOLDER, "flex-col gap-2")} role="alert">
+              Chart tidak dapat dirender ({rendered.status}).
+              <Button variant="outline" size="sm" onClick={onRetry} data-export-hide>
+                Coba lagi
+              </Button>
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col gap-2 px-3.5 pb-3.5" aria-busy="true">
+              <span className="sr-only">Menyiapkan chart</span>
+              <Skeleton className="min-h-0 flex-1" />
+            </div>
+          )
         )
       ) : item?.kind === "kpi" ? (
         <KpiTile item={item} rendered={rendered} />
       ) : item?.kind === "insight" ? (
         renderInsight ? (
-          <div className="min-h-0 flex-1 overflow-hidden px-2.5 py-2">
+          <div className="min-h-0 flex-1 px-4 pb-4">
             <InsightCard
               insight={item}
               dashboardId={snapshot.id}

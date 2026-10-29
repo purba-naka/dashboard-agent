@@ -18,16 +18,20 @@ import type {
   Scalar,
 } from "@/lib/types";
 import { defaultFilterClient, errorMessage, isTimeColumn, type FilterClient } from "./client";
-import { XIcon } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon, InfoIcon, XIcon } from "@phosphor-icons/react/ssr";
+import { IconAction } from "@/components/IconAction";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const MUTED = "text-[0.8125rem] text-muted-foreground";
-const CONTROL = "relative m-0 min-w-0 rounded-md border bg-muted px-2.5 py-1.5";
+const MUTED = "text-xs text-muted-foreground";
+/** Trigger berbentuk chip: `Provinsi: Semua ▾`. */
+const CONTROL = "relative m-0 min-w-0 rounded-full border bg-surface-2 text-xs transition-colors hover:border-border-strong";
+/** Kontrol yang sedang menyaring: latar aksen lembut agar terlihat sekilas. */
+const CONTROL_ACTIVE = "border-transparent bg-accent-soft text-primary";
 const CONTROL_NAME = "p-0 text-xs text-muted-foreground";
-const CHIP = "inline-flex items-center gap-1 rounded-full border bg-muted py-0.5 pr-1 pl-2.5 text-[0.8125rem] whitespace-nowrap";
+const CHIP = "inline-flex max-w-full items-center gap-1 rounded-full bg-accent-soft py-0.5 pr-0.5 pl-2.5 text-xs text-primary";
 const CHECK = "size-4 accent-foreground";
 
 export interface GlobalFilterPanelProps {
@@ -113,16 +117,20 @@ export function GlobalFilterPanel({
   });
 
   return (
-    <section aria-label="Filter" className="flex flex-col gap-2.5 rounded-lg border bg-card px-4 py-3.5">
-      <h2 className="text-base font-semibold">Saring data</h2>
-      <p className={MUTED}>Berlaku ke semua chart di dashboard.</p>
+    <section aria-label="Filter" className="flex min-h-11 flex-wrap items-center gap-2 py-1.5">
+      <h2 className="section-label flex items-center">
+        Filter
+        <IconAction label="Tentang filter" tip="Berlaku ke semua chart di halaman ini." className="size-6">
+          <InfoIcon />
+        </IconAction>
+      </h2>
 
       {datasets.length === 0 ? (
         <p className={MUTED}>Unggah dataset untuk mulai menyaring data.</p>
       ) : controls.length === 0 ? (
         <p className={MUTED}>Memuat kolom</p>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] items-start gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {controls.map((c) =>
             c.time ? (
               <DateRangeControl
@@ -149,10 +157,10 @@ export function GlobalFilterPanel({
       )}
 
       {(globalLabels.length > 0 || crossLabels.length > 0) && (
-        <ul className="flex flex-wrap gap-1.5">
+        <ul className="flex list-none flex-wrap items-center gap-1.5" aria-label="Filter aktif">
           {globalFilters.map((pred, i) => (
             <li key={`g-${pred.table}.${pred.column}-${i}`} className={CHIP}>
-              <span>{globalLabels[i]}</span>
+              <span className="truncate" title={globalLabels[i]}>{globalLabels[i]}</span>
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -164,8 +172,8 @@ export function GlobalFilterPanel({
             </li>
           ))}
           {crossFilters.map((pred, i) => (
-            <li key={`c-${pred.table}.${pred.column}-${i}`} className={cn(CHIP, "border-primary")}>
-              <span>Dipilih di chart · {crossLabels[i]}</span>
+            <li key={`c-${pred.table}.${pred.column}-${i}`} className={cn(CHIP, "ring-1 ring-primary/40")}>
+              <span className="truncate" title={crossLabels[i]}>Dipilih di chart · {crossLabels[i]}</span>
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -180,7 +188,7 @@ export function GlobalFilterPanel({
       )}
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="basis-full">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -243,17 +251,28 @@ function ValuesControl({
   const summary =
     selected.length === 0
       ? "Semua"
-      : selected.length === 1
-        ? formatScalar(selected[0])
-        : `${selected.length} dipilih`;
+      : selected.length <= 2
+        ? selected.map(formatScalar).join(", ")
+        : `${selected.slice(0, 2).map(formatScalar).join(", ")} (+${selected.length - 2})`;
 
   return (
-    <details className={CONTROL} onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary className="flex cursor-pointer list-none flex-col rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
-        <span className={CONTROL_NAME}>{label}</span>
-        <span className={cn("truncate text-sm", selected.length > 0 && "font-semibold")}>{summary}</span>
+    <details
+      className={cn(CONTROL, selected.length > 0 && CONTROL_ACTIVE, "open:z-20")}
+      onToggle={(e) => setOpen(e.currentTarget.open)}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && e.currentTarget.open) {
+          e.currentTarget.open = false;
+          e.currentTarget.querySelector("summary")?.focus();
+        }
+      }}
+    >
+      <summary className="flex h-7 max-w-64 cursor-pointer list-none items-center gap-1 rounded-full px-3 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+        <span className={cn(CONTROL_NAME, selected.length > 0 && "text-primary")}>{label}:</span>
+        <span className={cn("truncate", selected.length > 0 && "font-medium")}>{summary}</span>
+        <CaretDownIcon aria-hidden className="size-3 shrink-0 text-muted-foreground transition-transform in-open:rotate-180" />
       </summary>
-      <div className="mt-1.5 flex flex-col gap-1.5">
+      {/* Melayang di atas canvas agar membuka dropdown tidak menggeser tata letak. */}
+      <div className="absolute top-full left-0 z-20 mt-1 flex w-60 flex-col gap-1.5 rounded-lg border bg-popover p-2 text-foreground shadow-(--shadow-md)">
         <Input
           className="h-7"
           type="search"
@@ -263,7 +282,7 @@ function ValuesControl({
           onChange={(e) => setQ(e.target.value)}
         />
         <div
-          className="flex max-h-48 flex-col gap-1 overflow-auto rounded-md border bg-card px-3 py-2"
+          className="flex max-h-56 flex-col gap-1 overflow-auto px-1 py-1"
           role="group"
           aria-label={label}
         >
@@ -275,7 +294,7 @@ function ValuesControl({
             options.values.map((v) => {
               const text = formatScalar(v);
               return (
-                <label key={text} className="flex items-center gap-1.5 text-[0.8125rem]">
+                <label key={text} className="flex items-center gap-2 rounded-sm px-1 py-0.5 text-xs hover:bg-muted">
                   <input
                     type="checkbox"
                     data-slot="checkbox"
@@ -318,11 +337,12 @@ function DateRangeControl({
   }
 
   return (
-    <fieldset className={CONTROL}>
-      <legend className={CONTROL_NAME}>{label}</legend>
-      <div className="flex flex-wrap gap-3 [&_label]:flex [&_label]:flex-col [&_label]:gap-1 [&_label]:text-[0.8125rem] [&_label]:text-muted-foreground">
+    <fieldset className={cn(CONTROL, (start || end) && CONTROL_ACTIVE, "flex h-7 items-center gap-1.5 px-3")}>
+      <legend className="sr-only">{label}</legend>
+      <span aria-hidden className={cn(CONTROL_NAME, (start || end) && "text-primary")}>{label}:</span>
+      <div className="flex items-center gap-1 [&_input]:h-6 [&_input]:w-32 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-1 [&_input]:text-xs [&_label]:flex [&_label]:items-center [&_label]:gap-1 [&_label]:text-muted-foreground">
         <label>
-          Dari
+          <span className="sr-only">Dari</span>
           <Input
             className="h-7"
             type="date"
@@ -331,8 +351,9 @@ function DateRangeControl({
             onChange={(e) => set(e.target.value, end)}
           />
         </label>
+        <span aria-hidden className="text-muted-foreground">–</span>
         <label>
-          Sampai
+          <span className="sr-only">Sampai</span>
           <Input
             className="h-7"
             type="date"

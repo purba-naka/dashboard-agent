@@ -1,5 +1,6 @@
 "use client";
 
+import { formatNumber } from "@/lib/format-number";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isXlsxUpload } from "@/lib/api";
 import type { Dataset, DatasetDetail, SheetInfo } from "@/lib/types";
@@ -16,9 +17,11 @@ import {
   typeLabel,
   type DatasetClient,
 } from "./client";
-import { UploadSimpleIcon } from "@phosphor-icons/react/ssr";
+import { TableIcon, UploadSimpleIcon } from "@phosphor-icons/react/ssr";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DatasetPreview } from "./DatasetPreview";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -69,6 +72,7 @@ export function DatasetsPanel({
 
   // --- Detail & re-upload ------------------------------------------------
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<{ id: string; detail: DatasetDetail } | null>(null);
   // Detail dataset lain (pilihan berganti/ditutup) dianggap belum dimuat.
   const detail = loaded && loaded.id === selectedId ? loaded.detail : null;
@@ -119,13 +123,17 @@ export function DatasetsPanel({
       if (outcome.status === "done") {
         setUploadProgress(1);
         onDatasetsChanged();
+        toast.success("Dataset berhasil diunggah.");
       } else if (outcome.status === "failed") {
         setUploadError(outcome.error?.message ?? "Konversi data gagal.");
+        toast.error("Unggah gagal.");
       } else {
         setUploadError("Konversi melewati batas waktu.");
+        toast.error("Unggah gagal.");
       }
     } catch (err: unknown) {
       setUploadError(errorMessage(err));
+      toast.error("Unggah gagal.");
     } finally {
       setUploading(false);
       if (uploadFileRef.current) uploadFileRef.current.value = "";
@@ -217,17 +225,20 @@ export function DatasetsPanel({
     }
   }
 
+  const previewDataset = datasets.find((d) => d.id === previewId) ?? null;
   const selected = datasets.find((d) => d.id === selectedId) ?? detail?.dataset ?? null;
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border bg-card px-4 py-3.5">
-      <h2 className="text-base font-semibold">Dataset</h2>
+    <div className="flex min-w-0 flex-col gap-3">
+      <h2 className="section-label flex items-center gap-2">
+        Dataset <span className="font-normal tabular-nums">{datasets.length}</span>
+      </h2>
 
       {/* Upload baru */}
       <div className="flex flex-col gap-2">
         <label
           data-dragging={dragging || undefined}
-          className="flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-dashed border-input px-3 py-4 text-center text-sm transition-colors hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring/50 has-disabled:cursor-not-allowed has-disabled:opacity-50 data-dragging:border-primary data-dragging:bg-muted"
+          className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-md border border-dashed border-input px-3 py-2.5 text-sm transition-colors hover:border-border-strong hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring/50 has-disabled:cursor-not-allowed has-disabled:opacity-50 data-dragging:border-primary data-dragging:bg-primary/5"
           onDragOver={(e) => {
             e.preventDefault();
             setDragging(true);
@@ -239,9 +250,15 @@ export function DatasetsPanel({
             if (!uploading) setFile(e.dataTransfer.files[0] ?? null);
           }}
         >
-          <UploadSimpleIcon className="size-5 text-muted-foreground" aria-hidden />
-          <span className="truncate font-medium">{file ? file.name : "Pilih atau seret file"}</span>
-          <span className="text-xs text-muted-foreground">CSV atau XLSX</span>
+          <UploadSimpleIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-medium" title={file?.name}>
+              {file ? file.name : "Pilih atau seret file"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {file ? `${formatNumber(file.size / 1024 / 1024, 1)} MB · siap diunggah` : "CSV atau XLSX"}
+            </span>
+          </span>
           <input
             data-slot="file-input"
             ref={uploadFileRef}
@@ -253,7 +270,12 @@ export function DatasetsPanel({
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
         </label>
-        <Button variant="outline" disabled={!file || uploading} onClick={handleUpload}>
+        <Button
+                  variant={file ? "default" : "outline"}
+                  disabled={!file || uploading}
+                  title={file ? undefined : "Pilih file CSV atau XLSX dulu"}
+                  onClick={handleUpload}
+                >
           {uploading ? "Mengunggah" : "Unggah"}
         </Button>
         {uploading && (
@@ -316,24 +338,36 @@ export function DatasetsPanel({
       {datasets.length === 0 ? (
         <p className="text-[0.8125rem] text-muted-foreground">Belum ada dataset. Unggah CSV atau XLSX.</p>
       ) : (
-        <ul className="flex flex-col gap-1">
+        <ul className="flex list-none flex-col gap-0.5">
           {datasets.map((d) => (
-            <li key={d.id}>
+            <li key={d.id} className="group/dataset relative min-w-0">
               <button
                 type="button"
                 data-slot="dataset-row"
-                className="flex w-full min-w-0 flex-col items-start gap-0.5 rounded-md border bg-card px-2.5 py-2 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:border-primary aria-pressed:bg-muted [&>span]:max-w-full"
+                className="flex w-full min-w-0 flex-col items-start rounded-md border-l-2 border-transparent px-2 py-1.5 text-left text-sm transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 aria-pressed:border-l-primary aria-pressed:bg-muted [&>span]:max-w-full"
                 aria-pressed={d.id === selectedId}
+                title={`${d.source_name}${d.sheet_name ? ` · ${d.sheet_name}` : ""}`}
                 onClick={() => setSelectedId(d.id === selectedId ? null : d.id)}
               >
-                <span className="block truncate font-semibold">
+                <span className="block truncate font-medium">
                   {d.source_name}
                   {d.sheet_name ? ` · ${d.sheet_name}` : ""}
                 </span>
-                <span className="text-[0.8125rem] text-muted-foreground">
-                  {d.row_count.toLocaleString("id-ID")} baris · v{d.data_version}
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {formatNumber(d.row_count)} baris · {d.schema.length} kolom · v{d.data_version}
                 </span>
               </button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                data-slot="dataset-preview-button"
+                aria-label="Pratinjau"
+                title="Pratinjau"
+                className="absolute top-1 right-1 opacity-0 transition-opacity group-hover/dataset:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
+                onClick={() => setPreviewId(d.id)}
+              >
+                <TableIcon aria-hidden />
+              </Button>
             </li>
           ))}
         </ul>
@@ -347,7 +381,7 @@ export function DatasetsPanel({
             {selected.sheet_name ? ` · ${selected.sheet_name}` : ""}
           </h3>
           <p className="text-[0.8125rem] text-muted-foreground">
-            Tabel <code>{selected.table_name}</code> · {selected.row_count.toLocaleString("id-ID")}{" "}
+            Tabel <code>{selected.table_name}</code> · {formatNumber(selected.row_count)}{" "}
             baris · data v{selected.data_version}
           </p>
 
@@ -457,7 +491,7 @@ export function DatasetsPanel({
               <div className="flex flex-col gap-1">
                 <h4 className="text-[0.9375rem] font-semibold">Kualitas data</h4>
                 <p className="text-[0.8125rem] text-muted-foreground">
-                  Baris duplikat: {detail.quality.duplicate_rows.toLocaleString("id-ID")}
+                  Baris duplikat: {formatNumber(detail.quality.duplicate_rows)}
                 </p>
                 {detail.quality.mixed_type_columns.length > 0 && (
                   <p className="text-[0.8125rem] text-warn">
@@ -476,6 +510,15 @@ export function DatasetsPanel({
             </>
           )}
         </section>
+      )}
+      {previewDataset && (
+        <DatasetPreview
+          workspaceId={workspaceId}
+          dataset={previewDataset}
+          open
+          onOpenChange={(o) => !o && setPreviewId(null)}
+          client={client}
+        />
       )}
     </div>
   );

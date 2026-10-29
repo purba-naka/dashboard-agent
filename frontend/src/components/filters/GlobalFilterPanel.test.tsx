@@ -172,7 +172,7 @@ describe("GlobalFilterPanel", () => {
   it("memfilter dimensi lewat dropdown dengan nilai dari API (Req 22.1)", async () => {
     const user = userEvent.setup();
     const { client } = renderPanel();
-    await user.click(await screen.findByText("Region"));
+    await user.click(await screen.findByText("Region:"));
     const barat = await screen.findByLabelText("Barat");
     await user.click(barat);
     expect(client.command).toHaveBeenCalledWith("db_1", 5, {

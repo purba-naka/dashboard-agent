@@ -8,10 +8,13 @@
  */
 
 import {
+  apiUrl,
   getDataset,
   getJob,
   isApiError,
+  isAbortError,
   isSchemaMismatch,
+  parseApiError,
   reuploadDataset,
   selectSheets,
   updateDataset,
@@ -22,6 +25,7 @@ import {
 import type {
   Dataset,
   DatasetDetail,
+  DatasetRowsPage,
   JobStatus,
   SchemaMismatchDetails,
   SelectSheetsResponse,
@@ -49,6 +53,12 @@ export interface DatasetClient {
     changes: UpdateDatasetRequest,
     opts?: RequestOptions,
   ): Promise<Dataset>;
+  rows?(
+    ws: string,
+    datasetId: string,
+    page: { offset: number; limit: number },
+    opts?: RequestOptions,
+  ): Promise<DatasetRowsPage>;
   reupload(
     ws: string,
     datasetId: string,
@@ -57,13 +67,33 @@ export interface DatasetClient {
   ): Promise<{ job_id: string }>;
 }
 
-export const defaultDatasetClient: DatasetClient = {
+async function fetchRows(
+  ws: string,
+  datasetId: string,
+  page: { offset: number; limit: number },
+  opts?: RequestOptions,
+): Promise<DatasetRowsPage> {
+  const path = `/workspaces/${encodeURIComponent(ws)}/datasets/${encodeURIComponent(datasetId)}/rows`;
+  const res = await fetch(apiUrl(path, page), {
+    headers: { Accept: "application/json" },
+    signal: opts?.signal,
+  }).catch((err: unknown) => {
+    if (isAbortError(err)) throw err;
+    throw parseApiError(0, "", "Tidak dapat terhubung ke server.");
+  });
+  const text = await res.text();
+  if (!res.ok) throw parseApiError(res.status, text, res.statusText);
+  return JSON.parse(text) as DatasetRowsPage;
+}
+
+export const defaultDatasetClient: DatasetClient & Required<Pick<DatasetClient, "rows">> = {
   upload: (ws: string, file: globalThis.File, opts?: UploadOptions) =>
     uploadFile(ws, file, opts),
   selectSheets: (ws, uploadId, sheets, opts) => selectSheets(ws, uploadId, sheets, opts),
   getJob: (jobId, opts) => getJob(jobId, opts),
   getDataset: (ws, datasetId, opts) => getDataset(ws, datasetId, opts),
   updateDataset: (ws, datasetId, changes, opts) => updateDataset(ws, datasetId, changes, opts),
+  rows: fetchRows,
   reupload: (ws, datasetId, file, opts) => reuploadDataset(ws, datasetId, file, opts),
 };
 
