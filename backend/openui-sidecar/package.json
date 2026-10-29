@@ -1,0 +1,14 @@
+{
+  "name": "studio-openui-sidecar",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@openuidev/lang-core": "1.0.1",
+    "zod": "3.25.76"
+  },
+  "packageManager": "bun@1.3.14"
+}

@@ -1,0 +1,100 @@
+[
+  {
+    "name": "render_query",
+    "description": "Run a saved query (query_id from run_query) with the active dashboard filters. Returns {columns, rows}.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "query_id"
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "render_kpi",
+    "description": "Compute a KPI value (and optional comparison) from a saved query. Use only as data of Kpi.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "query_id"
+        },
+        "value": {
+          "type": "string",
+          "description": "value column"
+        },
+        "compare": {
+          "type": "string",
+          "description": "comparison column (optional)"
+        },
+        "compare_label": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "number",
+            "currency",
+            "percent"
+          ]
+        },
+        "currency": {
+          "type": "string"
+        },
+        "decimals": {
+          "type": "number"
+        },
+        "compact": {
+          "type": "boolean"
+        },
+        "good": {
+          "type": "string",
+          "enum": [
+            "up",
+            "down",
+            "neutral"
+          ]
+        },
+        "metric": {
+          "type": "string",
+          "description": "semantic metric name (optional)"
+        }
+      },
+      "required": [
+        "query",
+        "value"
+      ]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "formatted": {
+          "type": "object"
+        }
+      }
+    }
+  }
+]

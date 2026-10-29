@@ -19,3 +19,13 @@ dist/
 # Frontend
 node_modules/
 .next/
+
+# log dev server lokal
+frontend/dev.log
+backend/run.log
+
+# artefak lokal (jangan di-commit)
+.shots/
+*.log
+backend/.run/
+backend/tests/eval/results/run-*.json

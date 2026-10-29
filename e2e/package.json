@@ -1,0 +1,20 @@
+{
+  "name": "dashboard-studio-e2e",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "bun test lib",
+    "gate": "bun scripts/run.ts --layer gate",
+    "scorecard": "bun scripts/run.ts --layer scorecard"
+  },
+  "devDependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.67",
+    "@e2e-dev/web": "^0.14.0",
+    "@types/bun": "latest",
+    "ai": "^7.0.137",
+    "e2e": "^0.19.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

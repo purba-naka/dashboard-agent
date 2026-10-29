@@ -1,0 +1,735 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "VContainer": {
+      "$ref": "#/$defs/VContainer"
+    },
+    "HContainer": {
+      "$ref": "#/$defs/HContainer"
+    },
+    "Section": {
+      "$ref": "#/$defs/Section"
+    },
+    "Tabs": {
+      "$ref": "#/$defs/Tabs"
+    },
+    "LineChart": {
+      "$ref": "#/$defs/LineChart"
+    },
+    "BarChart": {
+      "$ref": "#/$defs/BarChart"
+    },
+    "PieChart": {
+      "$ref": "#/$defs/PieChart"
+    },
+    "ScatterChart": {
+      "$ref": "#/$defs/ScatterChart"
+    },
+    "Heatmap": {
+      "$ref": "#/$defs/Heatmap"
+    },
+    "Waterfall": {
+      "$ref": "#/$defs/Waterfall"
+    },
+    "Kpi": {
+      "$ref": "#/$defs/Kpi"
+    },
+    "Table": {
+      "$ref": "#/$defs/Table"
+    },
+    "Matrix": {
+      "$ref": "#/$defs/Matrix"
+    },
+    "Slicer": {
+      "$ref": "#/$defs/Slicer"
+    },
+    "Insight": {
+      "$ref": "#/$defs/Insight"
+    },
+    "Unsupported": {
+      "$ref": "#/$defs/Unsupported"
+    }
+  },
+  "required": [
+    "VContainer",
+    "HContainer",
+    "Section",
+    "Tabs",
+    "LineChart",
+    "BarChart",
+    "PieChart",
+    "ScatterChart",
+    "Heatmap",
+    "Waterfall",
+    "Kpi",
+    "Table",
+    "Matrix",
+    "Slicer",
+    "Insight",
+    "Unsupported"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "VContainer": {
+      "type": "object",
+      "properties": {
+        "children": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineChart"
+              },
+              {
+                "$ref": "#/$defs/BarChart"
+              },
+              {
+                "$ref": "#/$defs/PieChart"
+              },
+              {
+                "$ref": "#/$defs/ScatterChart"
+              },
+              {
+                "$ref": "#/$defs/Heatmap"
+              },
+              {
+                "$ref": "#/$defs/Waterfall"
+              },
+              {
+                "$ref": "#/$defs/Kpi"
+              },
+              {
+                "$ref": "#/$defs/Table"
+              },
+              {
+                "$ref": "#/$defs/Matrix"
+              },
+              {
+                "$ref": "#/$defs/Slicer"
+              },
+              {
+                "$ref": "#/$defs/Insight"
+              },
+              {
+                "$ref": "#/$defs/Unsupported"
+              },
+              {
+                "$ref": "#/$defs/HContainer"
+              },
+              {
+                "$ref": "#/$defs/Tabs"
+              },
+              {
+                "$ref": "#/$defs/Section"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "children"
+      ],
+      "additionalProperties": false,
+      "id": "VContainer",
+      "description": "Vertical stack of tiles/containers. Use as root."
+    },
+    "LineChart": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "x": {
+          "type": "string"
+        },
+        "y": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "crossFilter": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "area": {
+              "type": "boolean"
+            },
+            "smooth": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "id": "LineChart",
+      "description": "Trend over an ordered dimension (usually time). One line per y column."
+    },
+    "BarChart": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "x": {
+          "type": "string"
+        },
+        "y": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "crossFilter": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "stack": {
+              "type": "boolean"
+            },
+            "horizontal": {
+              "type": "boolean"
+            },
+            "lines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "id": "BarChart",
+      "description": "Compare a measure across categories. stack=true stacks series; horizontal=true for long labels; lines turns listed y columns into lines (combo)."
+    },
+    "PieChart": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "category": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "crossFilter": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "donut": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "category",
+        "value"
+      ],
+      "additionalProperties": false,
+      "id": "PieChart",
+      "description": "Part-of-whole for at most 8 categories."
+    },
+    "ScatterChart": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "x": {
+          "type": "string"
+        },
+        "y": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "crossFilter": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "series": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "id": "ScatterChart",
+      "description": "Relationship between two measures; optional series column for colour."
+    },
+    "Heatmap": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "x": {
+          "type": "string"
+        },
+        "y": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "crossFilter": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "x",
+        "y",
+        "value"
+      ],
+      "additionalProperties": false,
+      "id": "Heatmap",
+      "description": "Measure intensity across two dimensions."
+    },
+    "Waterfall": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "category": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "options": {
+          "type": "object",
+          "properties": {
+            "crossFilter": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "category",
+        "value"
+      ],
+      "additionalProperties": false,
+      "id": "Waterfall",
+      "description": "Bridge from a start value through positive/negative contributions (in row order)."
+    },
+    "Kpi": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {}
+      },
+      "required": [
+        "title",
+        "data"
+      ],
+      "additionalProperties": false,
+      "id": "Kpi",
+      "description": "Headline number with optional comparison; data MUST be a Query(\"render_kpi\", ...)."
+    },
+    "Table": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "data"
+      ],
+      "additionalProperties": false,
+      "id": "Table",
+      "description": "Detail rows; columns limits and orders the shown columns."
+    },
+    "Matrix": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "data": {},
+        "rows": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "data",
+        "rows",
+        "columns",
+        "value"
+      ],
+      "additionalProperties": false,
+      "id": "Matrix",
+      "description": "Pivot: rows x columns with one aggregated value per cell."
+    },
+    "Slicer": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "column": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "in",
+            "date_range"
+          ]
+        },
+        "data": {}
+      },
+      "required": [
+        "title",
+        "column",
+        "mode"
+      ],
+      "additionalProperties": false,
+      "id": "Slicer",
+      "description": "Canvas filter tile writing the dashboard Global_Filter. mode \"in\" lists distinct values from data; \"date_range\" picks a range."
+    },
+    "Insight": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "trend",
+            "anomaly",
+            "comparison",
+            "top_bottom_contributors",
+            "cross_dataset_correlation"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "title",
+        "text",
+        "query"
+      ],
+      "additionalProperties": false,
+      "id": "Insight",
+      "description": "Narrative finding. Every number in text must come from the query result; backend verifies it."
+    },
+    "Unsupported": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "id": "Unsupported",
+      "description": "System placeholder for migrated items that could not be converted. Do not write."
+    },
+    "HContainer": {
+      "type": "object",
+      "properties": {
+        "children": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineChart"
+              },
+              {
+                "$ref": "#/$defs/BarChart"
+              },
+              {
+                "$ref": "#/$defs/PieChart"
+              },
+              {
+                "$ref": "#/$defs/ScatterChart"
+              },
+              {
+                "$ref": "#/$defs/Heatmap"
+              },
+              {
+                "$ref": "#/$defs/Waterfall"
+              },
+              {
+                "$ref": "#/$defs/Kpi"
+              },
+              {
+                "$ref": "#/$defs/Table"
+              },
+              {
+                "$ref": "#/$defs/Matrix"
+              },
+              {
+                "$ref": "#/$defs/Slicer"
+              },
+              {
+                "$ref": "#/$defs/Insight"
+              },
+              {
+                "$ref": "#/$defs/Unsupported"
+              },
+              {
+                "$ref": "#/$defs/VContainer"
+              },
+              {
+                "$ref": "#/$defs/Section"
+              }
+            ]
+          }
+        },
+        "weights": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "required": [
+        "children"
+      ],
+      "additionalProperties": false,
+      "id": "HContainer",
+      "description": "Horizontal row of tiles/containers. weights = relative widths (same length as children), default equal."
+    },
+    "Section": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineChart"
+              },
+              {
+                "$ref": "#/$defs/BarChart"
+              },
+              {
+                "$ref": "#/$defs/PieChart"
+              },
+              {
+                "$ref": "#/$defs/ScatterChart"
+              },
+              {
+                "$ref": "#/$defs/Heatmap"
+              },
+              {
+                "$ref": "#/$defs/Waterfall"
+              },
+              {
+                "$ref": "#/$defs/Kpi"
+              },
+              {
+                "$ref": "#/$defs/Table"
+              },
+              {
+                "$ref": "#/$defs/Matrix"
+              },
+              {
+                "$ref": "#/$defs/Slicer"
+              },
+              {
+                "$ref": "#/$defs/Insight"
+              },
+              {
+                "$ref": "#/$defs/Unsupported"
+              },
+              {
+                "$ref": "#/$defs/HContainer"
+              },
+              {
+                "$ref": "#/$defs/Tabs"
+              },
+              {
+                "$ref": "#/$defs/VContainer"
+              }
+            ]
+          }
+        },
+        "subtitle": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "children"
+      ],
+      "additionalProperties": false,
+      "id": "Section",
+      "description": "Titled group of tiles/containers stacked vertically."
+    },
+    "Tabs": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/LineChart"
+              },
+              {
+                "$ref": "#/$defs/BarChart"
+              },
+              {
+                "$ref": "#/$defs/PieChart"
+              },
+              {
+                "$ref": "#/$defs/ScatterChart"
+              },
+              {
+                "$ref": "#/$defs/Heatmap"
+              },
+              {
+                "$ref": "#/$defs/Waterfall"
+              },
+              {
+                "$ref": "#/$defs/Kpi"
+              },
+              {
+                "$ref": "#/$defs/Table"
+              },
+              {
+                "$ref": "#/$defs/Matrix"
+              },
+              {
+                "$ref": "#/$defs/Slicer"
+              },
+              {
+                "$ref": "#/$defs/Insight"
+              },
+              {
+                "$ref": "#/$defs/Unsupported"
+              },
+              {
+                "$ref": "#/$defs/HContainer"
+              },
+              {
+                "$ref": "#/$defs/VContainer"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "labels",
+        "children"
+      ],
+      "additionalProperties": false,
+      "id": "Tabs",
+      "description": "Tabbed views; labels[i] is the tab title of children[i]."
+    }
+  }
+}
