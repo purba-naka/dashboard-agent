@@ -73,6 +73,13 @@ class Settings(BaseSettings):
     # Interval komentar heartbeat SSE (detik).
     sse_heartbeat_seconds: float = Field(default=15.0, gt=0)
 
+    # Mesin canvas selama refactor OpenUI (docs/plan-openui-canvas.md, D12):
+    # "legacy" = items/layout grid; "openui" = program OpenUI Lang.
+    canvas_engine: Literal["legacy", "openui"] = "legacy"
+    # Executable bun untuk sidecar OpenUI dan batas waktu per permintaan (detik).
+    openui_bun: str = "bun"
+    openui_timeout_s: float = Field(default=10.0, gt=0)
+
     @field_validator("max_upload_bytes", mode="after")
     @classmethod
     def _enforce_min_upload(cls, v: int) -> int:

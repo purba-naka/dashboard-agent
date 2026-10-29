@@ -66,6 +66,7 @@ Tool (18.6/18.7)::
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
@@ -86,6 +87,10 @@ TURN_EVIDENCE_KEY = "temp:turn_evidence"
 EXPLICIT_REQUEST_KEY = "temp:explicit_change_request"
 MUTATION_ALLOWED_KEY = "temp:mutation_allowed"
 MUTATION_REASON_KEY = "temp:mutation_reason"
+#: Jumlah transfer yang ditolak guard giliran saran (BUG A, lihat tools/transfer_guard.py).
+TRANSFER_BLOCKED_KEY = "temp:transfer_blocked_count"
+#: Penanda jaring pemulihan ``NO_QUERY`` sudah dipakai sekali di giliran ini (BUG B).
+NO_QUERY_RECOVERY_KEY = "temp:no_query_recovery"
 
 RETRY_KEY_PREFIX = "temp:retry:"
 
@@ -109,15 +114,18 @@ MutationReason = Literal["proposal", "explicit_request"]
 MUTATING_TOOLS: frozenset[str] = frozenset(
     {
         "add_chart",
+        "add_chart_from_template",
         "update_chart",
         "remove_chart",
         "update_layout",
+        "tidy_layout",
         "add_insight",
         "update_insight",
         "undo_last",
         "add_kpi",
         "update_kpi",
         "update_brief",
+        "apply_canvas_patch",
     }
 )
 
@@ -144,6 +152,8 @@ def _all_turn_keys() -> list[str]:
         EXPLICIT_REQUEST_KEY,
         MUTATION_ALLOWED_KEY,
         MUTATION_REASON_KEY,
+        TRANSFER_BLOCKED_KEY,
+        NO_QUERY_RECOVERY_KEY,
     ]
     for kind in RETRY_LIMITS:
         keys.append(retry_failures_key(kind))
@@ -213,6 +223,70 @@ class RetryExhaustedError(StudioError):
 # Siklus giliran
 # ---------------------------------------------------------------------------
 
+
+# ponytail: heuristik kata; naikkan ke klasifikasi LLM bila salah-buka/salah-tutup terukur.
+_NEGATION = re.compile(r"\b(jangan|tidak usah|tak usah|belum|menurutmu|menurut kamu|sarankan|saran|usulkan)\b", re.I)
+_COMMAND = re.compile(
+    r"\b(tambah\w*|buat\w*|bikin\w*|ubah|ganti|hapus|pindah\w*|rapikan|visualisasi\w*|terapkan|"
+    r"kerjakan|eksekusi|lanjut\w*|teruskan|setuju\w*|ya|oke|ok|boleh|gas)\b",
+    re.I,
+)
+
+def is_explicit_change_message(message: str | None) -> bool:
+    """Pesan berisi perintah perubahan/lanjut dan tanpa negasi/permintaan opini.
+
+    Dipakai :func:`auto_classify_on_rejection`: LLM sering transfer ke sub-agent sebelum
+    memanggil ``classify_turn``, sehingga mutasi ditolak ``APPROVAL_REQUIRED`` padahal
+    permintaannya sudah jelas. Pertanyaan (``?``) tidak dianggap perintah.
+    """
+    if not message or "?" in message or _NEGATION.search(message):
+        return False
+    return bool(_COMMAND.search(message))
+
+
+#: Intent ``general_question`` dari ``classify_turn`` (Req 8.2): giliran tanpa perubahan.
+GENERAL_QUESTION_INTENT = "general_question"
+
+#: Pola permintaan saran/pendapat dan larangan mengubah (bukan perintah perubahan).
+#: Mengikuti aturan ``root.md``: pesan berisi "jangan ubah dashboard", "menurutmu",
+#: "sarankan", atau pertanyaan opini jenis chart BUKAN permintaan perubahan.
+_ADVICE = re.compile(
+    r"\b(menurut\w*|saran\w*|sarankan|usul\w*|opini|pendapat\w*|rekomendasi\w*|"
+    r"sebaiknya|lebih baik|mending\w*|cocok\w*|bagus\w*|jangan|tidak usah|tak usah)\b",
+    re.I,
+)
+
+
+def is_advice_message(message: str | None) -> bool:
+    """Pesan berpola saran/opini atau larangan mengubah Dashboard.
+
+    Hanya sinyal permukaan bahasa; keputusan giliran ada di :func:`is_advice_turn`.
+    """
+    if not message:
+        return False
+    return bool(_ADVICE.search(message))
+
+
+def is_advice_turn(state: StateLike) -> bool:
+    """Giliran saran/opini: tidak boleh diserahkan ke agent pelaksana mutasi.
+
+    Guard deterministik untuk Root_Agent (BUG A): prompt ``root.md`` sudah melarang
+    transfer ke Chart_Designer_Agent pada giliran saran, tetapi model tetap
+    melakukannya. Predikat ini menang atas klasifikasi LLM yang keliru:
+
+    * perintah perubahan eksplisit di pesan (:func:`is_explicit_change_message`) →
+      bukan giliran saran (jangan blokir);
+    * persetujuan Proposal (``mutation_reason == "proposal"``) → bukan giliran saran;
+    * selain itu, pola saran/opini di pesan ATAU ``classify_turn`` mencatat intent
+      ``general_question`` → giliran saran. ``evidence`` verbatim dari kalimat
+      larangan ("jangan ubah dashboard dulu") tidak membatalkan keputusan ini.
+    """
+    message = state.get(USER_MESSAGE_KEY)
+    if is_explicit_change_message(message):
+        return False
+    if is_mutation_allowed(state) and state.get(MUTATION_REASON_KEY) == "proposal":
+        return False
+    return is_advice_message(message) or state.get(TURN_INTENT_KEY) == GENERAL_QUESTION_INTENT
 
 def initial_turn_state(
     *,
@@ -369,13 +443,34 @@ allow_mutation = is_mutation_allowed
 
 def require_mutation_allowed(state: StateLike, tool_name: str | None = None) -> None:
     """Raise :class:`ApprovalRequiredError` (``APPROVAL_REQUIRED``) bila gate tertutup."""
-    if not is_mutation_allowed(state):
+    if not (is_mutation_allowed(state) or auto_classify_on_rejection(state)):
         raise ApprovalRequiredError(tool_name)
 
 
+def auto_classify_on_rejection(state: StateLike) -> bool:
+    """Jalur (b) Req 21.3 tanpa LLM: pesan berisi perintah eksplisit, evidence = pesan itu sendiri.
+
+    Memakai :func:`record_turn_classification` sehingga evidence tetap divalidasi verbatim
+    terhadap pesan giliran ini. ``True`` bila gate terbuka.
+    """
+    message = state.get(USER_MESSAGE_KEY)
+    if not is_explicit_change_message(message):
+        return False
+    record_turn_classification(
+        state,
+        intent=state.get(TURN_INTENT_KEY) or "dashboard_modification",
+        explicit_change_request=True,
+        evidence=message.strip(),
+    )
+    return is_mutation_allowed(state)
+
 def mutation_gate_error(state: StateLike, tool_name: str | None = None) -> dict[str, Any] | None:
-    """Versi non-raise: ``{"ok": False, "error": {...}}`` bila ditolak, ``None`` bila diizinkan."""
-    if is_mutation_allowed(state):
+    """Versi non-raise: ``{"ok": False, "error": {...}}`` bila ditolak, ``None`` bila diizinkan.
+
+    Bila gate tertutup tapi pesan pengguna jelas berisi perintah perubahan, gate dibuka
+    lewat :func:`auto_classify_on_rejection` (tanpa putaran LLM tambahan).
+    """
+    if is_mutation_allowed(state) or auto_classify_on_rejection(state):
         return None
     return {"ok": False, "error": ApprovalRequiredError(tool_name).to_dict()}
 
@@ -520,14 +615,17 @@ __all__ = [
     "APPROVAL_REQUIRED",
     "APPROVED_PROPOSAL_KEY",
     "EXPLICIT_REQUEST_KEY",
+    "GENERAL_QUESTION_INTENT",
     "MIN_EVIDENCE_LENGTH",
     "MUTATING_TOOLS",
     "MUTATION_ALLOWED_KEY",
     "MUTATION_REASON_KEY",
+    "NO_QUERY_RECOVERY_KEY",
     "RETRY_EXHAUSTED",
     "RETRY_KEY_PREFIX",
     "RETRY_LIMITS",
     "TEMP_PREFIX",
+    "TRANSFER_BLOCKED_KEY",
     "TURN_EVIDENCE_KEY",
     "TURN_INTENT_KEY",
     "TURN_INVOCATION_KEY",
@@ -546,6 +644,8 @@ __all__ = [
     "ensure_retry_available",
     "error_to_dict",
     "initial_turn_state",
+    "is_advice_message",
+    "is_advice_turn",
     "is_mutation_allowed",
     "is_retry_exhausted",
     "is_valid_evidence",

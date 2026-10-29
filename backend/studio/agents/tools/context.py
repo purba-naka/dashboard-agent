@@ -74,6 +74,10 @@ class ToolServices:
     query_timeout_s: float = DEFAULT_TIMEOUT_S
     #: Anggaran karakter blok konteks semantik per agent (Req 33.3).
     semantic_budget: int = 12_000
+    #: Mesin canvas (docs/plan-openui-canvas.md D12): "legacy" atau "openui".
+    canvas_engine: str = "legacy"
+    #: Sidecar OpenUI (system prompt canvas); ``None`` = tidak tersedia.
+    openui: Any = None
 
     @classmethod
     def from_app_state(cls, state: Any) -> ToolServices:
@@ -87,6 +91,8 @@ class ToolServices:
             bus=getattr(state, "bus", None),
             query_timeout_s=float(getattr(settings, "query_timeout_s", DEFAULT_TIMEOUT_S)),
             semantic_budget=int(getattr(settings, "semantic_context_budget", 12_000)),
+            canvas_engine=str(getattr(settings, "canvas_engine", "legacy") or "legacy"),
+            openui=getattr(state, "openui", None),
         )
 
     def privacy_for(self, dataset: Any) -> PrivacySettings:

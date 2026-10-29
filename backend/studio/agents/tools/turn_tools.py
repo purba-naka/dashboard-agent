@@ -124,7 +124,8 @@ def make_turn_tools(services: ToolServices) -> dict[str, Callable[..., Any]]:
         tool_context: ToolContext,
         evidence: str | None = None,
     ) -> dict[str, Any]:
-        """Klasifikasikan pesan pengguna giliran ini. Panggil pertama kali setiap giliran.
+        """Klasifikasikan pesan pengguna giliran ini. Panggil HANYA bila giliran ini akan
+                mengubah Dashboard; untuk pertanyaan data, saran, atau persetujuan kartu, jangan panggil.
 
         Args:
             intent: salah satu dari profiling, query_analysis, chart_design, insight,
@@ -171,7 +172,10 @@ def make_turn_tools(services: ToolServices) -> dict[str, Callable[..., Any]]:
     async def propose_changes(
         summary: str, themes: list[str], tool_context: ToolContext
     ) -> dict[str, Any]:
-        """Tawarkan perubahan/draft Dashboard kepada pengguna untuk disetujui.
+        """Tawarkan perubahan KECIL (1-2 item) pada Dashboard untuk disetujui.
+
+                JANGAN dipakai untuk merancang dashboard utuh: transfer ke
+                Dashboard_Architect_Agent untuk itu.
 
         Args:
             summary: ringkasan perubahan yang diusulkan (bahasa pengguna).

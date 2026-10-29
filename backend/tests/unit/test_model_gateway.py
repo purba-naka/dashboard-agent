@@ -20,6 +20,7 @@ from studio.agents.model_gateway import (
     ModelCapabilityError,
     build_models,
     resolve_from_settings,
+    resolve_reasoning,
     skip_capability_check,
 )
 from studio.config import Settings
@@ -53,6 +54,24 @@ class _Stub:
         if isinstance(result, BaseException):
             raise result
         return bool(result)
+
+
+# --- reasoning_effort -------------------------------------------------------
+
+
+def test_resolve_reasoning_default_and_override() -> None:
+    env = {"MODEL_REASONING_DEFAULT": "low", "MODEL_ARCHITECT_REASONING": "high", "MODEL_ROOT_REASONING": " "}
+    out = resolve_reasoning(env)
+    assert out["architect"] == "high"
+    assert out["root"] == "low"
+    assert set(out) == set(AGENT_ENV)
+    assert resolve_reasoning({}) == {}
+
+
+def test_build_models_passes_reasoning_effort_only_when_set() -> None:
+    models = build_models(ALL_OPENAI, supports_tools=_Stub(True), reasoning={"chart": "low"})
+    assert models["chart"]._additional_args.get("reasoning_effort") == "low"
+    assert "reasoning_effort" not in models["root"]._additional_args
 
 
 # --- build_models -----------------------------------------------------------
@@ -174,8 +193,10 @@ def fake_run(monkeypatch: pytest.MonkeyPatch) -> _Runner:
 def _stub_gateway(monkeypatch: pytest.MonkeyPatch, stub: _Stub) -> None:
     """Arahkan ``main.build_models`` ke ``build_models`` asli dengan ``supports_tools`` stub."""
 
-    def patched(resolved: Any, supports_tools: Any = None, *, skip_check: bool = False) -> Any:
-        return model_gateway.build_models(resolved, stub, skip_check=skip_check)
+    def patched(
+        resolved: Any, supports_tools: Any = None, *, skip_check: bool = False, reasoning: Any = None
+    ) -> Any:
+        return model_gateway.build_models(resolved, stub, skip_check=skip_check, reasoning=reasoning)
 
     monkeypatch.setattr(main_module, "build_models", patched)
 

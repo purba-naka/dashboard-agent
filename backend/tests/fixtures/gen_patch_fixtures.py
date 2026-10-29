@@ -36,6 +36,9 @@ from studio.core.chart_convert import convert_chart_type  # noqa: E402
 from studio.core.chart_spec import validate_chart_spec  # noqa: E402
 from studio.core.history import History, redo_patch_fields, undo_patch_fields  # noqa: E402
 from studio.core.models import (  # noqa: E402
+    CanvasQuery,
+    CanvasStatement,
+    SetStatementOp,
     AddChartCommand,
     AddInsightCommand,
     AddKpiCommand,
@@ -208,6 +211,10 @@ class _Session:
         )
         return self._emit(source, {"ops": ops, "inverse_ops": invert_ops(ops)})
 
+    def ops(self, ops: list[Any], source: PatchSource = "user") -> PatchEvent:
+        """Ops canvas langsung (resolusi patch OpenUI butuh sidecar)."""
+        return self._emit(source, {"ops": ops, "inverse_ops": invert_ops(ops)})
+
     def undo(self, source: PatchSource = "user") -> PatchEvent:
         target = self._by_id[self.history.peek_undo()]
         return self._emit(source, undo_patch_fields(self.history, target))
@@ -215,6 +222,21 @@ class _Session:
     def redo(self, source: PatchSource = "user") -> PatchEvent:
         target = self._by_id[self.history.peek_redo()]
         return self._emit(source, redo_patch_fields(self.history, target))
+
+
+def _stmt(
+    name: str,
+    source: str,
+    component: str,
+    refs: list[str],
+    props: dict[str, Any],
+    *,
+    kind: str = "component",
+    query: CanvasQuery | None = None,
+) -> CanvasStatement:
+    return CanvasStatement(
+        name=name, source=source, kind=kind, component=component, refs=refs, props=props, query=query  # type: ignore[arg-type]
+    )
 
 
 def _base_session(*, with_insight: bool = True) -> _Session:
@@ -334,6 +356,27 @@ def _scenarios() -> list[tuple[str, str, _Session]]:
     s.redo()
     s.command(SetBriefCommand(brief=None))
     out.append(("set_brief", "set_brief: buat, ubah, undo/redo, hapus", s))
+
+    s = _Session(DashboardContent(title="Canvas"))
+    root_v1 = _stmt("root", "root = VContainer([chart])", "VContainer", ["chart"], {"children": [{"$ref": "chart"}]})
+    query = _stmt(
+        "q1", 'q1 = Query("render_query", {query: "q_sales"}, {rows: []})', "Query", [], {}, kind="query",
+        query=CanvasQuery(tool="render_query", args={"query": "q_sales"}),
+    )
+    chart = _stmt(
+        "chart", 'chart = BarChart("Revenue", q1, "region", ["revenue"])', "BarChart", ["q1"],
+        {"title": "Revenue", "data": {"$ref": "q1"}, "x": "region", "y": ["revenue"]},
+    )
+    s.ops([SetStatementOp(name=x.name, after=x) for x in (root_v1, query, chart)], source="agent")
+    renamed = chart.model_copy(update={"source": chart.source.replace("Revenue", "Omzet"), "props": {**chart.props, "title": "Omzet"}})
+    s.ops([SetStatementOp(name="chart", before=chart, after=renamed)])
+    s.undo()
+    s.redo()
+    s.ops([SetStatementOp(name=x.name, before=x) for x in (renamed, query)] + [
+        SetStatementOp(name="root", before=root_v1, after=root_v1.model_copy(update={"source": "root = VContainer([])", "refs": [], "props": {"children": []}}))
+    ])
+    s.undo()
+    out.append(("canvas_statements", "set_statement: tambah, ganti, undo/redo, hapus, undo hapus", s))
 
     return out
 

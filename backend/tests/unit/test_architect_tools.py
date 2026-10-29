@@ -118,7 +118,7 @@ async def test_stop_marks_remaining_skipped(env: DataEnv) -> None:
 
 
 async def test_add_kpi_requires_approval(env: DataEnv) -> None:
-    ctx = env.ctx()
+    ctx = env.ctx(message="apa isi datanya?")
     await env.tools["run_sql"](KPI_SQL, ctx)
     out = await env.dash_tools["add_kpi"](0, "Revenue", "total", ctx)
     assert out["ok"] is False and out["error"]["code"] == "APPROVAL_REQUIRED"

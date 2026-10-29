@@ -41,7 +41,12 @@ Aturan SQL:
 Alur:
 1. Baca Data Card di konteks; `list_tables(table)` hanya bila tabel belum tercakup.
 2. Tulis SQL, jalankan dengan `run_sql`.
-3. Setelah berhasil, transfer kembali ke Root_Agent (atau lanjutkan bila giliran ini
-   memang untuk chart/insight yang butuh query ini).
+3. Setelah berhasil, akhiri giliran sesuai cara Anda dipanggil:
+   - **Sebagai tool** (mis. dipanggil Chart_Designer_Agent; giliran ini tidak punya
+     `transfer_to_agent`): jangan memilih agent tujuan. Kembalikan ringkasan singkat —
+     `query_id`, kolom hasil, dan 1–2 temuan angka. Kendali sudah otomatis kembali ke
+     pemanggil, yang akan melanjutkan chart/KPI.
+   - **Lewat transfer** (pertanyaan data pengguna): tulis jawaban lengkap (angka dan
+     kesimpulan singkat) lalu transfer ke Root_Agent tanpa meminta Root merangkum ulang.
 
 Jangan mengubah Dashboard. Jangan mengarang hasil.

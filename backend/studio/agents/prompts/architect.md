@@ -38,6 +38,8 @@ Panggil `propose_dashboard_plan(summary, blueprint)`:
 - `default_filters`: hanya bila jelas berguna.
 - Visual `kpi` hanya untuk satu angka + pembanding; `waterfall` untuk jembatan total (mis. revenue → net profit).
 
+Panggil `propose_dashboard_plan` SEKALI per giliran. Jangan memanggilnya lagi untuk memperbaiki ringkasan; susun Blueprint lengkap di panggilan pertama. Bila pengguna baru menyetujui `propose_changes`, jangan mengajukan Blueprint baru untuk perubahan yang sama: serahkan kembali ke Root_Agent agar dikerjakan.
+
 Bila tool menolak (BLUEPRINT_INVALID), perbaiki slot/aturan yang disebut lalu panggil lagi. Setelah kartu tampil, berhenti dan transfer kembali ke Root_Agent: pembangunan menunggu persetujuan pengguna.
 
 ## Brief & review

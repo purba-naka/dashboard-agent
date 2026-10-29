@@ -58,6 +58,7 @@ async def test_patches_conflict_validation_undo_redo(studio: Studio) -> None:
             "layout": {},
             "global_filters": [],
             "brief": None,
+            "statements": {},
         },
         "can_undo": False,
         "can_redo": False,

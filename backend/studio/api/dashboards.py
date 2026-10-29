@@ -52,6 +52,8 @@ from studio.api.schemas import (
     RenderRequest,
     RenderResponse,
     UndoRedoRequest,
+    CanvasRenderRequest,
+    CanvasRenderResponse,
 )
 from studio.core.models import (
     MAX_EVIDENCE_ROWS,
@@ -63,7 +65,7 @@ from studio.core.models import (
 )
 from studio.core.privacy import truncate_result
 from studio.data.engine import DataEngine
-from studio.data.render import render_items
+from studio.data.render import render_canvas, render_items
 from studio.data.worker import DEFAULT_TIMEOUT_S
 from studio.store.dashboard_store import DashboardStore, VersionConflict
 from studio.store.repos import Repositories
@@ -221,6 +223,35 @@ async def render_dashboard(
         engine=engine,
         timeout_s=_timeout_s(request),
     )
+
+
+@router.post("/dashboards/{dashboard_id}/canvas/render", response_model=CanvasRenderResponse)
+async def render_canvas_queries(
+    request: Request,
+    dashboard_id: str,
+    body: CanvasRenderRequest,
+    repos: Repositories = Depends(_repos),
+    engine: DataEngine = Depends(_engine),
+) -> CanvasRenderResponse:
+    """Batch ``Query(...)`` canvas OpenUI dengan filter aktif, tanpa LLM (D7)."""
+    record = await repos.dashboards.get(dashboard_id)
+    return await render_canvas(
+        record,
+        body.queries,
+        body.cross_filters,
+        repos=repos,
+        engine=engine,
+        timeout_s=_timeout_s(request),
+    )
+
+
+@router.post("/dashboards/{dashboard_id}/canvas/convert", response_model=DashboardSnapshot)
+async def convert_canvas(
+    dashboard_id: str, store: DashboardStore = Depends(_store)
+) -> DashboardSnapshot:
+    """Migrasi satu arah legacy → canvas (D10); no-op bila sudah canvas."""
+    await store.convert_to_canvas(dashboard_id, "user")
+    return await store.get(dashboard_id)
 
 
 # ---------------------------------------------------------------------------

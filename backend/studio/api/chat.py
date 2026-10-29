@@ -36,6 +36,14 @@ if TYPE_CHECKING:  # pragma: no cover
 router = APIRouter(prefix="/api", tags=["chat"])
 
 _DEFAULT_TITLE = "Percakapan"
+_TITLE_MAX = 40
+
+def _title_from(message: str) -> str:
+    """Judul sesi = pertanyaan pertama (satu baris, <= 40 karakter)."""
+    text = " ".join(message.split())
+    if not text:
+        return _DEFAULT_TITLE
+    return text if len(text) <= _TITLE_MAX else text[: _TITLE_MAX - 1].rstrip() + "…"
 
 
 def _repos(request: Request) -> Repositories:
@@ -70,7 +78,7 @@ async def chat(workspace_id: str, body: ChatRequest, request: Request) -> Stream
         session = await repos.chat_sessions.get(body.session_id, workspace_id=workspace_id)
         session_id = session.id
     else:
-        session = await repos.chat_sessions.create(workspace_id, _DEFAULT_TITLE)
+        session = await repos.chat_sessions.create(workspace_id, _title_from(body.message))
         session_id = session.id
 
     if body.dashboard_id:

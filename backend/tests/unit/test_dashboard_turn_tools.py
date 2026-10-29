@@ -24,7 +24,7 @@ from studio.agents.tools.context import (
     ToolServices,
     resolve_dataset,
 )
-from studio.agents.tools.dashboard_tools import DASHBOARD_TOOL_NAMES, make_dashboard_tools
+from studio.agents.tools.dashboard_tools import CANVAS_ROLES, DASHBOARD_TOOL_NAMES, make_dashboard_tools
 from studio.agents.tools.turn_tools import TURN_TOOL_NAMES, make_turn_tools
 from studio.agents.turn_policy import APPROVAL_REQUIRED, RETRY_EXHAUSTED, begin_turn
 from studio.core.models import ColumnInfo
@@ -114,10 +114,14 @@ PAGE_TOOLS = {"list_pages", "create_page", "switch_page"}
 
 
 async def test_all_tools_have_adk_declarations(env: Env) -> None:
-    assert set(env.tools) == set(DASHBOARD_TOOL_NAMES) | set(TURN_TOOL_NAMES)
+    canvas = {f"apply_canvas_patch:{role}" for role in CANVAS_ROLES}
+    assert set(env.tools) == set(DASHBOARD_TOOL_NAMES) | set(TURN_TOOL_NAMES) | canvas
     for name, fn in env.tools.items():
         decl = FunctionTool(fn)._get_declaration()
-        assert decl.name == name
+        # Varian per peran canvas memakai nama tool yang sama (allowlist berbeda, D11).
+        assert decl.name == name.split(":")[0]
+        if name in canvas:
+            continue
         schema = decl.parameters_json_schema or (
             decl.parameters.model_dump(exclude_none=True) if decl.parameters else {}
         )
@@ -274,3 +278,21 @@ async def test_create_and_switch_page_retarget_add_chart(env: Env) -> None:
     assert (await env.tools["switch_page"](first, ctx))["ok"]
     assert ctx.state[STATE_DASHBOARD_ID] == first
     assert (await env.tools["switch_page"]("tidak-ada", ctx))["ok"] is False
+
+
+async def test_add_chart_from_template_flow(env: Env) -> None:
+    ctx = env.ctx(message="apa isi datanya?")
+    out = await env.tools["add_chart_from_template"](0, "Revenue", "bar", "region", "revenue", ctx)
+    assert out["ok"] is False and out["error"]["code"] == APPROVAL_REQUIRED  # gate tetap berlaku
+
+    ctx = env.ctx()
+    await env.allow(ctx)
+    bad = await env.tools["add_chart_from_template"](0, "Revenue", "bar", "region", "tidak_ada", ctx)
+    assert bad["ok"] is False and bad["error"]["code"] == "UNKNOWN_COLUMN"  # kolom divalidasi
+    assert "retries_left" in bad  # memakan jatah chart_spec
+
+    out = await env.tools["add_chart_from_template"](0, "Revenue", "bar", "region", "revenue", ctx)
+    assert out["ok"], out
+    snap = await env.store.get(ctx.state[STATE_DASHBOARD_ID])
+    item = snap.content.items[out["item_id"]]
+    assert item.spec.chart_type == "bar" and item.spec.option["series"][0]["encode"] == {"x": "region", "y": "revenue"}

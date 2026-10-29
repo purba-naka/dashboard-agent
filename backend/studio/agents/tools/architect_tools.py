@@ -19,6 +19,7 @@ disetujui disimpan sebagai Blueprint aktif berisi slot terpilih saja.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
@@ -47,6 +48,8 @@ from studio.api.errors import StudioError
 from studio.core.blueprint import BlueprintInvalid, finalize_blueprint, select_slots
 from studio.core.design_rules import QueryInfo, review
 from studio.core.models import DashboardBlueprint, SetGlobalFiltersCommand
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "ARCHITECT_TOOL_NAMES",
@@ -237,6 +240,14 @@ async def advance_blueprint(services: ToolServices, state: Any, invocation_id: s
             "termasuk slot yang gagal.",
             **({CHAT_EVENTS_KEY: events} if events else {}),
         )
+    skeleton_events: list[dict[str, Any]] = []
+    if (
+        getattr(services, "canvas_engine", "legacy") == "openui"
+        and services.dashboard_store is not None
+        and len(pending) == len(slots)
+        and is_mutation_allowed(state)
+    ):
+        skeleton_events = await _write_canvas_skeleton(services, record.dashboard_id, slots, invocation_id)
     slot = pending[0]
     await repos.blueprints.update_slot(record.id, slot["slot_id"], "building")
     state[BLUEPRINT_CURRENT_SLOT_KEY] = dict(slot)
@@ -250,13 +261,56 @@ async def advance_blueprint(services: ToolServices, state: Any, invocation_id: s
         brief=record.blueprint.get("brief"),
         **{
             CHAT_EVENTS_KEY: [
+                *skeleton_events,
                 chat_event(
                     "blueprint.progress",
                     {"blueprint_id": record.id, "slot_id": slot["slot_id"], "status": "building"},
-                )
+                ),
             ]
         },
     )
+
+
+async def _write_canvas_skeleton(
+    services: ToolServices,
+    dashboard_id: str,
+    slots: list[dict[str, Any]],
+    invocation_id: str | None,
+) -> list[dict[str, Any]]:
+    """Kerangka container canvas OpenUI untuk slot Blueprint (D8); event ``patch.applied``.
+
+    Dashboard legacy dikonversi dulu (D10). Kegagalan tidak menghentikan
+    pembangunan slot: tile tetap bisa ditambahkan Slot_Builder.
+    """
+    from studio.core.openui.program import is_ref
+    from studio.core.openui.skeleton import blueprint_skeleton, slot_statement_name
+
+    store = services.dashboard_store
+    assert store is not None
+    events: list[dict[str, Any]] = []
+    try:
+        converted = await store.convert_to_canvas(dashboard_id, source="agent")
+        if converted is not None:
+            events.append(chat_event("patch.applied", converted.model_dump(mode="json")))
+        dash = await services.repos.dashboards.get(dashboard_id)
+        statements = dash.content.statements
+        root = statements.get("root")
+        children = root.props.get("children") if root is not None else None
+        existing = [c["$ref"] for c in children or [] if is_ref(c)]
+        todo = [s for s in slots if slot_statement_name(s["slot_id"]) not in statements]
+        if not todo:
+            return events
+        event, _ = await store.apply_canvas(
+            dashboard_id,
+            blueprint_skeleton(todo, existing),
+            dash.version,
+            "agent",
+            actor_run_id=invocation_id,
+        )
+        events.append(chat_event("patch.applied", event.model_dump(mode="json")))
+    except StudioError:
+        logger.exception("Kerangka canvas Blueprint gagal ditulis")
+    return events
 
 
 def make_architect_tools(services: ToolServices) -> dict[str, Callable[..., Any]]:

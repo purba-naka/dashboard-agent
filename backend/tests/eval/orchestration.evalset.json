@@ -1,0 +1,241 @@
+{
+  "eval_set_id": "orchestration-evalset",
+  "name": "Orkestrasi multi-agent (model nyata)",
+  "description": "Routing Root_Agent ke sub-agent, trajectory tool (IN_ORDER), approval gate, dan grounding angka atas sampel sales. x_expected: agents = urutan agent aktif (subsequence), forbid_agents, mutation = patch wajib/terlarang, mentions = angka/teks yang wajib muncul di jawaban Root_Agent.",
+  "eval_cases": [
+    {
+      "eval_id": "route-query-total-revenue",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Berapa total revenue (kolom amount) seluruh transaksi?"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_sql",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [
+          "Query_Agent"
+        ],
+        "mutation": false,
+        "numbers": [
+          1802384000
+        ]
+      }
+    },
+    {
+      "eval_id": "route-query-join-region",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Region pelanggan mana yang menyumbang revenue terbesar? Sebutkan nilainya."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "run_sql",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [
+          "Query_Agent"
+        ],
+        "mutation": false,
+        "texts": [
+          "Jawa"
+        ],
+        "numbers": [
+          839612000
+        ]
+      }
+    },
+    {
+      "eval_id": "gate-saran-tanpa-mutasi",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Menurutmu chart apa yang cocok untuk data penjualan ini? Jangan ubah dashboard dulu."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [],
+        "forbid_agents": [
+          "Chart_Designer_Agent",
+          "Blueprint_Builder_Agent"
+        ],
+        "mutation": false
+      }
+    },
+    {
+      "eval_id": "route-chart-eksplisit",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Tambahkan bar chart total revenue per channel ke dashboard sekarang."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "classify_turn",
+                "args": {}
+              },
+              {
+                "name": "run_sql",
+                "args": {}
+              },
+              {
+                "name": "add_chart|add_chart_from_template",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [
+          "Query_Agent",
+          "Chart_Designer_Agent"
+        ],
+        "mutation": true
+      }
+    },
+    {
+      "eval_id": "route-insight-eksplisit",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Tambahkan Insight_Card ke dashboard tentang region pelanggan dengan revenue terbesar."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "classify_turn",
+                "args": {}
+              },
+              {
+                "name": "add_insight",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [
+          "Insight_Agent"
+        ],
+        "mutation": true
+      }
+    },
+    {
+      "eval_id": "route-architect-blueprint",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Rancangkan dashboard penjualan lengkap untuk manajer: KPI, tren bulanan, dan perbandingan region. Usulkan rancangannya dulu, jangan dibangun."
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "propose_dashboard_plan",
+                "args": {}
+              }
+            ]
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [
+          "Dashboard_Architect_Agent"
+        ],
+        "forbid_agents": [
+          "Blueprint_Builder_Agent"
+        ],
+        "mutation": false,
+        "blueprint_card": true
+      }
+    },
+    {
+      "eval_id": "route-profiler-kualitas",
+      "conversation": [
+        {
+          "invocation_id": "inv_1",
+          "user_content": {
+            "role": "user",
+            "parts": [
+              {
+                "text": "Bagaimana kualitas data tabel customers? Kolom mana yang punya nilai kosong dan berapa banyak?"
+              }
+            ]
+          },
+          "intermediate_data": {
+            "tool_uses": []
+          }
+        }
+      ],
+      "x_expected": {
+        "agents": [
+          "Data_Profiler_Agent"
+        ],
+        "mutation": false,
+        "texts": [
+          "email"
+        ],
+        "numbers": [
+          7
+        ]
+      }
+    }
+  ]
+}

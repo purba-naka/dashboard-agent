@@ -31,6 +31,12 @@ if TYPE_CHECKING:
 SKIP_CHECK_ENV = "MODEL_SKIP_CAPABILITY_CHECK"
 _TRUTHY = {"1", "true", "yes", "on"}
 
+#: ``reasoning_effort`` LiteLLM. Cadangan semua agent; override per agent lewat
+#: ``MODEL_<AGENT>_REASONING`` (mis. ``MODEL_ARCHITECT_REASONING=high``).
+#: Terukur pada glm-5.3: ``low`` ~45% lebih cepat per panggilan. Param
+#: ``thinking: disabled`` diabaikan proxy, jadi tidak dipakai.
+REASONING_DEFAULT_ENV = "MODEL_REASONING_DEFAULT"
+
 # Pemetaan variabel env model -> field `Settings`.
 _SETTINGS_FIELDS: dict[str, str] = {
     DEFAULT_ENV: "model_default",
@@ -82,11 +88,24 @@ def skip_capability_check(environ: Mapping[str, str] | None = None) -> bool:
     return (env.get(SKIP_CHECK_ENV) or "").strip().lower() in _TRUTHY
 
 
+def resolve_reasoning(environ: Mapping[str, str] | None = None) -> dict[str, str]:
+    """``{agent: reasoning_effort}`` dari env. Agent tanpa nilai tidak dimuat."""
+    env = os.environ if environ is None else environ
+    default = (env.get(REASONING_DEFAULT_ENV) or "").strip()
+    out: dict[str, str] = {}
+    for agent, var in AGENT_ENV.items():
+        value = (env.get(f"{var}_REASONING") or "").strip() or default
+        if value:
+            out[agent] = value
+    return out
+
+
 def build_models(
     resolved: Mapping[str, str],
     supports_tools: Callable[[str], bool] = litellm.supports_function_calling,
     *,
     skip_check: bool = False,
+    reasoning: Mapping[str, str] | None = None,
 ) -> dict[str, LiteLlm]:
     """Bangun ``LiteLlm`` per agent dari ``{agent: nama_model}``.
 
@@ -112,4 +131,8 @@ def build_models(
 
     # Pilihan LiteLLM untuk Gemini disengaja (provider-agnostik); redam peringatan ADK.
     os.environ.setdefault("ADK_SUPPRESS_GEMINI_LITELLM_WARNINGS", "true")
-    return {agent: LiteLlm(model=model) for agent, model in resolved.items()}
+    reasoning = reasoning or {}
+    return {
+        agent: LiteLlm(model=model, **({"reasoning_effort": reasoning[agent]} if agent in reasoning else {}))
+        for agent, model in resolved.items()
+    }

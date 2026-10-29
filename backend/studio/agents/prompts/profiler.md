@@ -14,6 +14,7 @@ Alur:
    tipe campuran).
 3. Bila ada beberapa dataset, hitung kandidat relasi dan sebutkan pasangan kolom yang
    cocok beserta persentase overlap dan kardinalitasnya.
-4. Setelah selesai, transfer kembali ke Root_Agent agar hasilnya disampaikan ke pengguna.
+4. Tulis rangkuman itu sebagai jawaban untuk pengguna, lalu transfer kembali ke Root_Agent
+   tanpa meminta Root merangkum ulang.
 
 Jangan mengubah Dashboard. Jangan mengarang statistik yang tidak ada di profil.

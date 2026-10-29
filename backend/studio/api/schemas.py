@@ -572,6 +572,41 @@ class RenderResponse(StudioModel):
     items: dict[str, RenderedItem]
 
 
+class CanvasQueryRequest(StudioModel):
+    """Satu panggilan ``Query(tool, args)`` dari runtime OpenUI (D7)."""
+
+    key: str
+    tool: str
+    args: dict[str, Any] = Field(default_factory=dict)
+
+
+class CanvasRenderRequest(StudioModel):
+    """``POST /dashboards/{id}/canvas/render``: batch semua Query dalam satu tick."""
+
+    queries: list[CanvasQueryRequest] = Field(max_length=200)
+    cross_filters: list[Predicate] = Field(default_factory=list)
+
+
+class CanvasQueryResult(_OmitNoneModel):
+    """Hasil satu Query: baris (``render_query``) atau KPI (``render_kpi``)."""
+
+    omit_if_none: ClassVar[frozenset[str]] = frozenset({"columns", "rows", "kpi", "formatted", "error"})
+
+    status: RenderItemStatus
+    columns: list[str] | None = None
+    rows: list[dict[str, Any]] | None = None
+    kpi: dict[str, Any] | None = None
+    #: Alias ``kpi.formatted`` agar default ``{formatted: {}}`` di program cocok.
+    formatted: dict[str, Any] | None = None
+    filter_unaffected: bool = False
+    error: ErrorBody | None = None
+
+
+class CanvasRenderResponse(StudioModel):
+    version: int = Field(ge=0)
+    results: dict[str, CanvasQueryResult]
+
+
 class RefreshInsightRequest(StudioModel):
     """``POST /dashboards/{id}/insights/{item_id}/refresh``."""
 

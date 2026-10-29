@@ -81,6 +81,15 @@ class RunRegistry:
         return True
 
 
+def build_session_service(data_dir: Path, database_url: str | None = None) -> DatabaseSessionService:
+    """Session_Service ADK dengan pre-ping: stream chat yang dibatalkan di tengah query bisa
+    mematikan koneksi aiosqlite di pool; tanpa pre-ping semua giliran berikutnya gagal
+    ``no active connection``."""
+    return DatabaseSessionService(
+        db_url=sessions_db_url(data_dir, database_url), pool_pre_ping=True
+    )
+
+
 class ChatRunner:
     """Satu instance per aplikasi; membungkus Runner ADK + Session_Service."""
 
@@ -94,9 +103,7 @@ class ChatRunner:
         database_url: str | None = None,
     ) -> None:
         self._services = services
-        self._session_service = session_service or DatabaseSessionService(
-            db_url=sessions_db_url(data_dir, database_url)
-        )
+        self._session_service = session_service or build_session_service(data_dir, database_url)
         self._runner = Runner(
             app_name=APP_NAME,
             agent=root_agent,

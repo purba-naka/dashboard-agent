@@ -73,9 +73,25 @@ from studio.core.models import (
     StudioModel,
 )
 from studio.core.kpi import validate_kpi_spec
-from studio.core.numbers import check_insight_type, verify_insight_numbers
-from studio.core.patches import apply_ops, invert_ops, resolve_command
-from studio.core.status import ItemStatus, dashboard_item_status, item_query_id
+from studio.core.models import (
+    MAX_EVIDENCE_ROWS,
+    ApplyCanvasPatchCommand,
+    CanvasStatement,
+    EvidenceTable,
+    SetStatementOp,
+)
+from studio.core.numbers import InvalidInsightType, check_insight_type, verify_insight_numbers
+from studio.core.openui.convert import legacy_to_program
+from studio.core.openui.program import program_text, statement_from_sidecar, title_of
+from studio.core.openui.sidecar import OpenUISidecar
+from studio.core.openui.validate import CanvasIssue, referenced_query_ids, validate_canvas_patch
+from studio.core.patches import InvalidOp, apply_ops, invert_ops, resolve_command
+from studio.core.status import (
+    ItemStatus,
+    canvas_query_ids,
+    dashboard_item_status,
+    item_query_id,
+)
 from studio.events.bus import EventBus
 from studio.store.db import Database
 from studio.store.repos import DashboardRecord, QueryRecord, Repositories, new_id
@@ -182,6 +198,16 @@ def _describe_op(op: Op, content: DashboardContent) -> str:
         return f"mengubah judul Dashboard menjadi '{op.after}'"
     if isinstance(op, SetBriefOp):
         return "mengubah Design_Brief" if op.after is not None else "menghapus Design_Brief"
+    if isinstance(op, SetStatementOp):
+        stmt = op.after or op.before
+        assert stmt is not None
+        what = stmt.component or stmt.kind
+        label = f"{what} '{title_of(stmt)}'"
+        if op.before is None:
+            return f"menambahkan {label}"
+        if op.after is None:
+            return f"menghapus {label}"
+        return f"mengubah {label}"
     return f"menerapkan {getattr(op, 'op', 'perubahan')}"
 
 
@@ -232,7 +258,10 @@ class DashboardStore:
         id_factory: IdFactory | None = None,
         clock: Clock | None = None,
         on_user_edit: UserEditHook | None = None,
+        openui: OpenUISidecar | None = None,
     ) -> None:
+        #: Sidecar OpenUI untuk patch canvas (D6); boleh dipasang belakangan.
+        self.openui: OpenUISidecar | None = openui
         self.repos = db if isinstance(db, Repositories) else Repositories(db)
         self.db: Database = self.repos.db
         self.bus = bus
@@ -313,12 +342,198 @@ class DashboardStore:
                 out.append(op)
         return out
 
+    # ---------------------------------------------------------------- canvas
+    async def _canvas_insight(
+        self,
+        workspace_id: str,
+        stmt: CanvasStatement,
+        cache: dict[str, QueryRecord],
+    ) -> InsightItem:
+        """Lampiran Insight_Card untuk komponen ``Insight`` (D11, V8)."""
+        props = stmt.props
+        query = await self._query(workspace_id, str(props.get("query")), cache)
+        insight_type = str(props.get("type"))
+        check_insight_type(insight_type, query.tables_used, query.relations_used)
+        if insight_type == "cross_dataset_correlation":
+            confirmed = set(await self.repos.relations.confirmed_ids(workspace_id))
+            missing = sorted(set(query.relations_used) - confirmed)
+            if missing:
+                raise InvalidInsightType(
+                    "Insight 'cross_dataset_correlation' membutuhkan query yang menggabungkan "
+                    "tabel hanya melalui Confirmed_Relation.",
+                    {"query_id": query.id, "relations_not_confirmed": missing},
+                )
+        versions = await self.repos.datasets.data_versions(workspace_id)
+        evidence = EvidenceTable(
+            columns=list(query.output_schema),
+            rows=[list(r) for r in query.rows[:MAX_EVIDENCE_ROWS]],
+            row_count=query.row_count,
+        )
+        filters = list(query.filters)
+        text = str(props.get("text", ""))
+        return InsightItem(
+            id=stmt.name,
+            insight_type=insight_type,  # type: ignore[arg-type]
+            title=str(props.get("title", stmt.name)),
+            text=text,
+            query_id=query.id,
+            sql=query.sql,
+            evidence=evidence,
+            matched_numbers=verify_insight_numbers(text, evidence, filters),
+            filters_snapshot=filters,
+            dataset_ids=list(query.dataset_ids),
+            computed_at=query.executed_at,
+            dataset_versions={d: versions[d] for d in query.dataset_ids if d in versions},
+        )
+
+    async def _resolve_canvas(
+        self,
+        record: DashboardRecord,
+        command: ApplyCanvasPatchCommand,
+        cache: dict[str, QueryRecord],
+    ) -> tuple[list[Op], list[CanvasIssue]]:
+        """Patch OpenUI Lang → ops ``set_statement`` (sidecar merge + V1–V8)."""
+        if self.openui is None:
+            raise StudioError(
+                "OPENUI_UNAVAILABLE", "Sidecar OpenUI tidak dikonfigurasi.", http_status=503
+            )
+        content = record.content
+        if content.items:
+            raise InvalidOp(
+                "Dashboard masih format legacy; konversi ke canvas dulu.",
+                {"dashboard_id": record.id},
+            )
+        result = await self.openui.acall(
+            "apply", {"program": program_text(content.statements), "patch": command.patch}
+        )
+        schemas: dict[str, list[str] | None] = {}
+        for qid in referenced_query_ids(result):
+            try:
+                query = await self._query(record.workspace_id, qid, cache)
+            except UnknownQuery:
+                schemas[qid] = None
+            else:
+                schemas[qid] = [c.name for c in query.output_schema]
+        plan = validate_canvas_patch(
+            result,
+            command.patch,
+            schemas=schemas,
+            allowed_components=command.allowed_components,
+        )
+        current = content.statements
+        ops: list[Op] = [
+            SetStatementOp(name=name, before=current[name], after=None)
+            for name in plan.removed
+            if name in current
+        ]
+        for name in plan.touched:
+            stmt = plan.statements[name]
+            if stmt.component == "Insight":
+                stmt = stmt.model_copy(
+                    update={"insight": await self._canvas_insight(record.workspace_id, stmt, cache)}
+                )
+            ops.append(SetStatementOp(name=name, before=current.get(name), after=stmt))
+        if not ops:
+            raise StudioError(
+                "CANVAS_NO_CHANGE",
+                "Patch tidak mengubah canvas (semua statement sama dengan yang ada).",
+                http_status=422,
+            )
+        return ops, plan.warnings
+
+    async def apply_canvas(
+        self,
+        dashboard_id: str,
+        patch: str,
+        base_version: int,
+        source: PatchSource,
+        *,
+        allowed_components: Sequence[str] | None = None,
+        actor_run_id: str | None = None,
+    ) -> tuple[PatchEvent, list[CanvasIssue]]:
+        """Terapkan patch OpenUI Lang sebagai satu Patch_Event; kembalikan juga peringatan."""
+        command = ApplyCanvasPatchCommand(
+            patch=patch,
+            allowed_components=list(allowed_components) if allowed_components is not None else None,
+        )
+        async with self._lock(dashboard_id):
+            record = await self.repos.dashboards.get(dashboard_id)
+            if base_version != record.version:
+                raise VersionConflict(record.version, base_version)
+            ops, warnings = await self._resolve_canvas(record, command, {})
+            event = await self._commit(
+                record,
+                source=source,
+                kind="normal",
+                ops=ops,
+                inverse_ops=invert_ops(ops),
+                target_patch_id=None,
+                command=command,
+                actor_run_id=actor_run_id,
+            )
+            return event, warnings
+
+    async def convert_to_canvas(
+        self, dashboard_id: str, source: PatchSource = "user"
+    ) -> PatchEvent | None:
+        """Migrasi satu arah legacy → canvas (D10); ``None`` bila sudah canvas/kosong.
+
+        Riwayat undo/redo direset: hasil migrasi menjadi baseline baru.
+        """
+        if self.openui is None:
+            raise StudioError(
+                "OPENUI_UNAVAILABLE", "Sidecar OpenUI tidak dikonfigurasi.", http_status=503
+            )
+        async with self._lock(dashboard_id):
+            record = await self.repos.dashboards.get(dashboard_id)
+            content = record.content
+            if not content.items:
+                return None
+            converted = legacy_to_program(content)
+            result = await self.openui.acall(
+                "apply", {"program": "", "patch": converted.program}
+            )
+            if result["syntax_errors"]:
+                raise InvalidOp(
+                    "Konversi legacy menghasilkan program tidak valid.",
+                    {"errors": result["syntax_errors"]},
+                )
+            statements = {
+                info["id"]: statement_from_sidecar(info) for info in result["statements"]
+            }
+            for name, stmt in list(statements.items()):
+                legacy = content.items.get(converted.item_names.get(name, ""))
+                if stmt.component == "Insight" and isinstance(legacy, InsightItem):
+                    statements[name] = stmt.model_copy(
+                        update={"insight": legacy.model_copy(update={"id": name})}
+                    )
+            ops: list[Op] = [
+                RemoveItemOp(item=item, layout=content.layout[item_id])
+                for item_id, item in content.items.items()
+            ]
+            ops += [SetStatementOp(name=n, after=s) for n, s in statements.items()]
+            event = await self._commit(
+                record,
+                source=source,
+                kind="normal",
+                ops=ops,
+                inverse_ops=invert_ops(ops),
+                target_patch_id=None,
+                command=None,
+                actor_run_id=None,
+                reset_history=True,
+            )
+            return event
+
     async def _resolve(
         self,
         record: DashboardRecord,
         command: Command,
         cache: dict[str, QueryRecord],
     ) -> list[Op]:
+        if isinstance(command, ApplyCanvasPatchCommand):
+            ops, _ = await self._resolve_canvas(record, command, cache)
+            return ops
         converter = None
         if isinstance(command, ChangeChartTypeCommand):
             current = record.content.items.get(command.id)
@@ -346,6 +561,7 @@ class DashboardStore:
         command: Command | None,
         actor_run_id: str | None,
         target_ops: Sequence[Op] | None = None,
+        reset_history: bool = False,
     ) -> PatchEvent:
         """Terapkan ops, simpan atomik, lalu publish + hook (dipanggil di bawah lock)."""
         new_content = apply_ops(record.content, ops)
@@ -361,8 +577,11 @@ class DashboardStore:
             inverse_ops=inverse_ops,
             created_at=self._clock(),
         )
-        history = History.from_lists(record.undo_stack, record.redo_stack).record(event)
-        undo_stack, redo_stack = history.to_lists()
+        if reset_history:
+            undo_stack, redo_stack = [], []
+        else:
+            history = History.from_lists(record.undo_stack, record.redo_stack).record(event)
+            undo_stack, redo_stack = history.to_lists()
 
         async with self.db.transaction():
             stored = await self.repos.patches.insert(
@@ -425,6 +644,7 @@ class DashboardStore:
     async def _snapshot(self, record: DashboardRecord) -> DashboardSnapshot:
         content = record.content
         query_ids = {item_query_id(item) for item in content.items.values()}
+        query_ids |= canvas_query_ids(content)
         queries = {
             qid: q
             for qid, q in (await self.repos.queries.get_many(query_ids)).items()

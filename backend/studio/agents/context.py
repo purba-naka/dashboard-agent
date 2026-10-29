@@ -205,6 +205,49 @@ AGENT_PROMPTS: dict[str, tuple[tuple[str, ...], str]] = {
     "slot_builder": (("slot_builder", "chart_rules"), "query"),
 }
 
+#: Prompt pengganti saat ``canvas_engine == "openui"`` (docs/plan-openui-canvas.md §3.7).
+OPENUI_AGENT_PROMPTS: dict[str, tuple[str, ...]] = {
+    "chart": ("chart_openui", "canvas_openui"),
+    "insight": ("insight_openui", "canvas_openui"),
+    "slot_builder": ("slot_builder_openui", "canvas_openui"),
+    "architect": ("architect", "canvas_openui"),
+}
+
+#: Aturan tambahan untuk system prompt OpenUI hasil sidecar (menimpa bagian generik).
+OPENUI_RULES: list[str] = [
+    "Output is a PATCH passed as the `patch` argument of apply_canvas_patch, never a chat message.",
+    "Never use Mutation, $variables, @functions, Button, Form, or mock data; there are no other tools.",
+    "Every data component's `data` argument references a Query statement; never inline arrays.",
+]
+
+
+def prompt_names(agent_key: str, canvas_engine: str = "legacy") -> tuple[str, ...]:
+    if canvas_engine == "openui" and agent_key in OPENUI_AGENT_PROMPTS:
+        return OPENUI_AGENT_PROMPTS[agent_key]
+    return AGENT_PROMPTS.get(agent_key, ((agent_key,), "root"))[0]
+
+
+async def openui_syntax_prompt(services: ToolServices) -> str:
+    """Spesifikasi OpenUI Lang + signature komponen dari sidecar (D6); kosong bila gagal."""
+    import asyncio
+
+    sidecar = getattr(services, "openui", None)
+    if sidecar is None:
+        return ""
+    try:
+        text = await asyncio.to_thread(
+            sidecar.prompt,
+            preamble="Reference: OpenUI Lang syntax and the canvas component library.",
+            additional_rules=OPENUI_RULES,
+        )
+    except Exception:  # noqa: BLE001 — prompt opsional; aturan canvas_openui.md tetap ada
+        import logging
+
+        logging.getLogger(__name__).exception("System prompt OpenUI gagal dibuat")
+        return ""
+    return f"## Referensi OpenUI Lang\n\n{text}"
+
+
 #: Agent yang memutasi Dashboard: butuh ``dashboard_version`` sebagai ``base_version``.
 _MUTATING_AGENTS = frozenset({"chart", "insight", "slot_builder"})
 
@@ -363,14 +406,22 @@ def make_instruction(
     """InstructionProvider generik: prompt statis + konteks data/semantik per agent."""
     from studio.agents.turn_policy import BLUEPRINT_CURRENT_SLOT_KEY
 
-    prompt_names, _ = AGENT_PROMPTS.get(agent_key, ((agent_key,), "root"))
-    static = "\n\n".join(load_prompt(n) for n in prompt_names)
+    engine = getattr(services, "canvas_engine", "legacy")
+    names = prompt_names(agent_key, engine)
+    static = "\n\n".join(load_prompt(n) for n in names)
+    openui = engine == "openui" and agent_key in OPENUI_AGENT_PROMPTS
+    syntax: dict[str, str] = {}
     # ponytail: cache satu entri (invocation terakhir) per provider. Giliran paralel
     # dalam satu proses saling menimpa (hanya cache miss, tetap benar). Upgrade: dict
     # kecil ber-LRU bila trace menunjukkan miss tinggi.
     cache: dict[str, Any] = {}
 
     async def provider(ctx: Any) -> str:
+        nonlocal static
+        if openui and "text" not in syntax:
+            syntax["text"] = await openui_syntax_prompt(services)
+            if syntax["text"]:
+                static = f"{static}\n\n{syntax['text']}"
         state = getattr(ctx, "state", {}) or {}
         if not state.get(STATE_WORKSPACE_ID):
             return static

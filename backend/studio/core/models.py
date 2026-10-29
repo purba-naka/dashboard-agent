@@ -292,8 +292,42 @@ class LayoutRect(StudioModel):
         return self
 
 
+StatementKind = Literal["component", "query", "mutation", "state", "value"]
+
+
+class CanvasQuery(StudioModel):
+    """Argumen literal statement ``Query("tool", {...}, ...)``."""
+
+    tool: str | None = None
+    args: Any = None
+
+
+class CanvasStatement(StudioModel):
+    """Satu statement program OpenUI Lang canvas (docs/plan-openui-canvas.md D1, D3).
+
+    ``source`` adalah teks statement apa adanya; field lain adalah hasil
+    analisis sidecar (``props`` bernama, rujukan ``{"$ref": nama}``) agar render
+    dan status tidak perlu mem-parse ulang. ``insight`` adalah lampiran
+    Insight_Card (SQL, bukti, angka cocok) untuk komponen ``Insight`` (D11).
+    """
+
+    name: str
+    source: str
+    kind: StatementKind
+    component: str | None = None
+    refs: list[str] = Field(default_factory=list)
+    props: dict[str, Any] = Field(default_factory=dict)
+    query: CanvasQuery | None = None
+    insight: InsightItem | None = None
+
+
 class DashboardContent(StudioModel):
-    """Konten Dashboard. Invariant: ``keys(layout) == keys(items)``."""
+    """Konten Dashboard.
+
+    Dua bentuk (selama refactor OpenUI, D12): legacy ``items``/``layout``
+    (invariant ``keys(layout) == keys(items)``) atau program canvas
+    ``statements``. Keduanya tidak boleh terisi bersamaan.
+    """
 
     title: str
     items: dict[str, DashboardItem] = Field(default_factory=dict)
@@ -301,6 +335,8 @@ class DashboardContent(StudioModel):
     global_filters: FilterSet = Field(default_factory=list)
     #: Design_Brief opsional (Req 36.1); konten lama tanpa brief tetap valid.
     brief: DesignBrief | None = None
+    #: Program OpenUI Lang per nama statement (urutan sisip dipertahankan).
+    statements: dict[str, CanvasStatement] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def _check_invariants(self) -> DashboardContent:
@@ -314,7 +350,16 @@ class DashboardContent(StudioModel):
         for key, item in self.items.items():
             if item.id != key:
                 raise ValueError(f"key item '{key}' tidak sama dengan item.id '{item.id}'")
+        for key, stmt in self.statements.items():
+            if stmt.name != key:
+                raise ValueError(f"key statement '{key}' tidak sama dengan name '{stmt.name}'")
+        if self.items and self.statements:
+            raise ValueError("Dashboard tidak boleh memiliki items legacy dan statements canvas sekaligus")
         return self
+
+    @property
+    def is_canvas(self) -> bool:
+        return bool(self.statements)
 
 
 class BlueprintSlot(StudioModel):
@@ -403,6 +448,24 @@ class SetBriefOp(StudioModel):
     after: DesignBrief | None = None
 
 
+class SetStatementOp(StudioModel):
+    """Tambah (``before=None``), ganti, atau hapus (``after=None``) satu statement canvas."""
+
+    op: Literal["set_statement"] = "set_statement"
+    name: str
+    before: CanvasStatement | None = None
+    after: CanvasStatement | None = None
+
+    @model_validator(mode="after")
+    def _check(self) -> SetStatementOp:
+        if self.before is None and self.after is None:
+            raise ValueError("set_statement: before dan after tidak boleh keduanya null")
+        for stmt in (self.before, self.after):
+            if stmt is not None and stmt.name != self.name:
+                raise ValueError("set_statement: name statement harus sama dengan name op")
+        return self
+
+
 Op = Annotated[
     Union[
         AddItemOp,
@@ -412,6 +475,7 @@ Op = Annotated[
         SetFiltersOp,
         SetTitleOp,
         SetBriefOp,
+        SetStatementOp,
     ],
     Field(discriminator="op"),
 ]
@@ -464,6 +528,9 @@ class SetLayoutCommand(StudioModel):
     changes: dict[str, LayoutRect]
 
 
+class TidyLayoutCommand(StudioModel):
+    type: Literal["tidy_layout"] = "tidy_layout"
+
 class SetGlobalFiltersCommand(StudioModel):
     type: Literal["set_global_filters"] = "set_global_filters"
     filters: FilterSet
@@ -493,8 +560,25 @@ class SetBriefCommand(StudioModel):
     brief: DesignBrief | None = None
 
 
+#: Batas ukuran teks patch canvas (V7, warisan C7).
+MAX_CANVAS_PATCH_BYTES = 64 * 1024
+
+
+class ApplyCanvasPatchCommand(StudioModel):
+    """Patch OpenUI Lang ``editMode`` (D3, D5); di-resolve Dashboard_Store via sidecar.
+
+    ``allowed_components`` membatasi komponen yang boleh ditulis (allowlist
+    per agent, D11); ``None`` = tanpa batas selain komponen sistem.
+    """
+
+    type: Literal["apply_canvas_patch"] = "apply_canvas_patch"
+    patch: str = Field(min_length=1)
+    allowed_components: list[str] | None = None
+
+
 Command = Annotated[
     Union[
+        ApplyCanvasPatchCommand,
         AddChartCommand,
         AddInsightCommand,
         UpdateChartCommand,
@@ -502,6 +586,7 @@ Command = Annotated[
         UpdateInsightCommand,
         RemoveItemCommand,
         SetLayoutCommand,
+        TidyLayoutCommand,
         SetGlobalFiltersCommand,
         SetTitleCommand,
         AddKpiCommand,
@@ -705,6 +790,12 @@ __all__ = [
     "SEMANTIC_BODY_MODELS",
     "LayoutRect",
     "DashboardContent",
+    "StatementKind",
+    "CanvasQuery",
+    "CanvasStatement",
+    "SetStatementOp",
+    "ApplyCanvasPatchCommand",
+    "MAX_CANVAS_PATCH_BYTES",
     "AddItemOp",
     "RemoveItemOp",
     "SetItemOp",
@@ -720,6 +811,7 @@ __all__ = [
     "UpdateInsightCommand",
     "RemoveItemCommand",
     "SetLayoutCommand",
+    "TidyLayoutCommand",
     "SetGlobalFiltersCommand",
     "SetTitleCommand",
     "Command",

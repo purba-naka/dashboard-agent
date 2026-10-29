@@ -31,18 +31,37 @@ Eksekusi chart berjalan paralel dengan batas konkurensi (``asyncio.Semaphore``).
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import math
 from collections.abc import Iterable, Mapping, Sequence
+from datetime import date, datetime
 from typing import Any
 
 from studio.api.errors import StudioError
-from studio.api.schemas import ErrorBody, RenderedItem, RenderResponse
+from studio.api.schemas import (
+    CanvasQueryRequest,
+    CanvasQueryResult,
+    CanvasRenderResponse,
+    ErrorBody,
+    RenderedItem,
+    RenderResponse,
+)
 from studio.core.chart_spec import bind_data
 from studio.core.filters import parse_filter_set
 from studio.core.kpi import compute_kpi
-from studio.core.models import ChartItem, DashboardItem, KpiItem, Predicate
+from studio.core.models import (
+    CanvasStatement,
+    ChartItem,
+    DashboardItem,
+    KpiItem,
+    KpiSpec,
+    NumberFormat,
+    Predicate,
+)
+from studio.core.openui.program import QUERY_TOOLS, is_ref
 from studio.core.propagation import RelationGraph, affected_tables, is_filter_unaffected
-from studio.core.status import ItemStatus, item_query_id, item_status
+from studio.core.status import ItemStatus, is_invalid, item_query_id, item_status
 from studio.data.engine import DataEngine
 from studio.data.worker import DEFAULT_TIMEOUT_S
 from studio.store.repos import DashboardRecord, QueryRecord, Repositories
@@ -52,6 +71,7 @@ __all__ = [
     "cross_filter_source_ref",
     "effective_filters",
     "render_items",
+    "render_canvas",
 ]
 
 log = logging.getLogger(__name__)
@@ -234,3 +254,153 @@ async def render_items(
 
     rendered = await asyncio.gather(*(render_one(i) for i in ids))
     return RenderResponse(version=dashboard.version, items=dict(zip(ids, rendered)))
+
+
+# ---------------------------------------------------------------------------
+# Canvas OpenUI (docs/plan-openui-canvas.md §3.5)
+# ---------------------------------------------------------------------------
+
+#: Batas baris yang dikirim ke klien per Query canvas.
+MAX_CANVAS_ROWS = 5000
+
+
+def _canonical(tool: str, args: Any) -> str:
+    return json.dumps([tool, args], sort_keys=True, default=str)
+
+
+def _json_cell(value: Any) -> Any:
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
+
+
+def _kpi_spec(args: Mapping[str, Any]) -> KpiSpec:
+    fmt: dict[str, Any] = {}
+    for src, dst in (("format", "style"), ("currency", "currency"), ("decimals", "decimals"), ("compact", "compact")):
+        if args.get(src) is not None:
+            fmt[dst] = args[src]
+    return KpiSpec(
+        query_id=str(args.get("query")),
+        value_column=str(args.get("value")),
+        comparison_column=args.get("compare"),
+        comparison_label=args.get("compare_label"),
+        format=NumberFormat(**fmt),
+        good_direction=args.get("good") or "up",
+        metric_name=args.get("metric"),
+    )
+
+
+def _canvas_source_refs(
+    statements: Mapping[str, CanvasStatement],
+    query_names: set[str],
+    query: QueryRecord,
+) -> set[tuple[str, str]]:
+    """``(table, column)`` Cross_Filter yang bersumber dari komponen pemakai Query ini."""
+    refs: set[tuple[str, str]] = set()
+    for stmt in statements.values():
+        data = stmt.props.get("data")
+        if stmt.kind != "component" or not is_ref(data) or data["$ref"] not in query_names:
+            continue
+        options = stmt.props.get("options")
+        column = options.get("crossFilter") if isinstance(options, dict) else None
+        ref = query.lineage.get(column) if isinstance(column, str) else None
+        if isinstance(ref, Mapping) and ref.get("table") and ref.get("column"):
+            refs.add((str(ref["table"]), str(ref["column"])))
+    return refs
+
+
+async def render_canvas(
+    dashboard: DashboardRecord,
+    requests: Sequence[CanvasQueryRequest],
+    cross_filters: Sequence[Predicate] | None,
+    *,
+    repos: Repositories,
+    engine: DataEngine,
+    concurrency: int = DEFAULT_RENDER_CONCURRENCY,
+    timeout_s: float = DEFAULT_TIMEOUT_S,
+) -> CanvasRenderResponse:
+    """Jalankan Query canvas dengan Global_Filter + Cross_Filter tanpa LLM.
+
+    Hanya pasangan ``(tool, args)`` yang ada sebagai statement ``Query`` di
+    program tersimpan yang dieksekusi; selain itu ``NOT_FOUND``.
+    """
+    content = dashboard.content
+    ws_id = dashboard.workspace_id
+    statements = content.statements
+    global_filters: list[Predicate] = list(content.global_filters)
+    cross: list[Predicate] = list(cross_filters or ())
+    parse_filter_set([*global_filters, *cross])
+
+    by_call: dict[str, set[str]] = {}
+    for name, stmt in statements.items():
+        if stmt.kind == "query" and stmt.query is not None and stmt.query.tool in QUERY_TOOLS:
+            by_call.setdefault(_canonical(stmt.query.tool, stmt.query.args), set()).add(name)
+
+    query_ids = {
+        str(r.args.get("query")) for r in requests if isinstance(r.args.get("query"), str)
+    }
+    queries = {
+        qid: q
+        for qid, q in (await repos.queries.get_many(query_ids)).items()
+        if q.workspace_id == ws_id
+    }
+    confirmed = frozenset(await repos.relations.confirmed_ids(ws_id))
+    graph = (await engine.workspace_tables(ws_id)).graph
+    semaphore = asyncio.Semaphore(max(1, concurrency))
+
+    async def run_one(req: CanvasQueryRequest) -> CanvasQueryResult:
+        names = by_call.get(_canonical(req.tool, req.args))
+        if not names:
+            return CanvasQueryResult(
+                status="error",
+                error=ErrorBody(code="NOT_FOUND", message="Query tidak ada di program canvas ini."),
+            )
+        query = queries.get(str(req.args.get("query")))
+        if query is None:
+            return CanvasQueryResult(
+                status="error",
+                error=ErrorBody(code="UNKNOWN_QUERY", message="Query tersimpan tidak ditemukan."),
+            )
+        sources = _canvas_source_refs(statements, names, query)
+        filters = list(global_filters) + [
+            p for p in cross if (p.table, p.column) not in sources
+        ]
+        unaffected, normalized = _filter_unaffected(graph, query, filters)
+        if is_invalid(query, confirmed):
+            return CanvasQueryResult(
+                status="invalid", filter_unaffected=unaffected, error=_invalid_error(query, confirmed)
+            )
+        try:
+            async with semaphore:
+                result = await engine.run_saved(
+                    query, () if unaffected else normalized, timeout_s, workspace_id=ws_id
+                )
+            if req.tool == "render_kpi":
+                kpi = compute_kpi(_kpi_spec(req.args), result).model_dump(mode="json")
+                return CanvasQueryResult(
+                    status="ok", kpi=kpi, formatted=kpi.get("formatted"), filter_unaffected=unaffected
+                )
+            columns = [c.name for c in result.columns]
+            rows = [
+                {c: _json_cell(v) for c, v in zip(columns, row)}
+                for row in result.rows[:MAX_CANVAS_ROWS]
+            ]
+            return CanvasQueryResult(
+                status="ok", columns=columns, rows=rows, filter_unaffected=unaffected
+            )
+        except StudioError as exc:
+            return CanvasQueryResult(status="error", filter_unaffected=unaffected, error=_error(exc))
+        except Exception:  # noqa: BLE001 — satu Query gagal tidak menggagalkan lainnya
+            log.exception("Render Query canvas %s gagal", req.key)
+            return CanvasQueryResult(
+                status="error",
+                filter_unaffected=unaffected,
+                error=ErrorBody(code="INTERNAL_ERROR", message="Gagal menjalankan query."),
+            )
+
+    results = await asyncio.gather(*(run_one(r) for r in requests))
+    return CanvasRenderResponse(
+        version=dashboard.version, results={r.key: res for r, res in zip(requests, results)}
+    )

@@ -1,0 +1,26 @@
+kode_toko,nama_toko,kota,kode_wilayah,tanggal_buka
+TK-001,Toko 001,Bandung,W01,2019-06-19
+TK-002,Toko 002,Bandung,W01,2020-11-05
+TK-003,Toko 003,Surabaya,W01,2019-12-09
+TK-004,Toko 004,Jakarta,W01,2021-09-10
+TK-005,Toko 005,,W01,2021-05-22
+TK-006,Toko 006,Surabaya,W01,2021-10-10
+TK-007,Toko 007,Bandung,W01,2022-10-09
+TK-008,Toko 008,Surabaya,W01,2021-10-06
+TK-009,Toko 009,Semarang,W01,2019-11-23
+TK-010,Toko 010,Pekanbaru,W02,2020-01-19
+TK-011,Toko 011,Palembang,W02,2022-09-14
+TK-012,Toko 012,Medan,W02,2021-08-04
+TK-013,Toko 013,Medan,W02,2019-05-08
+TK-014,Toko 014,Medan,W02,2023-01-16
+TK-015,Toko 015,Pekanbaru,W02,2022-02-14
+TK-016,Toko 016,Banjarmasin,W03,2022-05-08
+TK-017,Toko 017,Banjarmasin,W03,2020-01-02
+TK-018,Toko 018,Balikpapan,W03,2019-12-17
+TK-019,Toko 019,Pontianak,W03,2021-08-13
+TK-020,Toko 020,Makassar,W04,2022-12-24
+TK-021,Toko 021,,W04,2022-06-18
+TK-022,Toko 022,Makassar,W04,2019-12-07
+TK-023,Toko 023,Denpasar,W05,2021-04-11
+TK-024,Toko 024,Mataram,W05,2020-03-07
+TK-025,Toko 025,Denpasar,W05,2021-10-20

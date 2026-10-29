@@ -1,0 +1,482 @@
+{
+  "summary": {
+    "approval_gate": 1.0,
+    "grounding": 1.0,
+    "routing": 1.0,
+    "trajectory": 1.0,
+    "avg_seconds": 17.4,
+    "avg_transfer_count": 1.0,
+    "avg_classify_turn_count": 0.43,
+    "avg_tool_calls": 5.86,
+    "avg_agent_switches": 2.14
+  },
+  "passed": 7,
+  "total": 7,
+  "cases": [
+    {
+      "eval_id": "route-query-total-revenue",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0,
+        "grounding": 1.0
+      },
+      "seconds": 7.7,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 0,
+        "tool_calls": 3,
+        "agent_switches": 2,
+        "tool_counts": {
+          "transfer_to_agent": 1,
+          "list_tables": 1,
+          "run_sql": 1
+        },
+        "args_summary_chars": {
+          "transfer_to_agent": 22,
+          "list_tables": 0,
+          "run_sql": 64
+        }
+      },
+      "agents": [
+        "Query_Agent"
+      ],
+      "tools": [
+        "list_tables",
+        "run_sql"
+      ],
+      "tool_errors": [],
+      "self_corrections": 0,
+      "errors": [],
+      "answer": "I'll route this data question to the Query agent.I'll look at the available tables first.**Total revenue (SUM amount) seluruh transaksi = 1.802.384.000** (≈ Rp 1,80 miliar)\n\nRincian:\n| Metrik | Nilai |\n|---|---|\n| Total revenue (SUM of `amount`) | **1.802.384.000** |\n| Jumlah transaksi | 2.000 |\n| Rata-rata per transaksi | 901.192 |\n\nCatatan: kolom `amount` tidak memiliki nilai null (0%), sehingga seluruh 2.000 transaksi terhitung. Data mencakup periode 2024-01-01 s/d 2024-12-31.",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "agent.active:Query_Agent:",
+        "tool.call:Query_Agent:list_tables",
+        "tool.result:Query_Agent:list_tables",
+        "tool.call:Query_Agent:run_sql",
+        "tool.result:Query_Agent:run_sql",
+        "run.done::"
+      ]
+    },
+    {
+      "eval_id": "route-query-join-region",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0,
+        "grounding": 1.0
+      },
+      "seconds": 8.3,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 0,
+        "tool_calls": 4,
+        "agent_switches": 2,
+        "tool_counts": {
+          "transfer_to_agent": 1,
+          "list_tables": 1,
+          "search_semantic": 1,
+          "run_sql": 1
+        },
+        "args_summary_chars": {
+          "transfer_to_agent": 22,
+          "list_tables": 0,
+          "search_semantic": 29,
+          "run_sql": 64
+        }
+      },
+      "agents": [
+        "Query_Agent"
+      ],
+      "tools": [
+        "list_tables",
+        "search_semantic",
+        "run_sql"
+      ],
+      "tool_errors": [],
+      "self_corrections": 0,
+      "errors": [],
+      "answer": "I'll look into the revenue data by customer region for you.I'll investigate the revenue data by customer region.**Region Jawa** menyumbang revenue terbesar, yaitu **Rp 839.612.000**.\n\nRincian revenue per region (total Rp 1.802.384.000 dari 2.000 transaksi):\n\n| Region | Revenue | Transaksi |\n|---|---|---|\n| **Jawa** | **Rp 839.612.000** (46,6%) | 984 |\n| Sumatera | Rp 279.085.000 | 282 |\n| Sulawesi | Rp 255.354.000 | 235 |\n| Kalimantan | Rp 245.590.000 | 298 |\n| Bali & Nusa Tenggara | Rp 182.743.000 | 201 |\n\nJawa mendominasi dengan kontribusi hampir separuh total revenue (≈46,6%), sekitar 3× li",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "agent.active:Query_Agent:",
+        "tool.call:Query_Agent:list_tables",
+        "tool.call:Query_Agent:search_semantic",
+        "tool.result:Query_Agent:list_tables",
+        "tool.result:Query_Agent:search_semantic",
+        "tool.call:Query_Agent:run_sql",
+        "tool.result:Query_Agent:run_sql",
+        "run.done::"
+      ]
+    },
+    {
+      "eval_id": "gate-saran-tanpa-mutasi",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0
+      },
+      "seconds": 7.8,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 1,
+        "tool_calls": 2,
+        "agent_switches": 1,
+        "tool_counts": {
+          "classify_turn": 1,
+          "transfer_to_agent": 1
+        },
+        "args_summary_chars": {
+          "classify_turn": 50,
+          "transfer_to_agent": 31
+        }
+      },
+      "agents": [],
+      "tools": [
+        "classify_turn"
+      ],
+      "tool_errors": [],
+      "self_corrections": 0,
+      "errors": [],
+      "answer": "Siap, dashboard tidak saya ubah. Berikut rekomendasi chart untuk data penjualan, disesuaikan dengan tujuan analisisnya:\n\n| Tujuan | Chart yang cocok | Catatan |\n|---|---|---|\n| Tren penjualan dari waktu ke waktu | **Line chart** (atau area) | Sumbu X: tanggal/bulan; sumbu Y: revenue. Tambahkan garis pembanding periode sebelumnya bila ada |\n| Perbandingan antar kategori/produk/region | **Bar chart** (horizontal jika label panjang) | Urutkan dari terbesar agar cepat terbaca; hindari pie jika kategori > 5 |\n| Kontribusi kategori terhadap total | **Bar bertumpuk (stacked)** atau **treemap** | Pie ",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:classify_turn",
+        "tool.result:Root_Agent:classify_turn",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "run.done::"
+      ]
+    },
+    {
+      "eval_id": "route-chart-eksplisit",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0
+      },
+      "seconds": 16.8,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 1,
+        "tool_calls": 7,
+        "agent_switches": 4,
+        "tool_counts": {
+          "classify_turn": 1,
+          "get_dashboard_state": 1,
+          "transfer_to_agent": 1,
+          "Query_Agent": 1,
+          "list_tables": 1,
+          "run_sql": 1,
+          "add_chart_from_template": 1
+        },
+        "args_summary_chars": {
+          "classify_turn": 130,
+          "get_dashboard_state": 0,
+          "transfer_to_agent": 31,
+          "Query_Agent": 68,
+          "list_tables": 0,
+          "run_sql": 64,
+          "add_chart_from_template": 118
+        }
+      },
+      "agents": [
+        "Chart_Designer_Agent",
+        "Query_Agent",
+        "Chart_Designer_Agent"
+      ],
+      "tools": [
+        "classify_turn",
+        "get_dashboard_state",
+        "Query_Agent",
+        "list_tables",
+        "run_sql",
+        "add_chart_from_template"
+      ],
+      "tool_errors": [],
+      "self_corrections": 0,
+      "errors": [],
+      "answer": "I'll help with that. Let me first check the current dashboard state to understand what we're working with.The active dashboard is currently empty (version 0, no items). To build a proper bar chart of total revenue per channel, I need the chart builder which handles query construction and ECharts config. Let me transfer to the Chart_Designer_Agent.I'll create the bar chart of total revenue per channel. First I need a query with the data.I'll start by exploring the available tables to understand the schema.The `transactions` table has `channel` and `amount`. Revenue = sum of `amount`.Total reven",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:classify_turn",
+        "tool.call:Root_Agent:get_dashboard_state",
+        "tool.result:Root_Agent:classify_turn",
+        "tool.result:Root_Agent:get_dashboard_state",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "agent.active:Chart_Designer_Agent:",
+        "tool.call:Chart_Designer_Agent:Query_Agent",
+        "agent.active:Query_Agent:",
+        "tool.call:Query_Agent:list_tables",
+        "tool.result:Query_Agent:list_tables",
+        "tool.call:Query_Agent:run_sql",
+        "tool.result:Query_Agent:run_sql",
+        "agent.active:Chart_Designer_Agent:",
+        "tool.result:Chart_Designer_Agent:Query_Agent",
+        "tool.call:Chart_Designer_Agent:add_chart_from_template",
+        "tool.result:Chart_Designer_Agent:add_chart_from_template",
+        "patch.applied::",
+        "run.done::"
+      ]
+    },
+    {
+      "eval_id": "route-insight-eksplisit",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0
+      },
+      "seconds": 13.5,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 1,
+        "tool_calls": 6,
+        "agent_switches": 2,
+        "tool_counts": {
+          "classify_turn": 1,
+          "get_dashboard_state": 1,
+          "transfer_to_agent": 1,
+          "run_sql": 2,
+          "add_insight": 1
+        },
+        "args_summary_chars": {
+          "classify_turn": 130,
+          "get_dashboard_state": 0,
+          "transfer_to_agent": 24,
+          "run_sql": 79,
+          "add_insight": 160
+        }
+      },
+      "agents": [
+        "Insight_Agent"
+      ],
+      "tools": [
+        "classify_turn",
+        "get_dashboard_state",
+        "run_sql",
+        "run_sql",
+        "add_insight"
+      ],
+      "tool_errors": [
+        "run_sql"
+      ],
+      "self_corrections": 1,
+      "errors": [
+        {
+          "code": "NOT_SELECT",
+          "message": "Hanya statement SELECT (termasuk WITH ... SELECT) yang diizinkan; ditemukan statement SHOW.",
+          "agent": "Insight_Agent"
+        }
+      ],
+      "answer": "I'll help add that insight card. Let me first check the current dashboard state.The dashboard is currently empty, so to create an Insight_Card about the region with the largest revenue, I need to first compute the actual data. Let me hand this to the Insight agent.I'll start by exploring the available tables to understand the data structure.I have the schema. `customers` has `region` and `transactions` has `amount`, joined via `customer_id`. Let me compute revenue by region.The query succeeded. Jawa is the top region with 839,612,000 in revenue. Let me create the Insight_Card.Insight_Card berh",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:classify_turn",
+        "tool.call:Root_Agent:get_dashboard_state",
+        "tool.result:Root_Agent:classify_turn",
+        "tool.result:Root_Agent:get_dashboard_state",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "agent.active:Insight_Agent:",
+        "tool.call:Insight_Agent:run_sql",
+        "tool.result:Insight_Agent:run_sql",
+        "error:Insight_Agent:",
+        "tool.call:Insight_Agent:run_sql",
+        "tool.result:Insight_Agent:run_sql",
+        "tool.call:Insight_Agent:add_insight",
+        "tool.result:Insight_Agent:add_insight",
+        "patch.applied::",
+        "run.done::"
+      ]
+    },
+    {
+      "eval_id": "route-architect-blueprint",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0
+      },
+      "seconds": 59.1,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 0,
+        "tool_calls": 17,
+        "agent_switches": 2,
+        "tool_counts": {
+          "transfer_to_agent": 1,
+          "get_semantic_model": 1,
+          "get_bi_knowledge": 6,
+          "get_dashboard_state": 1,
+          "search_semantic": 3,
+          "propose_dashboard_plan": 5
+        },
+        "args_summary_chars": {
+          "transfer_to_agent": 36,
+          "get_semantic_model": 15,
+          "get_bi_knowledge": 117,
+          "get_dashboard_state": 0,
+          "search_semantic": 32,
+          "propose_dashboard_plan": 700
+        }
+      },
+      "agents": [
+        "Dashboard_Architect_Agent"
+      ],
+      "tools": [
+        "get_semantic_model",
+        "get_bi_knowledge",
+        "get_bi_knowledge",
+        "get_bi_knowledge",
+        "get_dashboard_state",
+        "get_bi_knowledge",
+        "get_bi_knowledge",
+        "search_semantic",
+        "search_semantic",
+        "get_bi_knowledge",
+        "search_semantic",
+        "propose_dashboard_plan",
+        "propose_dashboard_plan",
+        "propose_dashboard_plan",
+        "propose_dashboard_plan",
+        "propose_dashboard_plan"
+      ],
+      "tool_errors": [
+        "propose_dashboard_plan",
+        "propose_dashboard_plan",
+        "propose_dashboard_plan",
+        "propose_dashboard_plan"
+      ],
+      "self_corrections": 4,
+      "errors": [
+        {
+          "code": "BLUEPRINT_INVALID",
+          "message": "Struktur Blueprint tidak valid.",
+          "agent": "Dashboard_Architect_Agent"
+        },
+        {
+          "code": "BLUEPRINT_INVALID",
+          "message": "Struktur Blueprint tidak valid.",
+          "agent": "Dashboard_Architect_Agent"
+        },
+        {
+          "code": "BLUEPRINT_INVALID",
+          "message": "Struktur Blueprint tidak valid.",
+          "agent": "Dashboard_Architect_Agent"
+        },
+        {
+          "code": "BLUEPRINT_INVALID",
+          "message": "Dashboard_Blueprint tidak valid: kpi_orders: UNKNOWN_METRIC; kpi_aov: UNKNOWN_METRIC; trend_sales_month: UNKNOWN_METRIC; trend_sales_month: UNKNOWN_DIMENSION",
+          "agent": "Dashboard_Architect_Agent"
+        }
+      ],
+      "answer": "I'll route this to the Dashboard Architect Agent, since a full dashboard design request belongs there.I'll start by reviewing the semantic model and BI knowledge relevant to sales dashboards.Sudah cukup konteks. Berikut rancangan yang saya usulkan untuk disetujui dulu — belum ada item yang dibangun.Struktur perlu diperbaiki (nilai `compare`, `time_grain`, dan bentuk `default_filters`). Saya perbaiki lalu ajukan ulang.Sesuai hasil validasi, `orders` dan `avg_order_value` belum ada di model semantik. Saya ajukan ulang hanya dengan metric/kolom yang dikenal.Rancangan sudah tayang dan **menunggu p",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "agent.active:Dashboard_Architect_Agent:",
+        "tool.call:Dashboard_Architect_Agent:get_semantic_model",
+        "tool.call:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.result:Dashboard_Architect_Agent:get_semantic_model",
+        "tool.result:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.call:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.call:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.call:Dashboard_Architect_Agent:get_dashboard_state",
+        "tool.result:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.result:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.result:Dashboard_Architect_Agent:get_dashboard_state",
+        "tool.call:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.call:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.result:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.result:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.call:Dashboard_Architect_Agent:search_semantic",
+        "tool.call:Dashboard_Architect_Agent:search_semantic",
+        "tool.result:Dashboard_Architect_Agent:search_semantic",
+        "tool.result:Dashboard_Architect_Agent:search_semantic",
+        "tool.call:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.call:Dashboard_Architect_Agent:search_semantic",
+        "tool.result:Dashboard_Architect_Agent:get_bi_knowledge",
+        "tool.result:Dashboard_Architect_Agent:search_semantic",
+        "tool.call:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "tool.result:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "error:Dashboard_Architect_Agent:",
+        "tool.call:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "tool.result:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "error:Dashboard_Architect_Agent:",
+        "tool.call:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "tool.result:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "error:Dashboard_Architect_Agent:",
+        "tool.call:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "tool.result:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "error:Dashboard_Architect_Agent:",
+        "tool.call:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "tool.result:Dashboard_Architect_Agent:propose_dashboard_plan",
+        "approval.request::",
+        "run.done::"
+      ]
+    },
+    {
+      "eval_id": "route-profiler-kualitas",
+      "passed": true,
+      "scores": {
+        "routing": 1.0,
+        "trajectory": 1.0,
+        "approval_gate": 1.0,
+        "grounding": 1.0
+      },
+      "seconds": 8.4,
+      "metrics": {
+        "transfer_count": 1,
+        "classify_turn_count": 0,
+        "tool_calls": 2,
+        "agent_switches": 2,
+        "tool_counts": {
+          "transfer_to_agent": 1,
+          "get_dataset_profile": 1
+        },
+        "args_summary_chars": {
+          "transfer_to_agent": 30,
+          "get_dataset_profile": 17
+        }
+      },
+      "agents": [
+        "Data_Profiler_Agent"
+      ],
+      "tools": [
+        "get_dataset_profile"
+      ],
+      "tool_errors": [],
+      "self_corrections": 0,
+      "errors": [],
+      "answer": "I'll help you analyze the data quality of the customers table. Let me route this to the Data Profiler Agent who can examine the dataset profile.I'll look up the dataset profile for the customers table.# Kualitas Data Tabel `customers`\n\nTabel **customers** berisi **200 baris** dengan **7 kolom**. Secara umum kualitasnya sangat baik — hanya ada satu kolom yang memiliki nilai kosong.\n\n## Ringkasan Kualitas\n\n| Aspek | Status |\n|---|---|\n| Duplicate rows | **0** ✅ |\n| Kolom dengan tipe campuran | **Tidak ada** ✅ |\n| Null percentage | Hanya 1 kolom bermasalah ⚠️ |\n\n## Kolom dengan Nilai Kosong\n\n| Ko",
+      "trace": [
+        "run.started::",
+        "agent.active:Root_Agent:",
+        "tool.call:Root_Agent:transfer_to_agent",
+        "tool.result:Root_Agent:transfer_to_agent",
+        "agent.active:Data_Profiler_Agent:",
+        "tool.call:Data_Profiler_Agent:get_dataset_profile",
+        "tool.result:Data_Profiler_Agent:get_dataset_profile",
+        "run.done::"
+      ]
+    }
+  ]
+}

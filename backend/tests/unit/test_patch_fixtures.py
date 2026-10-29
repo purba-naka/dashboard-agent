@@ -18,6 +18,7 @@ _OPS = {
     "set_filters",
     "set_title",
     "set_brief",
+    "set_statement",
 }
 
 

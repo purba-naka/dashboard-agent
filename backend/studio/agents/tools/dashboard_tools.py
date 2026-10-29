@@ -67,6 +67,8 @@ from studio.core.semantic import verified_query_key
 from studio.core.status import item_query_id
 from studio.api.errors import StudioError
 from studio.core.chart_convert import convert_chart_type
+from studio.core.chart_templates import build_chart_option
+from studio.core.patches import tidy_layout as _tidy_layout
 from studio.core.models import (
     MAX_EVIDENCE_ROWS,
     AddChartCommand,
@@ -94,7 +96,10 @@ from studio.core.models import (
     SetLayoutCommand,
     UpdateChartCommand,
     UpdateInsightCommand,
+    SetStatementOp,
 )
+from studio.core.openui.program import program_text, statement_query_id, title_of
+from studio.core.openui.skeleton import slot_statement_name
 from studio.core.numbers import InvalidInsightType, check_insight_type
 from studio.store.dashboard_store import (
     DashboardSnapshot,
@@ -107,6 +112,7 @@ from studio.store.repos import DashboardRecord, QueryRecord
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "CANVAS_ROLES",
     "CHART_SPEC_TOOLS",
     "DASHBOARD_TOOL_NAMES",
     "DEFAULT_DASHBOARD_TITLE",
@@ -117,9 +123,11 @@ __all__ = [
 DASHBOARD_TOOL_NAMES: tuple[str, ...] = (
     "get_dashboard_state",
     "add_chart",
+    "add_chart_from_template",
     "update_chart",
     "remove_chart",
     "update_layout",
+    "tidy_layout",
     "add_insight",
     "update_insight",
     "undo_last",
@@ -132,9 +140,23 @@ DASHBOARD_TOOL_NAMES: tuple[str, ...] = (
 )
 
 #: Tool yang kegagalan validasinya memakan jatah retry ``chart_spec`` (Req 13.5).
-CHART_SPEC_TOOLS: frozenset[str] = frozenset({"add_chart", "update_chart", "add_kpi", "update_kpi"})
+CHART_SPEC_TOOLS: frozenset[str] = frozenset({"add_chart", "add_chart_from_template", "update_chart", "add_kpi", "update_kpi"})
 
 DEFAULT_DASHBOARD_TITLE = "Dashboard"
+
+_LAYOUT = ("VContainer", "HContainer", "Section", "Tabs")
+_DATA = (
+    "Query", "LineChart", "BarChart", "PieChart", "ScatterChart", "Heatmap", "Waterfall",
+    "Kpi", "Table", "Matrix",
+)
+#: Allowlist komponen ``apply_canvas_patch`` per peran agent (D11). Container
+#: diizinkan semua peran karena tile baru harus dirujuk dari induknya.
+CANVAS_ROLES: dict[str, tuple[str, ...]] = {
+    "layout": (*_LAYOUT, "Slicer", "Query"),
+    "data": (*_LAYOUT, *_DATA),
+    "insight": (*_LAYOUT, "Insight"),
+    "slot": (*_LAYOUT, *_DATA, "Insight"),
+}
 
 #: ``build(record) -> Command`` dijalankan setelah pengecekan versi.
 CommandBuilder = Callable[[DashboardRecord], Awaitable[Command]]
@@ -292,7 +314,29 @@ def dashboard_state_for_llm(snapshot: DashboardSnapshot) -> dict[str, Any]:
         "global_filters": [p.model_dump(mode="json") for p in content.global_filters],
         "brief": content.brief.model_dump(mode="json") if content.brief else None,
         "items": items,
+        **({"canvas": canvas_state_for_llm(snapshot)} if content.statements else {}),
     }
+
+
+def canvas_state_for_llm(snapshot: DashboardSnapshot) -> dict[str, Any]:
+    """Program canvas OpenUI + ringkasan per tile untuk LLM (edit mode butuh nama statement)."""
+    statements = snapshot.content.statements
+    tiles = []
+    for name, stmt in statements.items():
+        if stmt.kind != "component" or stmt.component in ("VContainer", "HContainer", "Section", "Tabs"):
+            continue
+        status = snapshot.item_status.get(name)
+        tiles.append(
+            {
+                "name": name,
+                "component": stmt.component,
+                "title": title_of(stmt),
+                "query_id": statement_query_id(statements, stmt),
+                "invalid": bool(status and status.invalid),
+                "stale": bool(status and status.stale),
+            }
+        )
+    return {"program": program_text(statements), "tiles": tiles}
 
 
 def _touched_item(event: PatchEvent) -> DashboardItem | None:
@@ -596,7 +640,8 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
                 nama kolom hasil query (mis. {"x": "bulan", "y": "revenue"}); sertakan
                 title, label sumbu, dan legend sesuai tipe chart.
             query_id: id dari run_sql; kosong = query terakhir sesi ini.
-            layout: opsional {x, y, w, h} pada grid 12 kolom; kosong = baris kosong pertama.
+            layout: KOSONGKAN. Server menaruh item di posisi kosong pertama. Isi {x, y, w, h}
+                hanya bila pengguna menyebut posisi.
             cross_filter_column: opsional kolom output untuk Cross_Filter.
             slot_id: id Blueprint_Slot yang sedang dibangun; layout slot dipakai otomatis.
 
@@ -616,6 +661,51 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
 
         layout_rect = _layout(layout) or slot_layout(tool_context, slot_id)
         result = await mutate(tool_context, "add_chart", base_version, build_with(build, layout_rect))
+        return await after_add(tool_context, result, slot_id)
+
+    @guard
+    async def add_chart_from_template(
+        base_version: int,
+        title: str,
+        template: str,
+        x: str,
+        y: str,
+        tool_context: ToolContext,
+        query_id: str | None = None,
+        cross_filter_column: str | None = None,
+        slot_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Tambahkan chart STANDAR hanya dengan memilih templat dan kolom (jauh lebih ringkas
+        daripada add_chart). Pakai untuk bar, line, pie, atau scatter satu seri.
+
+        Args:
+            base_version: Dashboard_Version yang diketahui (dari get_dashboard_state).
+            title: judul chart.
+            template: bar, line, pie, atau scatter.
+            x: nama kolom hasil query untuk sumbu X (pie: kolom kategori).
+            y: nama kolom hasil query untuk sumbu Y (pie: kolom nilai).
+            query_id: id dari run_sql; kosong = query terakhir sesi ini.
+            cross_filter_column: opsional kolom output untuk Cross_Filter.
+            slot_id: id Blueprint_Slot yang sedang dibangun; layout slot dipakai otomatis.
+
+        Untuk chart multi-seri, kombinasi, dua sumbu, heatmap, atau waterfall pakai add_chart.
+        Kolom yang tidak ada di hasil query ditolak beserta daftar kolom yang valid.
+        """
+        ws_id = workspace_id_of(tool_context)
+        option = build_chart_option(template, title, x, y)  # StudioError bila argumen salah
+
+        async def build(record: DashboardRecord) -> Command:
+            query = await load_query(ws_id, tool_context, query_id)
+            spec = ChartSpec(
+                query_id=query.id,
+                chart_type=template,  # type: ignore[arg-type]
+                option=option,
+                cross_filter_column=_optional_text(cross_filter_column),
+            )
+            return AddChartCommand(title=str(title), spec=spec)
+
+        layout_rect = slot_layout(tool_context, slot_id)
+        result = await mutate(tool_context, "add_chart_from_template", base_version, build_with(build, layout_rect))
         return await after_add(tool_context, result, slot_id)
 
     @guard
@@ -650,7 +740,7 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
             decimals: jumlah desimal tampilan (0–4).
             good_direction: up (naik = baik), down (turun = baik), atau neutral.
             metric_name: nama Business_Metric terkait (opsional).
-            layout: opsional {x, y, w, h}; kosong = layout slot Blueprint atau baris kosong pertama.
+            layout: KOSONGKAN (server menempatkan; slot Blueprint memakai layout slotnya). Isi {x, y, w, h} hanya bila pengguna menyebut posisi.
             slot_id: id Blueprint_Slot yang sedang dibangun (opsional).
         """
         ws_id = workspace_id_of(tool_context)
@@ -822,6 +912,9 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
     ) -> dict[str, Any]:
         """Pindahkan/ubah ukuran item pada grid 12 kolom.
 
+        Gunakan HANYA bila pengguna menyebut posisi/ukuran tertentu. Untuk "rapikan" atau
+        "tata ulang", pakai tidy_layout. Item lain yang bertabrakan digeser otomatis ke bawah.
+
         Args:
             base_version: Dashboard_Version yang diketahui (dari get_dashboard_state).
             changes: pemetaan id item → {x, y, w, h} (x + w <= 12, w dan h >= 1).
@@ -836,6 +929,26 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
             return SetLayoutCommand.model_validate({"changes": dict(changes)})
 
         return await mutate(tool_context, "update_layout", base_version, build)
+
+    @guard
+    async def tidy_layout(base_version: int, tool_context: ToolContext) -> dict[str, Any]:
+        """Rapikan seluruh layout: tanpa celah dan tanpa tumpang tindih, tanpa koordinat.
+
+        Urutan: KPI di atas, lalu chart, lalu insight. Ukuran tiap item dipertahankan.
+        Pakai ini setelah menambah banyak item atau saat pengguna meminta merapikan.
+
+        Args:
+            base_version: Dashboard_Version yang diketahui (dari get_dashboard_state).
+        """
+
+        async def build(record: DashboardRecord) -> Command:
+            target = _tidy_layout(record.content)
+            changes = {i: r for i, r in target.items() if r != record.content.layout[i]}
+            if not changes:
+                raise StudioError("NO_CHANGES", "Layout sudah rapi.", http_status=422)
+            return SetLayoutCommand.model_validate({"changes": changes})
+
+        return await mutate(tool_context, "tidy_layout", base_version, build)
 
     # -- insight ------------------------------------------------------------
 
@@ -861,7 +974,7 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
             text: teks insight; setiap angka harus berasal dari hasil query tertaut
                 (format dengan format_number).
             query_id: id dari run_sql; kosong = query terakhir sesi ini.
-            layout: opsional {x, y, w, h}; kosong = layout slot Blueprint atau baris kosong pertama.
+            layout: KOSONGKAN (server menempatkan; slot Blueprint memakai layout slotnya). Isi {x, y, w, h} hanya bila pengguna menyebut posisi.
             slot_id: id Blueprint_Slot yang sedang dibangun (opsional).
 
         SQL, tabel bukti, filter aktif, waktu perhitungan, dan Dataset diambil
@@ -1023,12 +1136,100 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
         tool_context.state[STATE_DASHBOARD_ID] = dashboard_id
         return ok_result(dashboard=await state_of(dashboard_id))
 
+    # -- canvas OpenUI (docs/plan-openui-canvas.md D5, D11) --------------------
+
+    def make_canvas_tool(role: str) -> Callable[..., Any]:
+        allowed = CANVAS_ROLES[role]
+
+        @guard
+        async def apply_canvas_patch(
+            base_version: int, patch: str, tool_context: ToolContext
+        ) -> dict[str, Any]:
+            """Ubah canvas Dashboard dengan patch OpenUI Lang (edit mode).
+
+            Args:
+                base_version: Dashboard_Version yang diketahui (dari get_dashboard_state /
+                    dashboard_version di konteks).
+                patch: HANYA statement yang baru/berubah, satu per baris
+                    (``nama = Komponen(arg1, arg2, ...)``, argumen posisi). Nama sama =
+                    ganti, nama baru = tambah, ``nama = null`` = hapus. Tile baru WAJIB
+                    dirujuk dari container induknya (tulis ulang induknya). Data selalu
+                    lewat statement ``Query("render_query", {query: "<query_id>"}, {rows: []})``.
+
+            Gagal validasi → error berisi daftar pelanggaran (kode, statement, pesan) +
+            retries_left; perbaiki patch lalu panggil lagi.
+            """
+            state = bind_tool_context(tool_context)
+            tool_name = "apply_canvas_patch"
+            if (gate := mutation_gate_error(state, tool_name)) is not None:
+                return gate
+            for kind in ("version_conflict", "chart_spec"):
+                if (exhausted := exhausted_result(state, kind)) is not None:
+                    return exhausted
+            store = store_of()
+            base = _coerce_base_version(base_version)
+            dashboard_id = await resolve_dashboard(tool_context, create=True)
+            assert dashboard_id is not None
+            actor = getattr(tool_context, "invocation_id", None)
+            record = await repos.dashboards.get(dashboard_id)
+            try:
+                if record.content.items:
+                    # Dashboard legacy: konversi satu arah dulu (D10), lalu minta ulang.
+                    await store.convert_to_canvas(dashboard_id, source="agent")
+                    record = await repos.dashboards.get(dashboard_id)
+                    raise VersionConflict(record.version, base)
+                if base != record.version:
+                    raise VersionConflict(record.version, base)
+                event, warnings = await store.apply_canvas(
+                    dashboard_id, str(patch), base, "agent",
+                    allowed_components=allowed, actor_run_id=actor,
+                )
+            except VersionConflict as exc:
+                result = error_result(exc, state=state, kind="version_conflict")
+                result["dashboard"] = await state_of(dashboard_id)
+                return result
+            except StudioError as exc:
+                return error_result(exc, state=state, kind="chart_spec")
+
+            record_success(state, "version_conflict")
+            record_success(state, "chart_spec")
+            changed = [op.name for op in event.ops if isinstance(op, SetStatementOp)]
+            result = ok_result(
+                dashboard_id=dashboard_id,
+                patch_id=event.id,
+                base_version=event.base_version,
+                dashboard_version=event.version,
+                statements_changed=changed,
+                warnings=[{"code": w.code, "statement": w.statement, "message": w.message} for w in warnings],
+                summary=describe_ops(event.ops, record.content),
+                **{CHAT_EVENTS_KEY: [chat_event("patch.applied", event.model_dump(mode="json"))]},
+            )
+            slot = current_slot(tool_context)
+            if slot is not None:
+                name = slot_statement_name(str(slot.get("slot_id")))
+                done = any(
+                    isinstance(op, SetStatementOp) and op.name == name and op.after is not None
+                    and op.after.kind == "component"
+                    for op in event.ops
+                )
+                if done:
+                    events = await blueprint_progress(
+                        repos, tool_context, str(slot["slot_id"]), "done", item_id=name
+                    )
+                    result.setdefault(CHAT_EVENTS_KEY, []).extend(events)
+                    result["slot_done"] = slot["slot_id"]
+            return result
+
+        return apply_canvas_patch
+
     tools = {
         "get_dashboard_state": get_dashboard_state,
         "add_chart": add_chart,
+        "add_chart_from_template": add_chart_from_template,
         "update_chart": update_chart,
         "remove_chart": remove_chart,
         "update_layout": update_layout,
+        "tidy_layout": tidy_layout,
         "add_insight": add_insight,
         "update_insight": update_insight,
         "undo_last": undo_last,
@@ -1040,4 +1241,7 @@ def make_dashboard_tools(services: ToolServices) -> dict[str, Callable[..., Any]
         "switch_page": switch_page,
     }
     assert tuple(tools) == DASHBOARD_TOOL_NAMES
+    # Satu tool `apply_canvas_patch` per peran (allowlist berbeda, nama sama).
+    for role in CANVAS_ROLES:
+        tools[f"apply_canvas_patch:{role}"] = make_canvas_tool(role)
     return tools

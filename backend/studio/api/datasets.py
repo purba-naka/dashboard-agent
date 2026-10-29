@@ -265,6 +265,47 @@ async def column_values(
     return await asyncio.to_thread(read)
 
 
+#: Batas baris per halaman pratinjau.
+MAX_ROWS_PAGE = 100
+
+@router.get("/workspaces/{ws}/datasets/{dataset_id}/rows")
+async def dataset_rows(
+    ws: str,
+    dataset_id: str,
+    request: Request,
+    repos: ReposDep,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=MAX_ROWS_PAGE, ge=1),
+) -> dict[str, Any]:
+    """Satu halaman baris dataset untuk pratinjau; ``limit`` dipotong ke 100. Ditolak 403 bila ``privacy_no_samples``."""
+    import polars as pl
+
+    from studio.core.privacy import json_safe
+
+    dataset = await repos.datasets.get(dataset_id, workspace_id=ws)
+    if dataset.privacy_no_samples:
+        raise StudioError(
+            "PRIVACY_NO_SAMPLES",
+            "Pratinjau dinonaktifkan karena mode privasi.",
+            {"dataset_id": dataset.id},
+            http_status=403,
+        )
+    limit = min(limit, MAX_ROWS_PAGE)
+    path = request.app.state.engine.parquet_path(dataset)
+
+    def read() -> list[list[Any]]:
+        df = pl.scan_parquet(path).slice(offset, limit).collect()
+        return [[json_safe(v) for v in row] for row in df.select([c.name for c in dataset.schema]).iter_rows()]
+
+    rows = await asyncio.to_thread(read)
+    return {
+        "columns": [{"name": c.name, "type": c.type} for c in dataset.schema],
+        "rows": rows,
+        "total": dataset.row_count,
+        "offset": offset,
+        "limit": limit,
+    }
+
 @router.get("/workspaces/{ws}/datasets/{dataset_id}", response_model=DatasetDetail)
 async def get_dataset(ws: str, dataset_id: str, repos: ReposDep) -> DatasetDetail:
     """Skema, profil kolom, kualitas data, dan pemetaan nama kolom (Req 2.5, 6.2)."""

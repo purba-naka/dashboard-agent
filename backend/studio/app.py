@@ -38,6 +38,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from studio.api import dashboards, datasets, events, queries, relations, semantic, workspaces
 from studio.api.errors import register_error_handlers
 from studio.config import Settings
+from studio.core.openui.sidecar import OpenUISidecar
 from studio.data.engine import DataEngine
 from studio.data.ingestion import IngestionService
 from studio.data.profiler import Profiler
@@ -142,6 +143,11 @@ def create_app(
             state.profiler = profiler
             state.ingestion = ingestion
             state.semantic_drafter = semantic_drafter
+            # Sidecar OpenUI dijalankan malas pada pemanggilan pertama (D6).
+            openui = OpenUISidecar(bun=settings.openui_bun, timeout_s=settings.openui_timeout_s)
+            stack.push_async_callback(openui.aclose)
+            state.openui = openui
+            dashboard_store.openui = openui
             # Diisi wiring agent (task 18.11): hapus sesi ADK & penyusun ulang insight.
             state.workspace_cleanup_hooks = []
             state.insight_rewriter = None

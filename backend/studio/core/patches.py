@@ -23,6 +23,7 @@ from pydantic import ValidationError
 from ulid import ULID
 
 from studio.api.errors import StudioError
+from studio.core.layout_templates import rects_overlap
 from studio.core.models import (
     GRID_COLUMNS,
     AddChartCommand,
@@ -36,7 +37,10 @@ from studio.core.models import (
     DashboardContent,
     DashboardItem,
     AddKpiCommand,
+    ApplyCanvasPatchCommand,
+    CanvasStatement,
     InsightItem,
+    SetStatementOp,
     KpiItem,
     LayoutChange,
     LayoutRect,
@@ -51,6 +55,7 @@ from studio.core.models import (
     SetGlobalFiltersCommand,
     SetItemOp,
     SetLayoutCommand,
+    TidyLayoutCommand,
     SetLayoutOp,
     SetTitleCommand,
     SetTitleOp,
@@ -124,12 +129,66 @@ def first_empty_row_layout(
     """
     w = max(1, min(w, GRID_COLUMNS))
     rects = list(layout.values())
-    # Kandidat y cukup 0 dan tepi bawah setiap rect (titik awal celah kosong).
-    candidates = sorted({0, *(r.y + r.h for r in rects)})
-    for y in candidates:
-        if _rows_free(rects, y, h):
-            return LayoutRect(x=0, y=y, w=w, h=h)
+    # Kandidat cukup 0 dan tepi bawah/kanan setiap rect; urut y lalu x (first-fit).
+    ys = sorted({0, *(r.y + r.h for r in rects)})
+    xs = sorted({0, *(r.x + r.w for r in rects)})
+    for y in ys:
+        for x in xs:
+            if x + w > GRID_COLUMNS:
+                continue
+            cand = LayoutRect(x=x, y=y, w=w, h=h)
+            if not any(rects_overlap(cand, r) for r in rects):
+                return cand
     raise AssertionError("unreachable: tepi bawah terakhir selalu kosong")
+
+def push_down_collisions(
+    layout: Mapping[str, LayoutRect], fixed: Mapping[str, LayoutRect]
+) -> list[LayoutChange]:
+    """Dorong item yang bertabrakan dengan ``fixed`` ke bawah (compact vertikal).
+
+    ``layout`` = state saat ini TANPA ``fixed``. Hasil: perubahan layout item lain
+    sehingga tidak ada tumpang tindih; item ``fixed`` tidak pernah bergeser.
+    """
+    placed: list[LayoutRect] = list(fixed.values())
+    changes: list[LayoutChange] = []
+    for item_id, rect in sorted(layout.items(), key=lambda kv: (kv[1].y, kv[1].x)):
+        if item_id in fixed:
+            continue
+        new = rect
+        while True:
+            clash = [p for p in placed if rects_overlap(new, p)]
+            if not clash:
+                break
+            new = new.model_copy(update={"y": max(p.y + p.h for p in clash)})
+        placed.append(new)
+        if new != rect:
+            changes.append(LayoutChange(id=item_id, before=rect, after=new))
+    return changes
+
+def tidy_layout(content: DashboardContent) -> dict[str, LayoutRect]:
+    """Susun ulang tanpa celah/tabrakan: KPI, lalu chart, lalu insight; urut (y, x) saat ini.
+
+    Lebar dan tinggi item dipertahankan. Tiap item ditaruh di posisi first-fit paling
+    atas-kiri yang muat (shelf packing), sehingga agent tidak perlu menghitung koordinat.
+    """
+    order = {"kpi": 0, "chart": 1, "insight": 2}
+    ids = sorted(
+        content.layout,
+        key=lambda i: (order.get(content.items[i].kind, 1), content.layout[i].y, content.layout[i].x),
+    )
+    placed: dict[str, LayoutRect] = {}
+    for item_id in ids:
+        r = content.layout[item_id]
+        placed[item_id] = first_empty_row_layout(placed, r.w, r.h)
+    return placed
+
+def _add_with_layout(content: DashboardContent, item: DashboardItem, layout: LayoutRect) -> list[Op]:
+    """``add_item`` + dorongan item yang bertabrakan dengan rect baru."""
+    pushed = push_down_collisions(content.layout, {item.id: layout})
+    ops: list[Op] = [AddItemOp(item=item, layout=layout)]
+    if pushed:
+        ops.append(SetLayoutOp(changes=pushed))
+    return ops
 
 
 # ---------------------------------------------------------------------------
@@ -206,7 +265,7 @@ def resolve_command(
         layout = command.layout or first_empty_row_layout(
             content.layout, *DEFAULT_CHART_SIZE
         )
-        return [AddItemOp(item=item, layout=layout)]
+        return _add_with_layout(content, item, layout)
 
     if isinstance(command, AddInsightCommand):
         item_id = _new_item_id(content, make_id)
@@ -216,7 +275,7 @@ def resolve_command(
         layout = command.layout or first_empty_row_layout(
             content.layout, *DEFAULT_INSIGHT_SIZE
         )
-        return [AddItemOp(item=item, layout=layout)]
+        return _add_with_layout(content, item, layout)
 
     if isinstance(command, AddKpiCommand):
         item_id = _new_item_id(content, make_id)
@@ -224,7 +283,7 @@ def resolve_command(
         layout = command.layout or first_empty_row_layout(
             content.layout, *DEFAULT_KPI_SIZE
         )
-        return [AddItemOp(item=item, layout=layout)]
+        return _add_with_layout(content, item, layout)
 
     if isinstance(command, UpdateKpiCommand):
         before = _get_kpi(content, command.id)
@@ -281,6 +340,28 @@ def resolve_command(
             changes.append(
                 LayoutChange(id=item_id, before=content.layout[item_id], after=rect)
             )
+        # Item yang dipindah juga bisa saling menabrak (mis. tukar posisi beda ukuran):
+        # yang pertama tetap, berikutnya didorong ke bawah.
+        placed: list[LayoutRect] = []
+        for change in changes:
+            rect = change.after
+            while clash := [p for p in placed if rects_overlap(rect, p)]:
+                rect = rect.model_copy(update={"y": max(p.y + p.h for p in clash)})
+            change.after = rect
+            placed.append(rect)
+        moved = {c.id: c.after for c in changes}
+        rest = {k: v for k, v in content.layout.items() if k not in moved}
+        changes += push_down_collisions(rest, moved)
+        return [SetLayoutOp(changes=changes)]
+
+    if isinstance(command, TidyLayoutCommand):
+        changes = [
+            LayoutChange(id=i, before=content.layout[i], after=r)
+            for i, r in tidy_layout(content).items()
+            if r != content.layout[i]
+        ]
+        if not changes:
+            raise StudioError("NO_CHANGES", "Layout sudah rapi.", http_status=422)
         return [SetLayoutOp(changes=changes)]
 
     if isinstance(command, SetGlobalFiltersCommand):
@@ -292,6 +373,13 @@ def resolve_command(
 
     if isinstance(command, SetTitleCommand):
         return [SetTitleOp(before=content.title, after=command.title)]
+
+    if isinstance(command, ApplyCanvasPatchCommand):
+        # Butuh sidecar + query tersimpan (I/O): di-resolve Dashboard_Store.
+        raise InvalidOp(
+            "apply_canvas_patch di-resolve oleh Dashboard_Store, bukan resolve_command.",
+            {"type": command.type},
+        )
 
     raise InvalidOp(
         f"Command tidak dikenal: {type(command).__name__}.",
@@ -315,6 +403,7 @@ def apply_ops(content: DashboardContent, ops: Sequence[Op]) -> DashboardContent:
     layout: dict[str, LayoutRect] = dict(content.layout)
     filters = list(content.global_filters)
     brief = content.brief
+    statements: dict[str, CanvasStatement] = dict(content.statements)
 
     for index, op in enumerate(ops):
         where = {"op_index": index, "op": op.op}
@@ -393,6 +482,18 @@ def apply_ops(content: DashboardContent, ops: Sequence[Op]) -> DashboardContent:
                 )
             brief = op.after
 
+        elif isinstance(op, SetStatementOp):
+            current_stmt = statements.get(op.name)
+            if current_stmt != op.before:
+                raise InvalidOp(
+                    f"set_statement: before statement '{op.name}' tidak sama dengan state saat ini.",
+                    {**where, "name": op.name},
+                )
+            if op.after is None:
+                del statements[op.name]
+            else:
+                statements[op.name] = op.after
+
         else:
             raise InvalidOp(f"Op tidak dikenal: {type(op).__name__}.", where)
 
@@ -403,6 +504,7 @@ def apply_ops(content: DashboardContent, ops: Sequence[Op]) -> DashboardContent:
             layout=layout,
             global_filters=filters,
             brief=brief,
+            statements=statements,
         )
     except ValidationError as exc:
         raise InvalidOp(
@@ -437,6 +539,8 @@ def invert_op(op: Op) -> Op:
         return SetTitleOp(before=op.after, after=op.before)
     if isinstance(op, SetBriefOp):
         return SetBriefOp(before=op.after, after=op.before)
+    if isinstance(op, SetStatementOp):
+        return SetStatementOp(name=op.name, before=op.after, after=op.before)
     raise InvalidOp(f"Op tidak dikenal: {type(op).__name__}.")
 
 
@@ -478,6 +582,8 @@ __all__ = [
     "ItemNotFound",
     "ChartConversionUnavailable",
     "first_empty_row_layout",
+    "tidy_layout",
+    "push_down_collisions",
     "resolve_command",
     "apply_ops",
     "invert_op",

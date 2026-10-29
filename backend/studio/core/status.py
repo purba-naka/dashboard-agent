@@ -119,11 +119,37 @@ def dashboard_item_status(
     tidak memakai relasi.
     """
     confirmed = frozenset(confirmed_relation_ids)
-    return {
+    out = {
         item_id: item_status(
             item, query_metas.get(item_query_id(item)), confirmed, dataset_versions
         )
         for item_id, item in content.items.items()
+    }
+    # Canvas OpenUI: status per statement komponen yang bersumber query.
+    from studio.core.openui.program import statement_query_id  # hindari siklus impor
+
+    for name, stmt in content.statements.items():
+        if stmt.kind != "component":
+            continue
+        qid = statement_query_id(content.statements, stmt)
+        if qid is None:
+            continue
+        meta = query_metas.get(qid)
+        out[name] = ItemStatus(
+            invalid=is_invalid(meta, confirmed),
+            stale=stmt.insight is not None and is_stale(stmt.insight, dataset_versions),
+        )
+    return out
+
+
+def canvas_query_ids(content: DashboardContent) -> set[str]:
+    """``query_id`` yang dirujuk program canvas."""
+    from studio.core.openui.program import statement_query_id
+
+    return {
+        qid
+        for stmt in content.statements.values()
+        if (qid := statement_query_id(content.statements, stmt)) is not None
     }
 
 
@@ -136,4 +162,5 @@ __all__ = [
     "item_status",
     "item_query_id",
     "dashboard_item_status",
+    "canvas_query_ids",
 ]

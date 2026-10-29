@@ -12,6 +12,7 @@ from studio.agents.model_gateway import (
     ModelCapabilityError,
     build_models,
     resolve_from_settings,
+    resolve_reasoning,
     skip_capability_check,
 )
 from studio.agents.wiring import configure_agents
@@ -28,7 +29,9 @@ def load_models(settings: Settings) -> dict:
     """
     try:
         resolved = resolve_models(resolve_from_settings(settings))
-        return build_models(resolved, skip_check=skip_capability_check())
+        return build_models(
+            resolved, skip_check=skip_capability_check(), reasoning=resolve_reasoning()
+        )
     except (MissingModelConfig, ModelCapabilityError) as exc:
         print(f"ERROR [{exc.code}]: {exc.message}", file=sys.stderr)
         sys.exit(1)

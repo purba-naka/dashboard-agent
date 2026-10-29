@@ -258,3 +258,33 @@ async def test_reupload_marks_insight_stale(studio: Studio) -> None:
     chart = rendered["items"][chart_id]
     assert chart["status"] == "ok"
     assert sum(r["customers"] for r in dataset_rows(chart["option"])) == 150
+
+
+async def test_list_queries_by_workspace(studio: Studio) -> None:
+    """``GET /workspaces/{ws}/queries`` mendaftar query terbaru tanpa snapshot baris."""
+    ws = await studio.create_workspace("Daftar Query")
+    await studio.upload_sample(ws, "customers.csv")
+    query = await studio.execute(ws, SQL["customers_by_region"])
+
+    resp = await studio.client.get(f"/api/workspaces/{ws}/queries")
+    assert resp.status_code == 200, resp.text
+    [item] = resp.json()
+    assert item["id"] == query.query_id
+    assert item["sql"] == SQL["customers_by_region"]
+    assert item["tables_used"] == ["customers"]
+    assert "rows" not in item
+    assert (await studio.client.get("/api/workspaces/tidak-ada/queries")).status_code == 404
+
+
+async def test_execute_query_endpoint(studio: Studio) -> None:
+    """``POST /workspaces/{ws}/queries`` mengeksekusi SELECT dan menolak SQL mutasi."""
+    ws = await studio.create_workspace("Eksekusi Query")
+    await studio.upload_sample(ws, "customers.csv")
+
+    resp = await studio.client.post(f"/api/workspaces/{ws}/queries", json={"sql": SQL["customers_by_region"]})
+    assert resp.status_code == 201, resp.text
+    qid = resp.json()["query_id"]
+    assert (await studio.client.get(f"/api/queries/{qid}")).json()["sql"] == SQL["customers_by_region"]
+
+    resp = await studio.client.post(f"/api/workspaces/{ws}/queries", json={"sql": "DROP TABLE customers"})
+    assert resp.status_code in (400, 422), resp.text
